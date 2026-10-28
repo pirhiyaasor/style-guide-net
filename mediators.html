@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>רשימת מגשרים חיצונים</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* ── פוטר במסכים צרים — כמו בשאר המסכים ── */
+  @media (max-width: 1180px) {
+    #siteFooter > div { padding: 56px 40px !important; gap: 40px !important; }
+    #siteFooter > div > div { flex-wrap: wrap !important; gap: 40px !important; }
+    #siteFooter > div > div > div { flex: 1 1 300px !important; }
+  }
+  @media (max-width: 860px) {
+    #siteFooter > div { padding: 44px 20px !important; }
+    #siteFooter > div > div > div { flex: 1 1 100% !important; }
+    /* phone / WhatsApp / chat stack instead of three side by side */
+    #siteFooter [style*="gap:24px;width:100%"] { flex-direction: column !important; gap: 18px !important; }
+    #siteFooter [style*="align-self:stretch"] { display: none !important; }
+  }
+</style>
+<style>
+  .cvs-headerclear {
+    height: 36px; padding: 0 4px; flex-shrink: 0;
+    background: none; border: 0; color: var(--brand-navy);
+    font: 400 14px 'Rubik'; cursor: pointer; white-space: nowrap;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .cvs-headerclear:hover { color: var(--brand-navy-hover); }
+
+  /* ═══ רשימת מגשרים חיצונים — a public register, read and narrowed.
+         Shares styles.css (tokens, rail, header, footer) with the other
+         screens. The live page's three pick-lists (סוג רשימה, נושא מומחיות,
+         שפות), יישוב and the two name fields become one filter card; the grid
+         below keeps the live page's six columns, its sort and its paging. ═══ */
+
+  [hidden] { display: none !important; }
+
+  .dc-pagehead { margin: 22px 0 16px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .dc-title { font: 700 26px/1.25 'Rubik'; color: #1a1a1a; letter-spacing: -0.2px; margin: 0; }
+  .dc-titlecount { font: 400 14px 'Rubik'; color: var(--fg-3); }
+
+  .dc-card {
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(20,40,80,.07);
+    padding: 20px 22px 0;
+  }
+
+  /* text fields and יישוב on one line; the pick-lists below them */
+  .dc-fields {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px 18px;
+  }
+  .dc-span2 { grid-column: span 2; }
+  .dc-span4 { grid-column: span 4; }
+  @media (max-width: 1180px) {
+    .dc-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dc-span4 { grid-column: span 2; }
+  }
+  @media (max-width: 700px) {
+    .dc-fields { grid-template-columns: minmax(0, 1fr); }
+    .dc-span2, .dc-span4 { grid-column: span 1; }
+  }
+
+  .dc-field { min-width: 0; display: flex; flex-direction: column; gap: 6px; position: relative; }
+  .dc-label { font: 400 13px 'Rubik'; color: var(--fg-2); }
+  .dc-labelrow { display: flex; align-items: baseline; gap: 10px; }
+  .dc-labelrow .dc-linkbtn { margin-inline-start: auto; }
+
+  /* type into it → a line to write on */
+  .dc-input {
+    height: 38px; min-width: 0; width: 100%;
+    padding: 2px 2px; background: transparent;
+    border: 0; border-bottom: 1.5px solid #cbd6e6; border-radius: 0;
+    font: 400 15px 'Rubik'; color: var(--fg-1);
+    transition: border-color .15s ease;
+  }
+  .dc-input::placeholder { color: #c2c9d4; }
+  .dc-input:hover { border-bottom-color: var(--secondary-text-color); }
+  .dc-input:focus { outline: none; border-bottom-color: var(--brand-navy); }
+
+  /* pick from it → a box (the languages menu trigger) */
+  .dc-select {
+    height: 38px; min-width: 0; width: 100%;
+    padding: 4px 11px; padding-inline-end: 28px; background: #fff;
+    border: 1px solid var(--border-1); border-radius: 6px;
+    font: 400 14px 'Rubik'; color: var(--fg-1); text-align: start; cursor: pointer;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235B6472' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+    background-repeat: no-repeat; background-position: left 10px center;
+    transition: border-color .15s ease;
+  }
+  .dc-select:hover { border-color: var(--secondary-text-color); }
+  .dc-select:focus-visible, .dc-select[aria-expanded="true"] { outline: none; border-color: var(--brand-navy); }
+  .dc-select.dc-placeholder { color: var(--fg-3); }
+
+  /* multi-pick laid open: few options, so they are all on show (radio-pill look,
+     checkbox behaviour — any number may be on) */
+  .dc-checks { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; min-height: 38px; }
+  .dc-check {
+    display: inline-flex; align-items: center; gap: 7px;
+    height: 38px; padding: 0 10px; border-radius: 999px;
+    font: 400 14px 'Rubik'; color: var(--fg-1);
+    cursor: pointer; white-space: nowrap;
+    transition: background .15s ease, color .15s ease;
+  }
+  .dc-check:hover { background: #f1f5fa; }
+  .dc-check input { accent-color: var(--brand-navy); width: 15px; height: 15px; margin: 0; cursor: pointer; }
+  .dc-check:has(input:checked) { color: var(--brand-navy); font-weight: 500; }
+
+  .dc-linkbtn {
+    border: 0; background: none; padding: 0 2px; cursor: pointer;
+    font: 400 13px 'Rubik'; color: var(--brand-navy);
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .dc-linkbtn:hover { color: var(--brand-navy-hover); }
+
+  /* יישוב: an input with its own suggestion list, as on the live page */
+  .dc-suggest {
+    position: absolute; top: calc(100% + 4px); inset-inline: 0; z-index: 40;
+    background: #fff; border-radius: 8px; box-shadow: var(--box-shadow-medium);
+    padding: 6px; max-height: 264px; overflow: auto; margin: 0; list-style: none;
+  }
+  .dc-suggest li {
+    padding: 9px 12px; border-radius: 4px; cursor: pointer;
+    font: 400 15px/1.35 'Rubik'; color: var(--fg-1);
+    display: flex; justify-content: space-between; gap: 10px;
+  }
+  .dc-suggest li:hover, .dc-suggest li[aria-selected="true"] { background: var(--cvs-hover); }
+  .dc-suggest li small { font: 400 13px 'Rubik'; color: var(--fg-3); }
+  .dc-suggest mark { background: none; color: var(--brand-navy); font-weight: 600; }
+  .dc-suggest .dc-sugnone { color: var(--fg-3); cursor: default; }
+  .dc-suggest .dc-sugnone:hover { background: none; }
+
+  /* שפות: 55 options — a menu with its own search, the same pattern as the
+     documents table's filter menus */
+  .dc-menu {
+    position: absolute; top: calc(100% + 4px); inset-inline-start: 0; z-index: 40;
+    width: 300px; max-width: calc(100vw - 32px);
+    background: #fff; border-radius: 8px; box-shadow: var(--box-shadow-medium);
+    padding: 8px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .dc-menusearch {
+    height: 34px; width: 100%; padding: 4px 10px 4px 32px;
+    border: 1px solid var(--border-1); border-radius: 6px;
+    font: 400 14px 'Rubik'; color: var(--fg-1); background: #fff;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239699a6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><path d='m21 21-4.3-4.3'/></svg>");
+    background-repeat: no-repeat; background-position: left 10px center;
+  }
+  .dc-menusearch:hover { border-color: var(--fg-2); }
+  .dc-menusearch:focus { outline: none; border-color: #0073ea; }
+  .dc-menulist { max-height: 280px; overflow: auto; margin: 0 -2px; padding: 0 2px; }
+  .dc-menuopt {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 10px; border-radius: 4px; cursor: pointer;
+    font: 400 14px 'Rubik'; color: var(--fg-1);
+  }
+  .dc-menuopt:hover { background: var(--cvs-hover); }
+  .dc-menuopt input { accent-color: var(--brand-navy); width: 15px; height: 15px; margin: 0; cursor: pointer; flex-shrink: 0; }
+  .dc-menuopt span { flex: 1; min-width: 0; }
+  .dc-menuopt small { font: 400 13px 'Rubik'; color: var(--fg-3); }
+  .dc-menuopt:has(input:checked) span { color: var(--brand-navy); font-weight: 500; }
+  .dc-menunone { padding: 10px; text-align: center; font: 400 14px 'Rubik'; color: var(--fg-3); }
+  .dc-menufoot { display: flex; justify-content: space-between; border-top: 1px solid #eef1f6; padding: 8px 4px 2px; }
+
+  /* card footer — נקה beside the primary action */
+  .dc-cardfoot {
+    margin: 4px 0 0; padding: 18px 0 20px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .dc-btns { margin-inline-start: auto; display: flex; align-items: center; gap: 10px; }
+  .dc-btn {
+    height: 38px; padding: 0 22px; border-radius: 6px; cursor: pointer;
+    font: 500 14px 'Rubik'; white-space: nowrap;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .dc-btn-primary { background: var(--brand-navy); color: #fff; border: 1px solid var(--brand-navy); }
+  .dc-btn-primary:hover { background: var(--brand-navy-hover); border-color: var(--brand-navy-hover); }
+  .dc-btn-ghost { background: #fff; color: var(--brand-navy); border: 1px solid var(--border-1); }
+  .dc-btn-ghost:hover { background: var(--brand-tint); border-color: var(--brand-tint); }
+  /* the form differs from what the grid shows — say so on the button */
+  .dc-dirty { font: 400 13px 'Rubik'; color: var(--fg-3); }
+
+  /* what the grid is filtered by, as removable chips */
+  .dc-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .dc-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    height: 26px; padding: 0 4px 0 10px; border-radius: 999px;
+    background: var(--brand-tint); color: var(--brand-navy);
+    font: 400 13px 'Rubik'; border: 0; cursor: pointer; white-space: nowrap;
+  }
+  .dc-chip:hover { background: var(--brand-tint-strong); }
+  .dc-chip b { font-weight: 500; }
+  .dc-chip svg { width: 14px; height: 14px; }
+
+  /* ── results ───────────────────────────────────────────────────────────── */
+  .dc-results {
+    margin-top: 24px; background: #fff; border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(20,40,80,.07);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .dc-resulthead {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 16px 22px 12px;
+  }
+  .dc-resulttitle { font: 500 17px 'Rubik'; color: var(--fg-2); }
+  .dc-resulthead .dc-chips { flex: 1 1 auto; min-width: 0; }
+
+  .dc-tablewrap { overflow-x: auto; padding: 0 22px; }
+  #mdTable { width: 100%; table-layout: fixed; border-collapse: collapse; min-width: 900px; }
+  #mdTable th {
+    position: sticky; top: 0; z-index: 2; background: #eff5fd;
+    text-align: start; font: 500 14px 'Rubik'; color: var(--fg-2);
+    padding: 8px; white-space: nowrap; cursor: pointer; user-select: none;
+  }
+  #mdTable th:first-child { border-start-start-radius: 6px; }
+  #mdTable th:last-child { border-start-end-radius: 6px; }
+  #mdTable th:hover { color: var(--brand-navy); }
+  #mdTable th:focus-visible { outline: 2px solid var(--brand-azure); outline-offset: -2px; }
+  .dc-sortind { width: 12px; height: 12px; color: var(--brand-navy); vertical-align: -2px; margin-inline-start: 4px; }
+  .dc-sortind.dc-sortup { transform: rotate(180deg); }
+  .dc-sortind.dc-sortidle { color: #a8b6cb; opacity: .8; }
+  #mdTable th:hover .dc-sortidle { color: var(--brand-navy); opacity: 1; }
+  #mdTable th[aria-sort="ascending"], #mdTable th[aria-sort="descending"] { color: var(--brand-navy); }
+  #mdTable td {
+    padding: 10px 8px; font: 400 15px/1.45 'Rubik'; color: #001E40;
+    vertical-align: top; border-bottom: 1px solid #eef1f6;
+    overflow-wrap: anywhere;
+  }
+  #mdTable tbody tr { transition: background .12s ease; }
+  #mdTable tbody tr:hover > td { background: var(--cvs-hover); }
+  .md-name { font-weight: 500; }
+  .md-muted { color: var(--fg-3); }
+  .md-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .md-tag {
+    display: inline-block; white-space: nowrap;
+    font: 400 13px/1.5 'Rubik'; padding: 1px 9px; border-radius: 999px;
+    background: var(--brand-tint); color: var(--brand-navy);
+  }
+  /* a match for the search, so the reader sees why a row is here */
+  #mdTable mark { background: #fbf0d6; color: inherit; border-radius: 2px; padding: 0 1px; }
+  .md-tag mark { background: none !important; font-weight: 600; }
+
+  .dc-norows { text-align: center; padding: 56px 24px 64px !important; border-bottom: 0 !important; }
+  .dc-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--fg-3); }
+  .dc-empty svg { width: 34px; height: 34px; stroke: currentColor; }
+  .dc-empty-main { font: 500 16px 'Rubik'; color: var(--fg-2); }
+  .dc-empty-sub { font: 400 14px 'Rubik'; color: var(--fg-3); }
+
+  /* paging — the live page's four steps and its "x עד y מתוך n" */
+  .dc-pager {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 12px 22px 16px; border-top: 1px solid #eef1f6;
+  }
+  .dc-pagerange { font: 400 14px 'Rubik'; color: var(--fg-2); }
+  .dc-pagenav { margin-inline-start: auto; display: flex; align-items: center; gap: 4px; }
+  .dc-pagebtn {
+    width: 32px; height: 32px; padding: 0; border: 1px solid var(--border-1); border-radius: 6px;
+    background: #fff; color: var(--brand-navy); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dc-pagebtn svg { width: 16px; height: 16px; }
+  .dc-pagebtn:hover:not(:disabled) { background: var(--brand-tint); border-color: var(--brand-tint); }
+  .dc-pagebtn:disabled { color: var(--fg-3); background: #f7f9fc; border-color: #e1e6ef; cursor: not-allowed; }
+  .dc-pageof { display: flex; align-items: center; gap: 6px; padding: 0 6px; font: 400 14px 'Rubik'; color: var(--fg-2); white-space: nowrap; }
+  .dc-pageof input {
+    width: 48px; height: 32px; padding: 2px 4px; text-align: center;
+    border: 1px solid var(--border-1); border-radius: 6px; font: 400 14px 'Rubik'; color: var(--fg-1);
+  }
+  .dc-pageof input:hover { border-color: var(--fg-2); }
+  .dc-pageof input:focus { outline: none; border-color: #0073ea; }
+
+  /* ── mobile: the rail becomes a drawer (design.md §6) ── */
+  .hp-burger { display: none; }
+  .md-backdrop { display: none; }
+  @media (max-width: 860px) {
+    body { padding-right: 0 !important; }
+    /* the drawer waits off-screen to the right; without this it counts as page
+       width and the whole page scrolls sideways */
+    html { overflow-x: hidden; }
+    .hp-burger {
+      display: flex; align-items: center; justify-content: center;
+      width: 40px; height: 40px; border: 0; border-radius: 8px; background: none;
+      color: var(--brand-navy); cursor: pointer; flex-shrink: 0; margin-inline-end: 4px;
+    }
+    .hp-burger:hover { background: var(--cvs-hover); }
+    .hp-burger svg { width: 22px; height: 22px; }
+    .cvs-thinscroll {
+      width: 284px !important; max-width: 86vw; transform: translateX(100%);
+      transition: transform .22s ease, visibility 0s .22s; box-shadow: -8px 0 24px rgba(20,40,80,.14); overflow-y: auto !important;
+      visibility: hidden;   /* closed: out of the tab order too */
+    }
+    body.md-drawer-open { overflow: hidden; }
+    body.md-drawer-open .cvs-thinscroll { transform: none; visibility: visible; transition: transform .22s ease; }
+    body.md-drawer-open .md-backdrop { display: block; position: fixed; inset: 0; z-index: 35; background: rgba(6,30,64,.32); }
+    .cvs-railInner { align-items: stretch !important; padding: 0 12px 12px !important; }
+    .md-drawerhead { display: flex !important; }
+    .cvs-thinscroll .cvs-raildash, .cvs-thinscroll .cvs-railnav > summary, .cvs-thinscroll .cvs-railInner > a {
+      flex-direction: row !important; justify-content: flex-start !important; gap: 12px !important;
+      padding: 12px !important; height: auto !important; margin: 0 !important;
+    }
+    .cvs-thinscroll .cvs-railInner span { font-size: 16px !important; text-align: start !important; }
+    .cvs-thinscroll .cvs-railInner span br { display: none; }
+    .cvs-thinscroll .cvs-railnav > div {
+      position: static !important; width: auto !important; box-shadow: none !important;
+      padding: 0 31px 4px 0 !important;
+    }
+    #cvsTopHeader > div { flex-wrap: wrap; height: auto !important; padding: 10px 16px !important; row-gap: 10px; }
+    #cvsTopHeader .md-logocol { width: auto !important; flex: 1 1 auto !important; }
+    #cvsTopHeader .md-findcol { order: 3; flex: 1 1 100% !important; padding-right: 0 !important; flex-wrap: wrap; }
+    #cvsTopHeader .md-findcol select.cvs-select { width: 140px !important; }
+    .md-content { padding: 0 16px 64px !important; }
+  }
+  .md-drawerhead {
+    display: none; align-items: center; justify-content: space-between;
+    height: 56px; margin: 0 -12px 8px; padding: 0 16px; border-bottom: 1px solid #e1e6ef;
+    font: 600 17px 'Rubik'; color: var(--fg-1);
+  }
+  .md-drawerhead button {
+    width: 40px; height: 40px; border: 0; background: none; border-radius: 8px; cursor: pointer;
+    color: var(--fg-2); display: flex; align-items: center; justify-content: center;
+  }
+  .md-drawerhead button:hover { background: var(--cvs-hover); }
+  .cvs-railInner > .md-drawerhead:hover { background: none; }
+
+  /* narrow: each mediator becomes a card, the column names its labels */
+  @media (max-width: 760px) {
+    .dc-tablewrap { padding: 0 12px; }
+    #mdTable { min-width: 0; table-layout: auto; }
+    #mdTable thead { display: none; }
+    #mdTable, #mdTable tbody, #mdTable tr, #mdTable td { display: block; width: 100%; }
+    #mdTable tbody tr { padding: 12px 6px; border-bottom: 1px solid #eef1f6; }
+    #mdTable td { border: 0; padding: 3px 4px; display: grid; grid-template-columns: 120px 1fr; gap: 8px; font-size: 14.5px; }
+    #mdTable td::before { content: attr(data-label); font: 400 13px 'Rubik'; color: var(--fg-3); padding-top: 1px; }
+    #mdTable td.md-namecell { display: block; font-size: 16px; padding-bottom: 6px; }
+    #mdTable td.md-namecell::before { display: none; }
+    #mdTable td.dc-norows { display: block; }
+    #mdTable td.dc-norows::before { display: none; }
+    #mdTable td.md-emptycell { display: none; }
+    .dc-pager { padding: 12px; }
+    .dc-pagenav { margin-inline-start: 0; width: 100%; justify-content: center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cvs-thinscroll { transition: none !important; }
+  }
+</style>
+</head>
+<body style="display:flex;flex-direction:column;min-height:100vh;padding-right:68px">
+<div class="md-backdrop" id="mdBackdrop"></div>
+<div class="cvs-thinscroll" style="position:fixed;top:0;right:0;bottom:0;width:68px;background:#fff;overflow:visible;z-index:40;font-family:'Rubik',sans-serif">
+  <div class="cvs-railInner" dir="rtl" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:20px 3px 4px;min-height:100%">
+    <div class="md-drawerhead"><span>תפריט</span><button type="button" id="mdDrawerClose" aria-label="סגירת התפריט"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+    <!-- the personal area: the lawyer's own cases, decisions and payments. It sits
+         in the header band, above the rule, apart from the general navigation below. -->
+    <div class="cvs-raildash" role="button" tabindex="0" title="האזור שלי — סקירה כללית (אזור אישי ישן)" aria-label="האזור שלי">
+      <img class="cvs-dashillus" src="assets/illus-card.svg" width="26" height="26" alt="">
+      <span class="cvs-dashmain">האזור שלי</span>
+    </div>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">איתור <br>תיקים</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <a href="#ext" data-tab="ext" style="display:block;text-decoration:none;padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">תיקים לפי מס' תיק מקור</a>
+        <a href="#date" data-tab="date" style="display:block;text-decoration:none;padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">תיקים לתאריך פתיחה</a>
+        <a href="#mine" data-tab="mine" style="display:block;text-decoration:none;padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">התיקים שלי</a>
+      </div>
+    </details>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M9 15h6"></path><path d="M12 18v-6"></path></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">פתיחת <br>תיק</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">פתיחת תיק</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">הגשת תביעה בדיון מהיר בבית הדין לעבודה</div>
+      </div>
+    </details>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">הגשות</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">בקשה חדשה</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">כתב טענות לבקשה קיימת</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">הגשות אחרות</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">איתור הגשות לפי אסמכתא</div>
+      </div>
+    </details>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">יומן <br>דיונים</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">יומן בית משפט</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">דיונים לשופט ליום דיונים</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">הדיונים שלי</div>
+      </div>
+    </details>
+    <a href="https://case-view-lawyer-docs-inline.vercel.app/decisions.html" style="text-decoration:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="m9 15 2 2 4-4"></path></svg>
+      <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">איתור <br>החלטות</span>
+    </a>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">תשלומים</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">תשלום שוברים</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">תשלום אגרת בקשה מראש</div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div id="cvsTopHeader" style="background:#fff;position:sticky;top:0;z-index:30">
+  <div style="max-width:1840px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;gap:0;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
+
+    <!-- logo column: same width as the accordion sidebar below, so their right edges align -->
+    <button type="button" class="hp-burger" id="mdBurger" aria-label="פתיחת התפריט" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg></button>
+    <div class="md-logocol" style="width:260px;flex-shrink:0;display:flex;justify-content:flex-start">
+      <a href="https://case-view-lawyer-docs-inline.vercel.app/home.html" title="לדף הבית" style="display:flex">
+        <img id="cvsLogo" src="assets/42f818ae-3d00-4df0-9bfa-da8197a00c3c.png" alt="מדינת ישראל, הרשות השופטת — לדף הבית" style="height:36px">
+      </a>
+    </div>
+
+    <!-- search-bar column: same start edge as the main content below, so it aligns with the case card.
+         Case type now carries three options; picking תיק ישן reveals בית משפט + סוג תיק inline,
+         before the case number, replacing the old standalone "תיק ישן" flyout. -->
+    <div class="md-findcol" style="flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding-right:6px">
+        <div style="position:relative">
+          <select id="cvsCaseType" class="cvs-select" style="height:36px;padding:4px 28px 4px 10px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';color:var(--fg-1);background:#fff;width:150px">
+            <option value="court" selected>תיק בית משפט</option>
+            <option value="traffic">תיק תעבורה</option>
+            <option value="old">תיק ישן</option>
+          </select>
+          <span style="position:absolute;top:50%;left:8px;transform:translateY(-50%);pointer-events:none;color:var(--fg-2);display:flex"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+        </div>
+        <div id="cvsOldCaseFields" style="display:none;align-items:center;gap:8px">
+          <div style="position:relative">
+            <select class="cvs-select" style="height:36px;padding:4px 12px 4px 28px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';color:var(--fg-2);background:#fff;width:176px">
+              <option selected disabled>בית משפט</option>
+              <option>בית משפט השלום חדרה</option>
+            </select>
+            <span style="position:absolute;top:50%;left:8px;transform:translateY(-50%);pointer-events:none;color:var(--fg-2);display:flex"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+          </div>
+          <div style="position:relative">
+            <select class="cvs-select" style="height:36px;padding:4px 12px 4px 28px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';color:var(--fg-2);background:#fff;width:120px">
+              <option selected disabled>סוג תיק</option>
+              <option>אזרחי</option>
+            </select>
+            <span style="position:absolute;top:50%;left:8px;transform:translateY(-50%);pointer-events:none;color:var(--fg-2);display:flex"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+          </div>
+        </div>
+        <input id="cvsCaseNumA" placeholder="00-00" aria-label="חודש ושנה" title="חודש ושנה" maxlength="5" style="height:36px;width:56px;padding:4px 6px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';text-align:center;background:#fff">
+        <span style="color:var(--fg-3)">-</span>
+        <input id="cvsCaseNumB" aria-label="מספר התיק" title="מספר התיק" maxlength="5" placeholder="00000" style="height:36px;width:64px;padding:4px 6px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';text-align:center;background:#fff">
+        <button id="cvsHeaderSearch" onclick="location.href='https://case-view-lawyer-docs-inline.vercel.app/index.html'" class="cvs-btn" style="height:36px;padding:0 16px;background:var(--brand-tint);color:var(--brand-navy);border:1px solid var(--brand-tint);border-radius:6px;font:500 14px 'Rubik';cursor:pointer;white-space:nowrap">חיפוש</button>
+        <button type="button" id="cvsHeaderClear" class="cvs-headerclear">נקה</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <button class="cvs-bellbtn" aria-label="הודעות">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg>
+        <span class="cvs-bellbadge">3</span>
+      </button>
+      <details class="cvs-avatarmenu" style="position:relative">
+        <!-- The hat is worn in the header. The initials alone said WHO but not in
+             WHICH capacity, and that only showed once the menu was open — so the
+             role stands beside them, and the chevron says there is more inside. -->
+        <summary class="cvs-avatartrig" style="list-style:none">
+          <span class="cvs-avatarcircle">יכ</span>
+          <span class="cvs-avatarrole">עו"ד</span>
+          <svg class="cvs-avatarchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <div style="position:absolute;top:calc(100% + 6px);left:0;background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;min-width:210px;z-index:30">
+          <!-- active account — tinted + checked so the current identity is obvious;
+               no divider between the two accounts, the tint carries the separation -->
+          <div class="cvs-menuitem cvs-acctactive" style="padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <div>
+              <div style="font:600 15px 'Rubik';color:var(--fg-1)">עו"ד ישראל כהן</div>
+              <div style="font:400 13px 'Rubik';color:var(--fg-3);margin-top:2px">מ.ר 45213</div>
+            </div>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <!-- switchable private account, same visual style as the active one -->
+          <div class="cvs-menuitem" style="padding:8px 12px">
+            <div style="font:600 15px 'Rubik';color:var(--fg-1)">ת.ז 012345678</div>
+          </div>
+          <div style="border-top:1px solid var(--border-1);margin:4px -8px"></div>
+          <div class="cvs-menuitem" style="display:flex;align-items:center;gap:8px;padding:9px 12px;font:400 15px 'Rubik';color:var(--fg-1);white-space:nowrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>יציאה
+          </div>
+        </div>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<div style="flex:1 0 auto;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
+  <div class="md-content" style="max-width:1840px;margin:0 auto;padding:0 32px 110px">
+
+    <div class="dc-pagehead">
+      <h1 class="dc-title">רשימת מגשרים חיצונים</h1>
+    </div>
+
+    <!-- The live page's filters, in its own words: three pick-lists (סוג רשימת
+         מגשרים, נושא מומחיות בגישור, שפות), יישוב, שם פרטי, שם משפחה, and
+         נקה / אישור. Short lists are laid open; the 55 languages get a menu
+         with its own search. -->
+    <form class="dc-card" id="mdForm" novalidate>
+      <div class="dc-fields">
+        <div class="dc-field">
+          <label class="dc-label" for="mdFirst">שם פרטי</label>
+          <input class="dc-input" id="mdFirst" autocomplete="off">
+        </div>
+        <div class="dc-field">
+          <label class="dc-label" for="mdLast">שם משפחה</label>
+          <input class="dc-input" id="mdLast" autocomplete="off">
+        </div>
+        <div class="dc-field" id="mdCityField">
+          <label class="dc-label" for="mdCity">יישוב</label>
+          <input class="dc-input" id="mdCity" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="mdCityList">
+          <ul class="dc-suggest" id="mdCityList" role="listbox" aria-label="יישובים" hidden></ul>
+        </div>
+        <div class="dc-field" id="mdLangField">
+          <span class="dc-label" id="mdLangLabel">שפות</span>
+          <button type="button" class="dc-select dc-placeholder" id="mdLangBtn" aria-haspopup="true" aria-expanded="false" aria-labelledby="mdLangLabel mdLangBtn">כל השפות</button>
+          <div class="dc-menu" id="mdLangMenu" hidden>
+            <input class="dc-menusearch" id="mdLangSearch" placeholder="חיפוש שפה" aria-label="חיפוש שפה" autocomplete="off">
+            <div class="dc-menulist" id="mdLangList" role="group" aria-label="שפות"></div>
+            <div class="dc-menufoot">
+              <button type="button" class="dc-linkbtn" id="mdLangClear">ניקוי הבחירה</button>
+              <button type="button" class="dc-linkbtn" id="mdLangDone">סגירה</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="dc-field dc-span4">
+          <div class="dc-labelrow"><span class="dc-label" id="mdTypeLabel">סוג רשימת מגשרים</span></div>
+          <div class="dc-checks" id="mdTypes" role="group" aria-labelledby="mdTypeLabel"></div>
+        </div>
+        <div class="dc-field dc-span4">
+          <div class="dc-labelrow"><span class="dc-label" id="mdTopicLabel">נושא מומחיות בגישור</span></div>
+          <div class="dc-checks" id="mdTopics" role="group" aria-labelledby="mdTopicLabel"></div>
+        </div>
+      </div>
+
+      <div class="dc-cardfoot">
+        <div class="dc-btns">
+          <span class="dc-dirty" id="mdDirty" hidden>יש שינויים שעוד לא הוחלו</span>
+          <button type="button" class="dc-btn dc-btn-ghost" id="mdClear">נקה</button>
+          <button type="submit" class="dc-btn dc-btn-primary" id="mdApply">אישור</button>
+        </div>
+      </div>
+    </form>
+
+    <section class="dc-results" aria-labelledby="mdResultTitle">
+      <div class="dc-resulthead">
+        <h2 class="dc-resulttitle" id="mdResultTitle" style="margin:0">רשימת מגשרים</h2>
+        <span class="cvs-tablecount" id="mdCount" aria-live="polite"></span>
+        <div class="dc-chips" id="mdChips"></div>
+      </div>
+
+      <div class="dc-tablewrap">
+        <table id="mdTable">
+          <colgroup>
+            <col style="width:16%"><col style="width:17%"><col style="width:15%"><col style="width:22%"><col style="width:14%"><col style="width:16%">
+          </colgroup>
+          <thead><tr id="mdHead"></tr></thead>
+          <tbody id="mdBody"></tbody>
+        </table>
+      </div>
+
+      <div class="dc-pager" id="mdPager">
+        <span class="dc-pagerange" id="mdRange"></span>
+        <nav class="dc-pagenav" aria-label="דפדוף">
+          <button type="button" class="dc-pagebtn" id="mdFirstPg" title="להתחלה" aria-label="להתחלה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></svg></button>
+          <button type="button" class="dc-pagebtn" id="mdPrevPg" title="לדף הקודם" aria-label="לדף הקודם"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+          <label class="dc-pageof">עמוד <input id="mdPageIn" inputmode="numeric" aria-label="מספר עמוד"> מתוך <span id="mdPages"></span></label>
+          <button type="button" class="dc-pagebtn" id="mdNextPg" title="לדף הבא" aria-label="לדף הבא"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+          <button type="button" class="dc-pagebtn" id="mdLastPg" title="לסוף" aria-label="לסוף"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5"/><path d="m18 17-5-5 5-5"/></svg></button>
+        </nav>
+      </div>
+    </section>
+
+  </div>
+</div>
+<div id="siteFooter" style="flex-shrink:0;background:#001e40">
+  <div style="max-width:1840px;margin:0 auto;padding:70px 96px;display:flex;flex-direction:column;gap:60px;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
+    <div style="display:flex;justify-content:space-between;gap:40px">
+
+      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
+        <div style="position:relative;width:40px;height:40px">
+          <div style="position:absolute;top:17.5%;right:6.18%;bottom:15.23%;left:7.5%">
+            <img src="assets/footer-frame.svg" style="position:absolute;inset:0;width:100%;height:100%">
+          </div>
+        </div>
+        <div style="font:600 20px 'Rubik';color:#f4f8fe">מידע שימושי</div>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#f4f8fe;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הגשת תביעה קטנה</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הגשת תביעה בדיון מהיר בבית הדין לעבודה</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> בקשה לשינוי מועד דיון</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> בקשה לפטור מאגרה בשל חוסר יכולת כלכלית</a>
+      </div>
+
+      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
+        <div style="position:relative;width:40px;height:40px">
+          <div style="position:absolute;top:15%;right:7.43%;bottom:15.17%;left:7.5%;overflow:hidden">
+            <div style="position:absolute;top:19.3%;right:60.24%;bottom:16.11%;left:0">
+              <div style="position:absolute;top:-2.77%;right:0;bottom:0;left:0">
+                <img src="assets/footer-group.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:6.48%;right:0;bottom:28.93%;left:60.27%">
+              <div style="position:absolute;top:-2.77%;right:0;bottom:0;left:0">
+                <img src="assets/footer-group1.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:6.48%;right:19.89%;bottom:80.7%;left:19.86%">
+              <div style="position:absolute;top:-13.97%;right:-2.44%;bottom:-13.97%;left:-2.44%">
+                <img src="assets/footer-vector.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:13.57%;right:50.01%;bottom:10.06%;left:49.99%">
+              <div style="position:absolute;top:-2.34%;right:-0.5px;bottom:-2.34%;left:-0.5px">
+                <img src="assets/footer-vector1.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:91.01%;right:39.79%;bottom:8.99%;left:39.76%">
+              <div style="position:absolute;top:-0.5px;right:-7.18%;bottom:-0.5px;left:-7.18%">
+                <img src="assets/footer-vector2.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:98.21%;right:34.09%;bottom:1.79%;left:34.09%">
+              <div style="position:absolute;top:-0.5px;right:-4.62%;bottom:-0.5px;left:-4.62%">
+                <img src="assets/footer-vector3.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:0;right:47.11%;bottom:92.91%;left:47.07%">
+              <img src="assets/footer-vector4.svg" style="position:absolute;inset:0;width:100%;height:100%">
+            </div>
+          </div>
+        </div>
+        <div style="font:600 20px 'Rubik';color:#f4f8fe">אודות</div>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#f4f8fe;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> משוב</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> תנאי שימוש</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> שימוש בקבצי cookies</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הצהרת נגישות</a>
+      </div>
+
+      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
+        <div style="position:relative;width:40px;height:40px">
+          <div style="position:absolute;top:12.5%;right:12.13%;bottom:12.13%;left:12.5%;overflow:hidden">
+            <div style="position:absolute;top:2.72%;right:2.75%;bottom:2.75%;left:2.72%">
+              <div style="position:absolute;top:-1.75%;right:-1.75%;bottom:-1.75%;left:-1.75%">
+                <img src="assets/footer-group2.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:0;right:41.26%;bottom:0;left:41.23%">
+              <img src="assets/footer-group3.svg" style="position:absolute;inset:0;width:100%;height:100%">
+            </div>
+            <div style="position:absolute;top:41.23%;right:0;bottom:41.26%;left:0">
+              <img src="assets/footer-group4.svg" style="position:absolute;inset:0;width:100%;height:100%">
+            </div>
+          </div>
+        </div>
+        <div style="font:600 20px 'Rubik';color:#f4f8fe">מוקד מידע ושירות ארצי</div>
+        <div style="font:400 16px 'Rubik';color:#fff;width:100%">
+          <div>שעות מענה אנושי:</div>
+          <div style="margin-top:4px">ימים א-ה: 8:00 עד 17:00</div>
+          <div>ימי ו, ערבי חג וחול המועד: 8:00 עד 12:30</div>
+        </div>
+        <div style="display:flex;gap:24px;width:100%">
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <div style="font:400 18px 'Rubik';color:#fff">בטלפון</div>
+            <div style="display:flex;align-items:center;gap:16px">
+              <span dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">077-2703333</span>
+              <span style="width:2px;height:18px;background:rgba(255,255,255,.2)"></span>
+              <span dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">*3852</span>
+            </div>
+            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> ניתן לזמן תור לשיחה</a>
+          </div>
+          <div style="width:2px;background:rgba(255,255,255,.2);align-self:stretch"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <div style="font:400 18px 'Rubik';color:#fff">בווטסאפ</div>
+            <div dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">050-6255727</div>
+            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> להתחיל שיחה</a>
+          </div>
+          <div style="width:2px;background:rgba(255,255,255,.2);align-self:stretch"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <div style="font:400 18px 'Rubik';color:#fff">בצ'אט</div>
+            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> להתחיל שיחה</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  /* תיק ישן reveals בית משפט + סוג תיק inline, before the case number — and its
+     number is keyed differently: an old case carries a YEAR only, where a current
+     one carries month and year. Same two boxes, so the first one narrows and
+     relabels itself instead of a second layout appearing. */
+  (function () {
+    var type = document.getElementById('cvsCaseType');
+    var extra = document.getElementById('cvsOldCaseFields');
+    var numA = document.getElementById('cvsCaseNumA');
+    var numB = document.getElementById('cvsCaseNumB');
+    if (!type || !extra) return;
+    var first = true;
+    var sync = function () {
+      var old = type.value === 'old';
+      extra.style.display = old ? 'flex' : 'none';
+      if (numA) {
+        numA.style.width = old ? '44px' : '56px';
+        numA.maxLength = old ? 2 : 5;
+        /* the placeholder is the shape of the value, not a word for it: two
+           digits for an old case, two and two for a current one. Same as the
+           איתור החלטות form. */
+        numA.placeholder = old ? '00' : '00-00';
+        numA.title = old ? 'שנה' : 'חודש ושנה';
+        numA.setAttribute('aria-label', numA.title);
+        /* a number keyed for one format is meaningless in the other — clear it,
+           but not on the first run, which would wipe the open case's number */
+        if (!first) { numA.value = ''; if (numB) numB.value = ''; }
+      }
+      first = false;
+    };
+    type.addEventListener('change', sync);
+    sync();
+
+    /* A fly-out in the rail (or the avatar menu) closed only when its own
+       summary was clicked again — so clicking anywhere else left it hanging
+       open over the page. Any click outside an open one now shuts it. */
+    document.addEventListener('click', function (e) {
+      document.querySelectorAll('.cvs-railnav[open], .cvs-avatarmenu[open]').forEach(function (d) {
+        if (!d.contains(e.target)) d.open = false;
+      });
+    });
+
+    var clear = document.getElementById('cvsHeaderClear');
+    if (clear) clear.addEventListener('click', function () {
+      type.selectedIndex = 0;
+      sync();
+      if (numA) numA.value = '';
+      if (numB) numB.value = '';
+      extra.querySelectorAll('select').forEach(function (s) { s.selectedIndex = 0; });
+      if (numB) numB.focus();   /* the serial is typed first */
+    });
+  })();
+</script>
+
+<script src="mediators-data.js"></script>
+<script>
+/* ═══ רשימת מגשרים חיצונים ═══════════════════════════════════════════════════
+   The data is the live page's own (mediators-data.js). Filtering runs on אישור
+   (or Enter), as on the live page; the chips above the grid say what the grid
+   is narrowed by, and each one takes its own filter off.
+
+   Note: the live grid's rows carry no list-type field — סוג רשימת מגשרים is
+   applied on the server. The checkboxes are kept here as on the live page, but
+   in this prototype they do not narrow the rows.
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  var D = window.MEDIATORS || { types: [], topics: [], langs: [], rows: [] };
+  var PAGE = 16;   /* the live grid's page size */
+  var COLS = [
+    { h: 'שם מגשר', i: 0 },
+    { h: 'מקצוע', i: 1 },
+    { h: 'תואר אקדמי', i: 2 },
+    { h: 'נושא מומחיות בגישור', i: 3, tags: true },
+    { h: 'כתובת לקיום גישורים', i: 4 },
+    { h: 'שפה', i: 5 }
+  ];
+  var $ = function (id) { return document.getElementById(id); };
+  var split = function (s) { return s ? s.split(',').map(function (x) { return x.trim(); }).filter(Boolean) : []; };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var norm = function (s) { return (s || '').replace(/[֑-ׇ"'׳״\-]/g, '').replace(/\s+/g, ' ').trim(); };
+
+  /* rows, parsed once */
+  var ROWS = D.rows.map(function (r, n) {
+    var parts = r[0].split(' ');
+    return { r: r, n: n, first: parts[0] || '', last: parts.slice(1).join(' '),
+             topics: split(r[3]), cities: split(r[4]), langs: split(r[5]) };
+  });
+
+  /* counts, for the menus */
+  var count = function (key) {
+    var c = {};
+    ROWS.forEach(function (x) { x[key].forEach(function (v) { c[v] = (c[v] || 0) + 1; }); });
+    return c;
+  };
+  var CITY_N = count('cities'), LANG_N = count('langs'), TOPIC_N = count('topics');
+  var CITIES = Object.keys(CITY_N).sort(function (a, b) { return a.localeCompare(b, 'he'); });
+
+  /* ── state: what the form holds, and what the grid applies ── */
+  var applied = blank();
+  var sort = { col: 0, dir: 1 };   /* live grid: שם מגשר ascending */
+  var page = 0;
+  var shown = [];
+
+  function blank() { return { first: '', last: '', city: '', langs: [], types: D.types.slice(), topics: [] }; }
+  function readForm() {
+    return {
+      first: $('mdFirst').value.trim(), last: $('mdLast').value.trim(), city: $('mdCity').value.trim(),
+      langs: checked('mdLangList'), types: checked('mdTypes'), topics: checked('mdTopics')
+    };
+  }
+  function checked(id) { return [].map.call($(id).querySelectorAll('input:checked'), function (i) { return i.value; }); }
+  function writeForm(s) {
+    $('mdFirst').value = s.first; $('mdLast').value = s.last; $('mdCity').value = s.city;
+    setChecks('mdLangList', s.langs); setChecks('mdTypes', s.types); setChecks('mdTopics', s.topics);
+    langLabel();
+  }
+  function setChecks(id, vals) { $(id).querySelectorAll('input').forEach(function (i) { i.checked = vals.indexOf(i.value) > -1; }); }
+  function same(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+
+  /* ── build the pick-lists ── */
+  function checks(id, list, counts) {
+    $(id).innerHTML = list.map(function (v) {
+      return '<label class="dc-check"><input type="checkbox" value="' + esc(v) + '"><span>' + esc(v) + '</span>' +
+        (counts ? '<small class="md-muted" style="font-size:12.5px">(' + (counts[v] || 0) + ')</small>' : '') + '</label>';
+    }).join('');
+  }
+  checks('mdTypes', D.types);
+  checks('mdTopics', D.topics, TOPIC_N);
+  $('mdLangList').innerHTML = D.langs.map(function (v) {
+    return '<label class="dc-menuopt" data-v="' + esc(norm(v)) + '"><input type="checkbox" value="' + esc(v) + '"><span>' + esc(v) + '</span><small>' + (LANG_N[v] || 0) + '</small></label>';
+  }).join('') + '<div class="dc-menunone" id="mdLangNone" hidden>אין שפה מתאימה</div>';
+
+  /* ── שפות menu ── */
+  var langBtn = $('mdLangBtn'), langMenu = $('mdLangMenu');
+  function langLabel() {
+    var v = checked('mdLangList');
+    langBtn.textContent = v.length === 0 ? 'כל השפות' : v.length <= 2 ? v.join(', ') : v.slice(0, 2).join(', ') + ' ועוד ' + (v.length - 2);
+    langBtn.classList.toggle('dc-placeholder', v.length === 0);
+  }
+  function langOpen(open) {
+    langMenu.hidden = !open; langBtn.setAttribute('aria-expanded', open);
+    if (open) { $('mdLangSearch').value = ''; langFilter(); $('mdLangSearch').focus(); }
+  }
+  function langFilter() {
+    var q = norm($('mdLangSearch').value), any = false;
+    $('mdLangList').querySelectorAll('.dc-menuopt').forEach(function (o) {
+      var hit = !q || o.dataset.v.indexOf(q) > -1; o.hidden = !hit; any = any || hit;
+    });
+    $('mdLangNone').hidden = any;
+  }
+  langBtn.addEventListener('click', function () { langOpen(langMenu.hidden); });
+  $('mdLangSearch').addEventListener('input', langFilter);
+  $('mdLangList').addEventListener('change', function () { langLabel(); dirty(); });
+  $('mdLangClear').addEventListener('click', function () { setChecks('mdLangList', []); langLabel(); dirty(); });
+  $('mdLangDone').addEventListener('click', function () { langOpen(false); langBtn.focus(); });
+
+  /* ── יישוב suggestions ── */
+  var city = $('mdCity'), cityList = $('mdCityList'), cityIdx = -1;
+  function cityShow() {
+    var q = norm(city.value);
+    var hits = CITIES.filter(function (c) { return !q || norm(c).indexOf(q) > -1; }).slice(0, 40);
+    cityIdx = -1;
+    cityList.innerHTML = hits.length ? hits.map(function (c) {
+      var label = esc(c);
+      if (q) { var at = c.indexOf(city.value.trim()); if (at > -1) label = esc(c.slice(0, at)) + '<mark>' + esc(c.substr(at, city.value.trim().length)) + '</mark>' + esc(c.slice(at + city.value.trim().length)); }
+      return '<li role="option" data-c="' + esc(c) + '"><span>' + label + '</span><small>' + CITY_N[c] + '</small></li>';
+    }).join('') : '<li class="dc-sugnone">אין יישוב מתאים</li>';
+    cityList.hidden = false; city.setAttribute('aria-expanded', 'true');
+  }
+  function cityHide() { cityList.hidden = true; city.setAttribute('aria-expanded', 'false'); }
+  function cityPick(c) { city.value = c; cityHide(); dirty(); }
+  city.addEventListener('focus', cityShow);
+  city.addEventListener('input', function () { cityShow(); dirty(); });
+  city.addEventListener('keydown', function (e) {
+    var items = cityList.querySelectorAll('li[data-c]');
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault(); if (cityList.hidden) cityShow();
+      cityIdx = Math.max(0, Math.min(items.length - 1, cityIdx + (e.key === 'ArrowDown' ? 1 : -1)));
+      items.forEach(function (li, i) { li.setAttribute('aria-selected', i === cityIdx); });
+      if (items[cityIdx]) items[cityIdx].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter' && !cityList.hidden && cityIdx > -1 && items[cityIdx]) {
+      e.preventDefault(); cityPick(items[cityIdx].dataset.c);
+    } else if (e.key === 'Escape') cityHide();
+  });
+  cityList.addEventListener('mousedown', function (e) {
+    var li = e.target.closest('li[data-c]'); if (li) { e.preventDefault(); cityPick(li.dataset.c); }
+  });
+  city.addEventListener('blur', function () { setTimeout(cityHide, 0); });
+
+  /* closing menus: outside click and Esc, as everywhere in the shell */
+  document.addEventListener('click', function (e) {
+    if (!langMenu.hidden && !$('mdLangField').contains(e.target)) langOpen(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !langMenu.hidden) { langOpen(false); langBtn.focus(); }
+  });
+
+  /* ── apply ── */
+  function dirty() { $('mdDirty').hidden = same(readForm(), applied); }
+  ['mdFirst', 'mdLast'].forEach(function (id) { $(id).addEventListener('input', dirty); });
+  $('mdTypes').addEventListener('change', dirty);
+  $('mdTopics').addEventListener('change', dirty);
+
+  $('mdForm').addEventListener('submit', function (e) {
+    e.preventDefault(); cityHide(); langOpen(false);
+    applied = readForm(); page = 0; render(); dirty();
+  });
+  $('mdClear').addEventListener('click', function () {
+    applied = blank(); writeForm(applied); page = 0; render(); dirty(); $('mdFirst').focus();
+  });
+
+  function filter() {
+    var a = applied, f = norm(a.first), l = norm(a.last), c = norm(a.city);
+    return ROWS.filter(function (x) {
+      if (f && norm(x.first).indexOf(f) !== 0) return false;
+      if (l && norm(x.last).indexOf(l) < 0) return false;
+      if (c && !x.cities.some(function (v) { return norm(v).indexOf(c) > -1; })) return false;
+      if (a.langs.length && !a.langs.some(function (v) { return x.langs.indexOf(v) > -1; })) return false;
+      if (a.topics.length && !a.topics.some(function (v) { return x.topics.indexOf(v) > -1; })) return false;
+      return true;
+    });
+  }
+
+  /* ── chips: one per narrowing filter ── */
+  function chips() {
+    var a = applied, out = [];
+    var add = function (label, val, undo) { out.push({ label: label, val: val, undo: undo }); };
+    if (a.first) add('שם פרטי', a.first, function () { applied.first = ''; });
+    if (a.last) add('שם משפחה', a.last, function () { applied.last = ''; });
+    if (a.city) add('יישוב', a.city, function () { applied.city = ''; });
+    a.topics.forEach(function (t) { add('נושא', t, function () { applied.topics = applied.topics.filter(function (x) { return x !== t; }); }); });
+    a.langs.forEach(function (t) { add('שפה', t, function () { applied.langs = applied.langs.filter(function (x) { return x !== t; }); }); });
+    if (a.types.length !== D.types.length) add('סוג רשימה', a.types.join(', ') || 'ללא', function () { applied.types = D.types.slice(); });
+    var box = $('mdChips');
+    box.innerHTML = out.map(function (c, i) {
+      return '<button type="button" class="dc-chip" data-i="' + i + '" aria-label="הסרת הסינון ' + esc(c.label + ': ' + c.val) + '">' + esc(c.label) + ': <b>' + esc(c.val) + '</b>' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>';
+    }).join('') + (out.length > 1 ? '<button type="button" class="cvs-clearfilters" id="mdChipsClear">ניקוי הכל</button>' : '');
+    box.querySelectorAll('.dc-chip').forEach(function (b) {
+      b.addEventListener('click', function () { out[+b.dataset.i].undo(); writeForm(applied); page = 0; render(); dirty(); });
+    });
+    var all = $('mdChipsClear'); if (all) all.addEventListener('click', function () { $('mdClear').click(); });
+  }
+
+  /* ── the grid ── */
+  var IDLE = '<svg class="dc-sortind dc-sortidle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>';
+  var ON = function (up) { return '<svg class="dc-sortind' + (up ? ' dc-sortup' : '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>'; };
+  function head() {
+    $('mdHead').innerHTML = COLS.map(function (c, i) {
+      var s = sort.col === i;
+      return '<th scope="col" tabindex="0" data-i="' + i + '" aria-sort="' + (s ? (sort.dir > 0 ? 'ascending' : 'descending') : 'none') + '">' +
+        esc(c.h) + (s ? ON(sort.dir > 0) : IDLE) + '</th>';
+    }).join('');
+  }
+  function sortBy(i) {
+    sort = sort.col === i ? { col: i, dir: -sort.dir } : { col: i, dir: 1 };
+    page = 0; render();
+  }
+  $('mdHead').addEventListener('click', function (e) { var th = e.target.closest('th'); if (th) sortBy(+th.dataset.i); });
+  $('mdHead').addEventListener('keydown', function (e) {
+    var th = e.target.closest('th');
+    if (th && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); sortBy(+th.dataset.i); th = $('mdHead').querySelector('[data-i="' + th.dataset.i + '"]'); if (th) th.focus(); }
+  });
+
+  function hl(text, q, prefixOnly) {
+    if (!q) return esc(text);
+    var at = prefixOnly ? (text.indexOf(q) === 0 ? 0 : -1) : text.indexOf(q);
+    return at < 0 ? esc(text) : esc(text.slice(0, at)) + '<mark>' + esc(text.substr(at, q.length)) + '</mark>' + esc(text.slice(at + q.length));
+  }
+
+  function render() {
+    var rows = filter();
+    var c = sort.col, d = sort.dir;
+    rows.sort(function (a, b) {
+      var x = a.r[c], y = b.r[c];
+      if (!x && y) return 1; if (x && !y) return -1;   /* empty cells last, either way */
+      return (x.localeCompare(y, 'he') || a.n - b.n) * d;
+    });
+    shown = rows;
+    var pages = Math.max(1, Math.ceil(rows.length / PAGE));
+    page = Math.max(0, Math.min(page, pages - 1));
+    var from = page * PAGE, slice = rows.slice(from, from + PAGE);
+
+    head();
+    var a = applied;
+    $('mdBody').innerHTML = slice.length ? slice.map(function (x) {
+      return '<tr>' + COLS.map(function (col, i) {
+        var v = x.r[col.i], cls = '', inner;
+        if (i === 0) {
+          cls = 'md-name md-namecell';
+          inner = hl(x.first, a.first, true) + (x.last ? ' ' + hl(x.last, a.last) : '');
+        } else if (col.tags) {
+          inner = x.topics.length ? '<span class="md-tags">' + x.topics.map(function (t) {
+            return '<span class="md-tag">' + (a.topics.indexOf(t) > -1 ? '<mark>' + esc(t) + '</mark>' : esc(t)) + '</span>';
+          }).join('') + '</span>' : '';
+        } else if (i === 4) {
+          inner = x.cities.map(function (t) { return a.city && norm(t).indexOf(norm(a.city)) > -1 ? '<mark>' + esc(t) + '</mark>' : esc(t); }).join(', ');
+        } else if (i === 5) {
+          inner = x.langs.map(function (t) { return a.langs.indexOf(t) > -1 ? '<mark>' + esc(t) + '</mark>' : esc(t); }).join(', ');
+        } else inner = esc(v);
+        if (!v) cls += ' md-emptycell';
+        return '<td class="' + cls + '" data-label="' + esc(col.h) + '">' + inner + '</td>';
+      }).join('') + '</tr>';
+    }).join('') : '<tr><td class="dc-norows" colspan="6"><div class="dc-empty">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>' +
+      '<div class="dc-empty-main">לא נמצאו מגשרים</div><div class="dc-empty-sub">אפשר להסיר חלק מהסינונים או ללחוץ נקה</div></div></td></tr>';
+
+    var fmt = function (n) { return n.toLocaleString('en-US'); };
+    $('mdCount').textContent = rows.length === ROWS.length ? fmt(rows.length) + ' מגשרים' : fmt(rows.length) + ' מתוך ' + fmt(ROWS.length) + ' מגשרים';
+    $('mdRange').textContent = rows.length ? (from + 1) + ' עד ' + (from + slice.length) + ' מתוך ' + fmt(rows.length) : '';
+    $('mdPageIn').value = page + 1; $('mdPages').textContent = pages;
+    $('mdPager').hidden = !rows.length;
+    $('mdFirstPg').disabled = $('mdPrevPg').disabled = page === 0;
+    $('mdNextPg').disabled = $('mdLastPg').disabled = page >= pages - 1;
+    chips();
+  }
+
+  function go(p) { page = p; render(); $('mdResultTitle').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  $('mdFirstPg').addEventListener('click', function () { go(0); });
+  $('mdPrevPg').addEventListener('click', function () { go(page - 1); });
+  $('mdNextPg').addEventListener('click', function () { go(page + 1); });
+  $('mdLastPg').addEventListener('click', function () { go(1e9); });
+  $('mdPageIn').addEventListener('change', function () { var n = parseInt(this.value, 10); go(isNaN(n) ? page : n - 1); });
+  $('mdPageIn').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+
+  writeForm(applied);
+  render();
+})();
+
+/* ── mobile drawer (≤860): the rail slides in from the right ── */
+(function () {
+  var open = function (on) {
+    document.body.classList.toggle('md-drawer-open', on);
+    var b = document.getElementById('mdBurger'); if (b) b.setAttribute('aria-expanded', on);
+  };
+  var b = document.getElementById('mdBurger');
+  if (b) b.addEventListener('click', function () { open(true); });
+  var x = document.getElementById('mdDrawerClose');
+  if (x) x.addEventListener('click', function () { open(false); });
+  document.getElementById('mdBackdrop').addEventListener('click', function () { open(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') open(false); });
+})();
+</script>
+</body>
+</html>

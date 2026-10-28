@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>צ׳ט פנקס התובענות</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* ── פוטר במסכים צרים — כמו בשאר המסכים ── */
+  @media (max-width: 1180px) {
+    #siteFooter > div { padding: 56px 40px !important; gap: 40px !important; }
+    #siteFooter > div > div { flex-wrap: wrap !important; gap: 40px !important; }
+    #siteFooter > div > div > div { flex: 1 1 300px !important; }
+  }
+  @media (max-width: 860px) {
+    #siteFooter > div { padding: 44px 20px !important; }
+    #siteFooter > div > div > div { flex: 1 1 100% !important; }
+    /* phone / WhatsApp / chat stack instead of three side by side */
+    #siteFooter [style*="gap:24px;width:100%"] { flex-direction: column !important; gap: 18px !important; }
+    #siteFooter [style*="align-self:stretch"] { display: none !important; }
+  }
+</style>
+<style>
+  .cvs-headerclear {
+    height: 36px; padding: 0 4px; flex-shrink: 0;
+    background: none; border: 0; color: var(--brand-navy);
+    font: 400 14px 'Rubik'; cursor: pointer; white-space: nowrap;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .cvs-headerclear:hover { color: var(--brand-navy-hover); }
+
+  /* ── mobile: the rail becomes a drawer (design.md §6) ── */
+  .hp-burger { display: none; }
+  .md-backdrop { display: none; }
+  @media (max-width: 860px) {
+    body { padding-right: 0 !important; }
+    /* the drawer waits off-screen to the right; without this it counts as page
+       width and the whole page scrolls sideways */
+    html { overflow-x: hidden; }
+    .hp-burger {
+      display: flex; align-items: center; justify-content: center;
+      width: 40px; height: 40px; border: 0; border-radius: 8px; background: none;
+      color: var(--brand-navy); cursor: pointer; flex-shrink: 0; margin-inline-end: 4px;
+    }
+    .hp-burger:hover { background: var(--cvs-hover); }
+    .hp-burger svg { width: 22px; height: 22px; }
+    .cvs-thinscroll {
+      width: 284px !important; max-width: 86vw; transform: translateX(100%);
+      transition: transform .22s ease, visibility 0s .22s; box-shadow: -8px 0 24px rgba(20,40,80,.14); overflow-y: auto !important;
+      visibility: hidden;   /* closed: out of the tab order too */
+    }
+    body.md-drawer-open { overflow: hidden; }
+    body.md-drawer-open .cvs-thinscroll { transform: none; visibility: visible; transition: transform .22s ease; }
+    body.md-drawer-open .md-backdrop { display: block; position: fixed; inset: 0; z-index: 35; background: rgba(6,30,64,.32); }
+    .cvs-railInner { align-items: stretch !important; padding: 0 12px 12px !important; }
+    .md-drawerhead { display: flex !important; }
+    .cvs-thinscroll .cvs-raildash, .cvs-thinscroll .cvs-railnav > summary, .cvs-thinscroll .cvs-railInner > a {
+      flex-direction: row !important; justify-content: flex-start !important; gap: 12px !important;
+      padding: 12px !important; height: auto !important; margin: 0 !important;
+    }
+    .cvs-thinscroll .cvs-railInner span { font-size: 16px !important; text-align: start !important; }
+    .cvs-thinscroll .cvs-railInner span br { display: none; }
+    .cvs-thinscroll .cvs-railnav > div {
+      position: static !important; width: auto !important; box-shadow: none !important;
+      padding: 0 31px 4px 0 !important;
+    }
+    #cvsTopHeader > div { flex-wrap: wrap; height: auto !important; padding: 10px 16px !important; row-gap: 10px; }
+    #cvsTopHeader .md-logocol { width: auto !important; flex: 1 1 auto !important; }
+    #cvsTopHeader .md-findcol { order: 3; flex: 1 1 100% !important; padding-right: 0 !important; flex-wrap: wrap; }
+    #cvsTopHeader .md-findcol select.cvs-select { width: 140px !important; }
+    .md-content { padding: 0 16px 64px !important; }
+  }
+  .md-drawerhead {
+    display: none; align-items: center; justify-content: space-between;
+    height: 56px; margin: 0 -12px 8px; padding: 0 16px; border-bottom: 1px solid #e1e6ef;
+    font: 600 17px 'Rubik'; color: var(--fg-1);
+  }
+  .md-drawerhead button {
+    width: 40px; height: 40px; border: 0; background: none; border-radius: 8px; cursor: pointer;
+    color: var(--fg-2); display: flex; align-items: center; justify-content: center;
+  }
+  .md-drawerhead button:hover { background: var(--cvs-hover); }
+  .cvs-railInner > .md-drawerhead:hover { background: none; }
+</style>
+<style>
+  /* ═══ פנקס התובענות הייצוגיות — גרסת צ'ט. Shares styles.css (tokens, rail,
+         header, footer) with the other screens. One question in, one answer out:
+         the answer cites its sources inline [n], and the sources sit as
+         expandable cards under it. ═══ */
+
+  [hidden] { display: none !important; }
+
+  /* design.md §2.2 / §7.2: contrast fixes that styles.css does not carry yet */
+  :root {
+    --tertiary-text-color: #6c6e81;
+    --fg-disabled: #9699a6;
+    --border-field: #878ca0;
+    --pc-page: #f4f8fc;
+    --pc-ink: #001E40;
+    --pc-title: #1a1a1a;
+  }
+  body { background: var(--pc-page); }
+  #cvsTopHeader input, #cvsTopHeader select { border-color: var(--border-field) !important; }
+  #cvsTopHeader input::placeholder { color: var(--fg-3); }
+
+  .pc-crumbs { padding-top: 18px; font: 400 13px 'Rubik'; color: var(--fg-3); }
+  .pc-crumbs ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .pc-crumbs li { display: flex; align-items: center; gap: 6px; }
+  .pc-crumbs li + li::before { content: "‹"; color: var(--fg-3); }
+  .pc-crumbs a { color: var(--fg-2); text-decoration: none; border-radius: 4px; }
+  .pc-crumbs a:hover { color: var(--brand-navy); text-decoration: underline; text-underline-offset: 3px; }
+  .pc-crumbs a:focus-visible { outline: none; box-shadow: var(--box-shadow-focus, 0 0 0 3px rgba(10,59,143,.35)); }
+  .pc-crumbs [aria-current] { color: var(--pc-ink); }
+  .pc-wrap { padding-top: 14px; }
+  .pc-newbtn { margin-inline-start: auto; align-self: center; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 6px; border: 1px solid var(--border-1); background: #fff; color: var(--brand-navy); font: 500 14px 'Rubik'; cursor: pointer; }
+  .pc-newbtn:hover { background: var(--brand-tint); border-color: var(--brand-tint); }
+  .pc-newbtn svg { width: 16px; height: 16px; }
+
+  /* ── conversations column (same width as the logo column above it) ── */
+
+  .pc-main { min-width: 0; max-width: 980px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; }
+  .pc-pagehead { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .pc-pagehead .dc-title { margin: 0; font: 700 26px/1.25 'Rubik'; color: var(--pc-title); letter-spacing: -.2px; }
+  .pc-pagehead span { font: 400 14px 'Rubik'; color: var(--fg-2); }
+
+  /* ── welcome (screen 1) ── */
+  .pc-welcome { padding: 44px 0 34px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+  .pc-mark { width: 56px; height: 56px; border-radius: 14px; background: var(--brand-tint); color: var(--brand-navy); display: grid; place-items: center; margin-bottom: 6px; }
+  .pc-mark svg { width: 28px; height: 28px; }
+  .pc-welcome h2 { margin: 0; font: 600 24px/32px 'Rubik'; color: var(--pc-title); letter-spacing: -.2px; text-wrap: balance; }
+  .pc-welcome > p { margin: 0 0 14px; max-width: 60ch; font: 400 15px/1.6 'Rubik'; color: var(--fg-2); }
+  .pc-welcome .pc-composer { width: 100%; max-width: 760px; }
+  .pc-suggest { width: 100%; max-width: 760px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 18px; text-align: start; }
+  .pc-suggest-lbl { width: 100%; max-width: 760px; text-align: start; font: 500 13px 'Rubik'; color: var(--fg-2); margin-top: 18px; margin-bottom: -8px; }
+  .pc-sugg { display: flex; align-items: flex-start; gap: 10px; padding: 13px 14px; border: 1.5px solid var(--brand-tint-strong); border-radius: 10px; background: #fff; font: 400 14.5px/1.45 'Rubik'; color: var(--pc-ink); cursor: pointer; text-align: start; }
+  .pc-sugg:hover { background: var(--cvs-hover); border-color: var(--cvs-hover); }
+  .pc-sugg svg { width: 17px; height: 17px; flex: none; margin-top: 2px; color: var(--brand-navy); }
+  .pc-disclaim { margin-top: 18px; font: 400 12.5px 'Rubik'; color: var(--fg-3); }
+
+  /* ── composer ── */
+  .pc-composer { display: flex; flex-direction: column; gap: 8px; background: #fff; border: 1px solid var(--border-field); border-radius: 11px; padding: 12px 14px 10px; box-shadow: 0 2px 10px rgba(20,40,80,.07); transition: border-color 100ms var(--motion-timing-transition, ease), box-shadow 100ms; }
+  .pc-composer:hover { border-color: var(--fg-2); }
+  .pc-composer:focus-within { border-color: var(--brand-navy); box-shadow: 0 0 0 4px rgba(42,111,219,.1), 0 2px 10px rgba(20,40,80,.07); }
+  .pc-composer textarea { border: 0; outline: none; resize: none; background: none; width: 100%; min-height: 48px; max-height: 180px; font: 400 16px/1.55 'Rubik'; color: var(--fg-1); padding: 0; }
+  .pc-composer textarea::placeholder { color: var(--fg-3); }
+  .pc-crow { display: flex; align-items: center; gap: 10px; }
+  .pc-crow .pc-hint { flex: 1; font: 400 12.5px 'Rubik'; color: var(--fg-3); text-align: start; }
+  .pc-send { width: 38px; height: 38px; border-radius: 6px; border: 0; background: var(--brand-navy); color: #fff; display: grid; place-items: center; cursor: pointer; flex: none; }
+  .pc-send:hover { background: var(--brand-navy-hover); }
+  .pc-send:disabled { background: var(--brand-tint-strong); color: var(--brand-navy); cursor: not-allowed; }
+  .pc-send svg { width: 18px; height: 18px; }
+  .pc-dock { position: sticky; bottom: 0; padding: 14px 0 18px; background: linear-gradient(to top, var(--pc-page) 70%, rgba(244,248,252,0)); margin-top: 8px; z-index: 5; }
+  .pc-dock .pc-composer textarea { min-height: 26px; }
+
+  /* ── conversation ── */
+  .pc-thread { display: flex; flex-direction: column; gap: 22px; }
+  .pc-who { display: flex; align-items: center; gap: 10px; font: 600 15px 'Rubik'; color: var(--pc-ink); margin-bottom: 8px; }
+  .pc-who small { font: 400 13px 'Rubik'; color: var(--fg-3); }
+  .pc-av { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; flex: none; font: 600 13px 'Rubik'; }
+  .pc-av-user { background: var(--brand-tint); color: var(--brand-navy); }
+  .pc-av-bot { background: var(--brand-navy); color: #fff; }
+  .pc-av-bot svg { width: 17px; height: 17px; }
+  .pc-q { background: #fff; border: 1px solid var(--border-2); border-radius: 12px; padding: 14px 18px; font: 400 16px/1.6 'Rubik'; color: var(--pc-ink); white-space: pre-wrap; }
+
+  .pc-a { padding: 4px 0 10px; animation: pcIn 250ms cubic-bezier(0,0,.35,1); }
+  @keyframes pcIn { from { transform: translateY(6px); } to { transform: none; } }
+  .pc-ahead { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .pc-ahead .pc-who { margin: 0; flex: 1; }
+  .pc-acts { display: flex; gap: 2px; }
+  .pc-acts .cvs-iconbtn[aria-pressed="true"] { background: #e8f0fb; color: var(--pc-ink); }
+
+  .pc-body { font: 400 16px/1.75 'Rubik'; color: var(--fg-1); max-width: 78ch; }
+  .pc-body p { margin: 0 0 14px; }
+  .pc-body h3 { margin: 22px 0 8px; font: 600 18px/26px 'Rubik'; color: var(--pc-title); letter-spacing: -.2px; }
+  .pc-body ul { margin: 0 0 14px; padding-inline-start: 20px; }
+  .pc-body li { margin-bottom: 8px; }
+  .pc-body b { font-weight: 600; color: var(--pc-ink); }
+  .pc-body blockquote { margin: 0 0 12px; padding: 4px 16px 4px 0; border-right: 3px solid var(--brand-tint-strong); color: var(--fg-1); }
+  .pc-body blockquote footer { all: unset; display: block; font: 400 13.5px 'Rubik'; color: var(--fg-2); margin-top: 4px; }
+  .pc-num { direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; }
+
+  .pc-cite { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px; margin: 0 2px; vertical-align: 2px; border: 0; border-radius: 4px; background: var(--brand-tint); color: var(--brand-navy); font: 600 12px 'Rubik'; cursor: pointer; }
+  .pc-cite:hover { background: var(--brand-tint-strong); }
+  .pc-cite:focus-visible { outline: 2px solid var(--brand-azure); outline-offset: 2px; }
+
+  .pc-verdict { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 8px; margin-bottom: 16px; font: 400 14.5px/1.5 'Rubik'; }
+  .pc-verdict svg { width: 20px; height: 20px; flex: none; margin-top: 1px; }
+  .pc-verdict b { display: block; font: 600 15.5px 'Rubik'; margin-bottom: 2px; }
+  .pc-v-live { background: #f7ded6; color: #9e2b12; }
+  .pc-v-ended { background: #fdeeda; color: #854f0b; }
+  .pc-v-clear { background: #e8f6ee; color: #00734a; }
+
+  .pc-cmpwrap { overflow-x: auto; margin: 4px 0 14px; border: 1px solid var(--border-1); border-radius: 8px; }
+  .pc-cmp { width: 100%; min-width: 560px; border-collapse: collapse; font: 400 14px/1.45 'Rubik'; }
+  .pc-cmp th { background: #eff5fd; color: var(--fg-2); font-weight: 500; text-align: start; padding: 8px 10px; }
+  .pc-cmp td { padding: 9px 10px; border-top: 1px solid #eef1f6; color: var(--pc-ink); vertical-align: top; }
+
+  /* ── sources ── */
+  .pc-srchead { display: flex; align-items: baseline; gap: 10px; margin: 24px 0 12px; padding-top: 18px; border-top: 1px solid #eef1f6; }
+  .pc-srchead h3 { margin: 0; font: 600 18px 'Rubik'; color: var(--pc-title); }
+  .pc-srchead span { font: 400 13.5px 'Rubik'; color: var(--fg-2); }
+  .pc-sources { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .pc-src { position: relative; border: 1.5px solid var(--border-2); border-radius: 12px; background: #fff; transition: border-color .15s, background-color .15s, box-shadow .15s; scroll-margin: 90px; }
+  .pc-src:hover { box-shadow: 0 6px 18px rgba(20,40,80,.08); }
+  .pc-src.is-active { border-color: var(--brand-navy); background: #f7faff; }
+  .pc-srcn { position: absolute; top: -1.5px; right: -1.5px; min-width: 30px; height: 26px; padding: 0 8px; display: grid; place-items: center; border-radius: 0 12px 0 8px; background: var(--brand-tint); color: var(--brand-navy); font: 600 13px 'Rubik'; }
+  .pc-src.is-active .pc-srcn { background: var(--brand-navy); color: #fff; }
+  .pc-srcrow { display: grid; grid-template-columns: 20px minmax(0, 1.6fr) minmax(0, 1fr) auto auto 34px; align-items: center; gap: 14px; padding: 16px 16px 14px 14px; padding-right: 44px; cursor: pointer; }
+  .pc-srcid { min-width: 0; }
+  .pc-pick { display: grid; place-items: center; width: 34px; height: 34px; margin: -7px; border-radius: 6px; cursor: pointer; }
+  .pc-pick:hover { background: var(--brand-tint); }
+  .pc-pick input { width: 18px; height: 18px; margin: 0; accent-color: var(--brand-navy); cursor: pointer; }
+  .pc-src.is-picked { border-color: var(--brand-navy); background: var(--brand-tint); }
+  .pc-src.is-picked .pc-srcn { background: var(--brand-navy); color: #fff; }
+  .pc-selbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin-bottom: 10px; padding: 10px 14px; border-radius: 11px; background: var(--brand-tint); color: var(--pc-ink); font: 400 14px 'Rubik'; }
+  .pc-selbar b { font-weight: 600; }
+  .pc-selchips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pc-selchip { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 6px 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--brand-tint-strong); color: var(--brand-navy); font: 500 13px 'Rubik'; }
+  .pc-selchip button { width: 22px; height: 22px; border: 0; border-radius: 50%; background: none; color: var(--fg-2); display: grid; place-items: center; cursor: pointer; padding: 0; }
+  .pc-selchip button:hover { background: var(--brand-tint); color: var(--brand-navy); }
+  .pc-selchip svg { width: 13px; height: 13px; }
+  .pc-selacts { display: flex; flex-wrap: wrap; gap: 6px; margin-inline-start: auto; align-items: center; }
+  .pc-selacts .pc-btn { height: 30px; }
+  .pc-qtag { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; font: 400 13px 'Rubik'; color: var(--fg-2); }
+  .pc-qtag span { padding: 2px 8px; border-radius: 999px; background: var(--brand-tint); color: var(--brand-navy); font-weight: 500; }
+  .pc-srcid a { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font: 600 16px 'Rubik'; color: var(--brand-navy); text-decoration: none; }
+  .pc-srcid a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .pc-srcid a svg { width: 14px; height: 14px; }
+  .pc-srcid div { font: 400 14.5px/1.4 'Rubik'; color: var(--pc-ink); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pc-srcmeta { font: 400 14px/1.4 'Rubik'; color: var(--fg-2); min-width: 0; }
+  .pc-srcmeta span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pc-srcdate { font: 400 14px 'Rubik'; color: var(--fg-2); white-space: nowrap; }
+  .pc-status { font: 500 12.5px 'Rubik'; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+  .pc-st-pending { background: var(--brand-tint); color: var(--brand-navy); }
+  .pc-st-approved { background: #e8f6ee; color: #00734a; }
+  .pc-st-settled { background: #fdeeda; color: #854f0b; }
+  .pc-st-rejected { background: #ffe4d9; color: #c2410c; }
+  .pc-chev { width: 34px; height: 34px; border-radius: 6px; border: 0; background: none; color: var(--fg-2); display: grid; place-items: center; cursor: pointer; }
+  .pc-chev:hover { background: var(--brand-tint); color: var(--brand-navy); }
+  .pc-chev svg { width: 18px; height: 18px; transition: transform .15s; }
+  .pc-src.is-open .pc-chev svg { transform: rotate(180deg); }
+  .pc-srcbody { padding: 0 44px 16px 16px; display: grid; gap: 10px; font: 400 15px/1.65 'Rubik'; color: var(--fg-1); border-top: 1px solid #eef1f6; padding-top: 14px; margin: 0 14px 0 0; }
+  .pc-srcbody dl { margin: 0; display: grid; grid-template-columns: 110px 1fr; gap: 6px 14px; }
+  .pc-srcbody dt { font: 400 13.5px/1.65 'Rubik'; color: var(--fg-3); }
+  .pc-srcbody dd { margin: 0; color: var(--pc-ink); }
+  .pc-srcbody blockquote { margin: 0; padding: 10px 14px; background: #f6f7fb; border-radius: 8px; font-size: 14.5px; }
+  .pc-srcacts { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .pc-btn { height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border-1); background: #fff; color: var(--brand-navy); font: 500 13.5px 'Rubik'; display: inline-flex; align-items: center; gap: 7px; cursor: pointer; }
+  .pc-btn:hover { background: var(--brand-tint); border-color: var(--brand-tint); }
+  .pc-btn:disabled { color: var(--fg-disabled); background: #f7f9fc; border-color: #e1e6ef; cursor: not-allowed; }
+  .pc-btn svg { width: 15px; height: 15px; }
+  .pc-linkbtn { border: 0; background: none; padding: 0; color: var(--brand-navy); font: 400 14px 'Rubik'; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .pc-linkbtn:hover { color: var(--brand-navy-hover); }
+
+  /* ── loading: skeleton in the answer's own shape (design.md §8.2) ── */
+  .pc-loading .pc-step { display: flex; align-items: center; gap: 8px; font: 400 14px 'Rubik'; color: var(--fg-2); margin-bottom: 14px; }
+  .pc-spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--brand-tint-strong); border-top-color: var(--brand-navy); animation: pcSpin .8s linear infinite; }
+  @keyframes pcSpin { to { transform: rotate(360deg); } }
+  .pc-sk { height: 12px; border-radius: 4px; background: linear-gradient(90deg, #e7e9ef 0%, #f1f3f7 50%, #e7e9ef 100%); background-size: 200% 100%; animation: pcShim 1.2s ease-in-out infinite; margin-bottom: 10px; }
+  .pc-skcard { height: 64px; border-radius: 12px; margin-top: 16px; }
+  @keyframes pcShim { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+
+  /* ── error (design.md §8.3: .dc-notice shape, late-state colors) ── */
+  .pc-notice { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 8px; background: #f7ded6; color: #9e2b12; font: 400 14.5px/1.5 'Rubik'; }
+  .pc-notice svg { width: 18px; height: 18px; flex: none; }
+  .pc-notice span { flex: 1; }
+  .pc-notice .pc-linkbtn { color: #9e2b12; font-weight: 500; }
+
+  /* ── document side panel (design.md §4.13) ── */
+  .pc-docp { position: fixed; top: 0; bottom: 0; left: 0; z-index: 45; width: min(46vw, 720px); background: #eef1f6; box-shadow: 0 15px 50px rgba(0,0,0,.22); display: flex; flex-direction: column; }
+  .pc-dochead { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #fff; border-bottom: 1px solid var(--border-2); }
+  .pc-dochead b { flex: 1; min-width: 0; font: 500 16px 'Rubik'; color: var(--pc-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pc-docx { width: 26px; height: 26px; border-radius: 6px; border: 0; background: var(--brand-tint); color: var(--brand-navy); display: grid; place-items: center; cursor: pointer; box-shadow: var(--box-shadow-xs); }
+  .pc-docx:hover { background: var(--brand-tint-strong); }
+  .pc-docx svg { width: 15px; height: 15px; }
+  .pc-docscroll { flex: 1; overflow: auto; padding: 22px; }
+  .pc-paper { background: #fff; max-width: 600px; margin: 0 auto; padding: 46px 52px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,.12); font: 400 14.5px/1.85 'Rubik'; color: #1d2330; }
+  .pc-paper .c { text-align: center; font-weight: 600; }
+  .pc-paper .n { text-align: center; color: #555c6b; margin-bottom: 20px; }
+  .pc-paper h4 { text-align: center; font: 600 16px 'Rubik'; margin: 18px 0 12px; text-decoration: underline; text-underline-offset: 4px; }
+  .pc-paper p { margin: 0 0 12px; }
+  .pc-paper mark { background: #fdf0c4; color: inherit; padding: 0 2px; }
+  .pc-docbg { position: fixed; inset: 0; z-index: 44; background: rgba(6,30,64,.32); }
+
+  @media (max-width: 1180px) {
+    .pc-srcrow { grid-template-columns: 20px minmax(0, 1fr) auto 34px; }
+    .pc-srcmeta, .pc-srcdate { display: none; }
+  }
+  @media (max-width: 1000px) {
+    .pc-docp { width: min(640px, 100vw); }
+  }
+  @media (max-width: 860px) {
+    .pc-welcome { padding: 28px 0 24px; }
+    .pc-suggest { grid-template-columns: minmax(0, 1fr); }
+    .pc-a { padding: 2px 0 8px; }
+    .pc-body { font-size: 15.5px; }
+    .pc-srcrow { grid-template-columns: 20px minmax(0, 1fr) 34px; row-gap: 8px; }
+    .pc-srcrow .pc-status { grid-column: 2; grid-row: 2; justify-self: start; }
+    .pc-srcbody { padding: 12px 16px 14px; margin: 0; }
+    .pc-srcbody dl { grid-template-columns: 1fr; gap: 0; }
+    .pc-srcbody dd { margin-bottom: 8px; }
+    .pc-paper { padding: 28px 22px; }
+    .pc-docscroll { padding: 12px; }
+    .pc-dock .pc-hint, .pc-ahead .pc-who small { display: none; }
+    .pc-dock .pc-crow { position: absolute; left: 10px; bottom: 10px; }
+    .pc-dock .pc-composer { position: relative; padding-left: 58px; }
+  }
+  @media (pointer: coarse) {
+    .pc-cite { position: relative; }
+    .pc-cite::after { content: ""; position: absolute; inset: -12px -6px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pc-a, .pc-sk, .pc-spin { animation: none !important; }
+    .pc-src, .pc-chev svg { transition: none !important; }
+  }
+</style>
+</head>
+<body style="display:flex;flex-direction:column;min-height:100vh;padding-right:68px">
+<div class="md-backdrop" id="mdBackdrop"></div>
+<div class="cvs-thinscroll" style="position:fixed;top:0;right:0;bottom:0;width:68px;background:#fff;overflow:visible;z-index:40;font-family:'Rubik',sans-serif">
+  <div class="cvs-railInner" dir="rtl" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:20px 3px 4px;min-height:100%">
+    <div class="md-drawerhead"><span>תפריט</span><button type="button" id="mdDrawerClose" aria-label="סגירת התפריט"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+    <!-- the personal area: the lawyer's own cases, decisions and payments. It sits
+         in the header band, above the rule, apart from the general navigation below. -->
+    <div class="cvs-raildash" role="button" tabindex="0" title="האזור שלי — סקירה כללית (אזור אישי ישן)" aria-label="האזור שלי">
+      <img class="cvs-dashillus" src="assets/illus-card.svg" width="26" height="26" alt="">
+      <span class="cvs-dashmain">האזור שלי</span>
+    </div>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">איתור <br>תיקים</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <a href="#ext" data-tab="ext" style="display:block;text-decoration:none;padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">תיקים לפי מס' תיק מקור</a>
+        <a href="#date" data-tab="date" style="display:block;text-decoration:none;padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">תיקים לתאריך פתיחה</a>
+        <a href="#mine" data-tab="mine" style="display:block;text-decoration:none;padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">התיקים שלי</a>
+      </div>
+    </details>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M9 15h6"></path><path d="M12 18v-6"></path></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">פתיחת <br>תיק</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">פתיחת תיק</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">הגשת תביעה בדיון מהיר בבית הדין לעבודה</div>
+      </div>
+    </details>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">הגשות</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">בקשה חדשה</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">כתב טענות לבקשה קיימת</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">הגשות אחרות</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">איתור הגשות לפי אסמכתא</div>
+      </div>
+    </details>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">יומן <br>דיונים</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">יומן בית משפט</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">דיונים לשופט ליום דיונים</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">הדיונים שלי</div>
+      </div>
+    </details>
+    <a href="https://case-view-lawyer-docs-inline.vercel.app/decisions.html" style="text-decoration:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="m9 15 2 2 4-4"></path></svg>
+      <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">איתור <br>החלטות</span>
+    </a>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">תשלומים</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">תשלום שוברים</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">תשלום אגרת בקשה מראש</div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div id="cvsTopHeader" style="background:#fff;position:sticky;top:0;z-index:30">
+  <div style="max-width:1840px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;gap:0;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
+
+    <!-- logo column: same width as the accordion sidebar below, so their right edges align -->
+    <button type="button" class="hp-burger" id="mdBurger" aria-label="פתיחת התפריט" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg></button>
+    <div class="md-logocol" style="width:260px;flex-shrink:0;display:flex;justify-content:flex-start">
+      <a href="https://case-view-lawyer-docs-inline.vercel.app/home.html" title="לדף הבית" style="display:flex">
+        <img id="cvsLogo" src="assets/42f818ae-3d00-4df0-9bfa-da8197a00c3c.png" alt="מדינת ישראל, הרשות השופטת — לדף הבית" style="height:36px">
+      </a>
+    </div>
+
+    <!-- search-bar column: same start edge as the main content below, so it aligns with the case card.
+         Case type now carries three options; picking תיק ישן reveals בית משפט + סוג תיק inline,
+         before the case number, replacing the old standalone "תיק ישן" flyout. -->
+    <div class="md-findcol" style="flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding-right:6px">
+        <div style="position:relative">
+          <select id="cvsCaseType" class="cvs-select" style="height:36px;padding:4px 28px 4px 10px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';color:var(--fg-1);background:#fff;width:150px">
+            <option value="court" selected>תיק בית משפט</option>
+            <option value="traffic">תיק תעבורה</option>
+            <option value="old">תיק ישן</option>
+          </select>
+          <span style="position:absolute;top:50%;left:8px;transform:translateY(-50%);pointer-events:none;color:var(--fg-2);display:flex"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+        </div>
+        <div id="cvsOldCaseFields" style="display:none;align-items:center;gap:8px">
+          <div style="position:relative">
+            <select class="cvs-select" style="height:36px;padding:4px 12px 4px 28px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';color:var(--fg-2);background:#fff;width:176px">
+              <option selected disabled>בית משפט</option>
+              <option>בית משפט השלום חדרה</option>
+            </select>
+            <span style="position:absolute;top:50%;left:8px;transform:translateY(-50%);pointer-events:none;color:var(--fg-2);display:flex"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+          </div>
+          <div style="position:relative">
+            <select class="cvs-select" style="height:36px;padding:4px 12px 4px 28px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';color:var(--fg-2);background:#fff;width:120px">
+              <option selected disabled>סוג תיק</option>
+              <option>אזרחי</option>
+            </select>
+            <span style="position:absolute;top:50%;left:8px;transform:translateY(-50%);pointer-events:none;color:var(--fg-2);display:flex"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+          </div>
+        </div>
+        <input id="cvsCaseNumA" placeholder="00-00" aria-label="חודש ושנה" title="חודש ושנה" maxlength="5" style="height:36px;width:56px;padding:4px 6px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';text-align:center;background:#fff">
+        <span style="color:var(--fg-3)">-</span>
+        <input id="cvsCaseNumB" aria-label="מספר התיק" title="מספר התיק" maxlength="5" placeholder="00000" style="height:36px;width:64px;padding:4px 6px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';text-align:center;background:#fff">
+        <button id="cvsHeaderSearch" onclick="location.href='https://case-view-lawyer-docs-inline.vercel.app/index.html'" class="cvs-btn" style="height:36px;padding:0 16px;background:var(--brand-tint);color:var(--brand-navy);border:1px solid var(--brand-tint);border-radius:6px;font:500 14px 'Rubik';cursor:pointer;white-space:nowrap">חיפוש</button>
+        <button type="button" id="cvsHeaderClear" class="cvs-headerclear">נקה</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <button class="cvs-bellbtn" aria-label="הודעות">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg>
+        <span class="cvs-bellbadge">3</span>
+      </button>
+      <details class="cvs-avatarmenu" style="position:relative">
+        <!-- The hat is worn in the header. The initials alone said WHO but not in
+             WHICH capacity, and that only showed once the menu was open — so the
+             role stands beside them, and the chevron says there is more inside. -->
+        <summary class="cvs-avatartrig" style="list-style:none">
+          <span class="cvs-avatarcircle">יכ</span>
+          <span class="cvs-avatarrole">עו"ד</span>
+          <svg class="cvs-avatarchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <div style="position:absolute;top:calc(100% + 6px);left:0;background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;min-width:210px;z-index:30">
+          <!-- active account — tinted + checked so the current identity is obvious;
+               no divider between the two accounts, the tint carries the separation -->
+          <div class="cvs-menuitem cvs-acctactive" style="padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <div>
+              <div style="font:600 15px 'Rubik';color:var(--fg-1)">עו"ד ישראל כהן</div>
+              <div style="font:400 13px 'Rubik';color:var(--fg-3);margin-top:2px">מ.ר 45213</div>
+            </div>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <!-- switchable private account, same visual style as the active one -->
+          <div class="cvs-menuitem" style="padding:8px 12px">
+            <div style="font:600 15px 'Rubik';color:var(--fg-1)">ת.ז 012345678</div>
+          </div>
+          <div style="border-top:1px solid var(--border-1);margin:4px -8px"></div>
+          <div class="cvs-menuitem" style="display:flex;align-items:center;gap:8px;padding:9px 12px;font:400 15px 'Rubik';color:var(--fg-1);white-space:nowrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>יציאה
+          </div>
+        </div>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<div style="flex:1 0 auto;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
+  <main class="md-content" style="max-width:1840px;margin:0 auto;padding:0 32px 40px">
+    <nav class="pc-crumbs" aria-label="פירורי לחם">
+      <ol>
+        <li><a href="https://case-view-lawyer-docs-inline.vercel.app/home.html">דף הבית</a></li>
+        <li><span aria-current="page">פנקס התובענות הייצוגיות</span></li>
+      </ol>
+    </nav>
+    <div class="pc-wrap">
+
+      <div class="pc-main">
+        <div class="pc-pagehead">
+          <h1 class="dc-title">פנקס התובענות הייצוגיות</h1>
+          <span>בדיקה אם כבר הוגשה תובענה ייצוגית בנושא</span>
+          <button type="button" class="pc-newbtn" id="pcNew" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86z"/></svg>שיחה חדשה</button>
+        </div>
+
+        <!-- screen 1: an empty chat with suggested questions -->
+        <section class="pc-welcome" id="pcWelcome" aria-labelledby="pcWelcomeH">
+          <div class="pc-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg></div>
+          <h2 id="pcWelcomeH">על איזה נושא תרצו להגיש תובענה?</h2>
+          <p>מתארים את המקרה במילים שלכם. התשובה מפרטת אילו תובענות ייצוגיות כבר הוגשו בנושא, מה מצבן, ומפנה לכל תיק בפנקס.</p>
+          <form class="pc-composer" id="pcFormHome">
+            <label for="pcAskHome" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">תיאור המקרה</label>
+            <textarea id="pcAskHome" rows="2" placeholder="למשל: חברת הסלולר מחייבת אותי כל חודש על שירות תוכן שלא הזמנתי"></textarea>
+            <div class="pc-crow">
+              <span class="pc-hint">Enter לשליחה · Shift+Enter לשורה חדשה</span>
+              <button type="submit" class="pc-send" aria-label="שליחה" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg></button>
+            </div>
+          </form>
+          <div class="pc-suggest-lbl">שאלות לדוגמה</div>
+          <div class="pc-suggest" id="pcSuggest"></div>
+          <div class="pc-disclaim">התשובות מבוססות על התיקים הרשומים בפנקס ואינן ייעוץ משפטי. כדאי לאמת כל תשובה מול המקורות.</div>
+        </section>
+
+        <!-- screen 2: the conversation -->
+        <section id="pcChat" aria-label="שיחה" hidden>
+          <div class="pc-thread" id="pcThread" aria-live="polite"></div>
+          <div class="pc-dock">
+            <div class="pc-selbar" id="pcSel" role="region" aria-label="תיקים שנבחרו לשיחה" hidden></div>
+            <form class="pc-composer" id="pcFormDock">
+              <label for="pcAskDock" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">שאלת המשך</label>
+              <textarea id="pcAskDock" rows="1" placeholder="שאלו שאלת המשך, למשל: מה ההבדל בין התיקים?"></textarea>
+              <div class="pc-crow">
+                <span class="pc-hint">התשובות מבוססות על התיקים בפנקס ואינן ייעוץ משפטי</span>
+                <button type="submit" class="pc-send" aria-label="שליחה" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg></button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<aside class="pc-docp" id="pcDoc" role="dialog" aria-modal="true" aria-labelledby="pcDocTitle" hidden>
+  <div class="pc-dochead">
+    <b id="pcDocTitle"></b>
+    <button type="button" class="pc-docx" id="pcDocClose" aria-label="סגירת המסמך"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+  </div>
+  <div class="pc-docscroll"><div class="pc-paper" id="pcPaper"></div></div>
+</aside>
+<div class="pc-docbg" id="pcDocBg" hidden></div>
+
+<div id="siteFooter" style="flex-shrink:0;background:#001e40">
+  <div style="max-width:1840px;margin:0 auto;padding:70px 96px;display:flex;flex-direction:column;gap:60px;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
+    <div style="display:flex;justify-content:space-between;gap:40px">
+
+      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
+        <div style="position:relative;width:40px;height:40px">
+          <div style="position:absolute;top:17.5%;right:6.18%;bottom:15.23%;left:7.5%">
+            <img src="assets/footer-frame.svg" style="position:absolute;inset:0;width:100%;height:100%">
+          </div>
+        </div>
+        <div style="font:600 20px 'Rubik';color:#f4f8fe">מידע שימושי</div>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#f4f8fe;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הגשת תביעה קטנה</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הגשת תביעה בדיון מהיר בבית הדין לעבודה</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> בקשה לשינוי מועד דיון</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> בקשה לפטור מאגרה בשל חוסר יכולת כלכלית</a>
+      </div>
+
+      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
+        <div style="position:relative;width:40px;height:40px">
+          <div style="position:absolute;top:15%;right:7.43%;bottom:15.17%;left:7.5%;overflow:hidden">
+            <div style="position:absolute;top:19.3%;right:60.24%;bottom:16.11%;left:0">
+              <div style="position:absolute;top:-2.77%;right:0;bottom:0;left:0">
+                <img src="assets/footer-group.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:6.48%;right:0;bottom:28.93%;left:60.27%">
+              <div style="position:absolute;top:-2.77%;right:0;bottom:0;left:0">
+                <img src="assets/footer-group1.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:6.48%;right:19.89%;bottom:80.7%;left:19.86%">
+              <div style="position:absolute;top:-13.97%;right:-2.44%;bottom:-13.97%;left:-2.44%">
+                <img src="assets/footer-vector.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:13.57%;right:50.01%;bottom:10.06%;left:49.99%">
+              <div style="position:absolute;top:-2.34%;right:-0.5px;bottom:-2.34%;left:-0.5px">
+                <img src="assets/footer-vector1.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:91.01%;right:39.79%;bottom:8.99%;left:39.76%">
+              <div style="position:absolute;top:-0.5px;right:-7.18%;bottom:-0.5px;left:-7.18%">
+                <img src="assets/footer-vector2.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:98.21%;right:34.09%;bottom:1.79%;left:34.09%">
+              <div style="position:absolute;top:-0.5px;right:-4.62%;bottom:-0.5px;left:-4.62%">
+                <img src="assets/footer-vector3.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:0;right:47.11%;bottom:92.91%;left:47.07%">
+              <img src="assets/footer-vector4.svg" style="position:absolute;inset:0;width:100%;height:100%">
+            </div>
+          </div>
+        </div>
+        <div style="font:600 20px 'Rubik';color:#f4f8fe">אודות</div>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#f4f8fe;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> משוב</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> תנאי שימוש</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> שימוש בקבצי cookies</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הצהרת נגישות</a>
+      </div>
+
+      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
+        <div style="position:relative;width:40px;height:40px">
+          <div style="position:absolute;top:12.5%;right:12.13%;bottom:12.13%;left:12.5%;overflow:hidden">
+            <div style="position:absolute;top:2.72%;right:2.75%;bottom:2.75%;left:2.72%">
+              <div style="position:absolute;top:-1.75%;right:-1.75%;bottom:-1.75%;left:-1.75%">
+                <img src="assets/footer-group2.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:0;right:41.26%;bottom:0;left:41.23%">
+              <img src="assets/footer-group3.svg" style="position:absolute;inset:0;width:100%;height:100%">
+            </div>
+            <div style="position:absolute;top:41.23%;right:0;bottom:41.26%;left:0">
+              <img src="assets/footer-group4.svg" style="position:absolute;inset:0;width:100%;height:100%">
+            </div>
+          </div>
+        </div>
+        <div style="font:600 20px 'Rubik';color:#f4f8fe">מוקד מידע ושירות ארצי</div>
+        <div style="font:400 16px 'Rubik';color:#fff;width:100%">
+          <div>שעות מענה אנושי:</div>
+          <div style="margin-top:4px">ימים א-ה: 8:00 עד 17:00</div>
+          <div>ימי ו, ערבי חג וחול המועד: 8:00 עד 12:30</div>
+        </div>
+        <div style="display:flex;gap:24px;width:100%">
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <div style="font:400 18px 'Rubik';color:#fff">בטלפון</div>
+            <div style="display:flex;align-items:center;gap:16px">
+              <span dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">077-2703333</span>
+              <span style="width:2px;height:18px;background:rgba(255,255,255,.2)"></span>
+              <span dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">*3852</span>
+            </div>
+            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> ניתן לזמן תור לשיחה</a>
+          </div>
+          <div style="width:2px;background:rgba(255,255,255,.2);align-self:stretch"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <div style="font:400 18px 'Rubik';color:#fff">בווטסאפ</div>
+            <div dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">050-6255727</div>
+            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> להתחיל שיחה</a>
+          </div>
+          <div style="width:2px;background:rgba(255,255,255,.2);align-self:stretch"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <div style="font:400 18px 'Rubik';color:#fff">בצ'אט</div>
+            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> להתחיל שיחה</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  /* תיק ישן reveals בית משפט + סוג תיק inline, before the case number — and its
+     number is keyed differently: an old case carries a YEAR only, where a current
+     one carries month and year. Same two boxes, so the first one narrows and
+     relabels itself instead of a second layout appearing. */
+  (function () {
+    var type = document.getElementById('cvsCaseType');
+    var extra = document.getElementById('cvsOldCaseFields');
+    var numA = document.getElementById('cvsCaseNumA');
+    var numB = document.getElementById('cvsCaseNumB');
+    if (!type || !extra) return;
+    var first = true;
+    var sync = function () {
+      var old = type.value === 'old';
+      extra.style.display = old ? 'flex' : 'none';
+      if (numA) {
+        numA.style.width = old ? '44px' : '56px';
+        numA.maxLength = old ? 2 : 5;
+        /* the placeholder is the shape of the value, not a word for it: two
+           digits for an old case, two and two for a current one. Same as the
+           איתור החלטות form. */
+        numA.placeholder = old ? '00' : '00-00';
+        numA.title = old ? 'שנה' : 'חודש ושנה';
+        numA.setAttribute('aria-label', numA.title);
+        /* a number keyed for one format is meaningless in the other — clear it,
+           but not on the first run, which would wipe the open case's number */
+        if (!first) { numA.value = ''; if (numB) numB.value = ''; }
+      }
+      first = false;
+    };
+    type.addEventListener('change', sync);
+    sync();
+
+    /* A fly-out in the rail (or the avatar menu) closed only when its own
+       summary was clicked again — so clicking anywhere else left it hanging
+       open over the page. Any click outside an open one now shuts it. */
+    document.addEventListener('click', function (e) {
+      document.querySelectorAll('.cvs-railnav[open], .cvs-avatarmenu[open]').forEach(function (d) {
+        if (!d.contains(e.target)) d.open = false;
+      });
+    });
+
+    var clear = document.getElementById('cvsHeaderClear');
+    if (clear) clear.addEventListener('click', function () {
+      type.selectedIndex = 0;
+      sync();
+      if (numA) numA.value = '';
+      if (numB) numB.value = '';
+      extra.querySelectorAll('select').forEach(function (s) { s.selectedIndex = 0; });
+      if (numB) numB.focus();   /* the serial is typed first */
+    });
+  })();
+</script>
+<script>
+/* ── פנקס התובענות: chat with cited sources ──
+   A question returns one answer. Every claim in it carries a numbered citation
+   [n]; the numbered source cards sit under the answer and expand in place.
+   Prototype data: every case, name and number below is invented. */
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var svg = {
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+    chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
+    doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>',
+    scale: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>',
+    alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
+    copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+    up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>',
+    down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>',
+    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+    msg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
+  };
+
+  var CASES = [
+    { id: 'c7', num: '8814-01-21', pl: 'דוד לוינסון', df: 'נתיב תקשורת סלולרית בע"מ', court: 'בית המשפט המחוזי מרכז', date: '14.01.2021', year: 2021, field: 'תקשורת', status: 'pending', kind: 'בקשה לאישור תובענה ייצוגית', doc: true,
+      kw: ['סלולר', 'תוכן', 'חיוב', 'הוזמ', 'הזמנתי', 'מנוי', 'טלפון'],
+      cause: 'חיוב מנויים על שירותי תוכן שלא הוזמנו', amount: '18,000,000 ₪',
+      sum: 'נטען שהמשיבה חייבה מנויים בתשלום חודשי על שירותי תוכן (משחקים והתראות) בלי הסכמה מפורשת, בניגוד לחוק הגנת הצרכן ולתנאי הרישיון. הקבוצה: כל מנויי המשיבה שחויבו בשירותי תוכן מ־2014.',
+      outcome: 'תלוי ועומד. המשיבה הגישה תשובה לבקשת האישור, ונקבע דיון הוכחות.',
+      quote: 'בעל הרישיון לא יחייב מנוי בתשלום בעד שירות תוכן, אלא אם המנוי ביקש את השירות במפורש ותיעוד הבקשה נשמר בידי בעל הרישיון.' },
+    { id: 'c10', num: '10601-08-10', pl: 'רונית אזולאי', df: 'קשת סלולר בע"מ', court: 'בית המשפט המחוזי מרכז', date: '18.08.2014', year: 2010, field: 'תקשורת', status: 'settled', kind: 'פסק דין והחלטה', doc: true,
+      kw: ['סלולר', 'sms', 'הודעות', 'מסרונים', 'חו"ל', 'חו״ל', 'מע"מ', 'מע״מ', 'חיוב', 'טלפון'],
+      cause: 'גביית מע"מ על מסרונים שנשלחו מחוץ לישראל', amount: '9,400,000 ₪',
+      sum: 'נטען שהמשיבה גבתה מע"מ על הודעות SMS ששלחו לקוחות בזמן שהותם בחו"ל, אף שהשירות ניתן מחוץ לישראל ופטור מהמס. הקבוצה: לקוחות שחויבו בין 2003 ל־2010.',
+      outcome: 'הסתיים בהסדר פשרה שאושר ב־2014: החזר המס שנגבה בתוספת הפרשי הצמדה, בזיכוי בחשבון.',
+      quote: 'המס הוטל ברגיל על חברות הסלולר, והן פעלו לפי הרשות הנתונה להן בחוק. הסדר זה יוצר חיוב ישיר בין החברה לבין הלקוחות שמהם נגבה המס.' },
+    { id: 'c8', num: '61530-08-17', pl: 'עדי נחום', df: 'גל־קו תקשורת בע"מ', court: 'בית המשפט המחוזי חיפה', date: '03.06.2019', year: 2017, field: 'תקשורת', status: 'rejected', kind: 'החלטה בבקשה לאישור', doc: true,
+      kw: ['סלולר', 'טלפון', 'מחיר', 'חבילה', 'חיוב', 'גלישה'],
+      cause: 'העלאת מחיר חבילה בניגוד להתחייבות למחיר קבוע', amount: '5,600,000 ₪',
+      sum: 'נטען שהמשיבה העלתה את מחיר חבילת הגלישה אחרי שנה, אף שבפרסום הובטח "מחיר קבוע לתמיד".',
+      outcome: 'הבקשה נדחתה ב־2019: נקבע שתנאי ההתקשרות הבהירו שהמחיר קבוע ל־12 חודשים בלבד.',
+      quote: 'הפרסום, כשהוא נקרא יחד עם תנאי ההתקשרות שנמסרו ללקוח, אינו מקים מצג של מחיר קבוע ללא הגבלת זמן.' },
+    { id: 'c1', num: '11138-09-11', pl: 'מיכל כהן', df: 'מחלבות הרים בע"מ', court: 'בית המשפט המחוזי מרכז', date: '22.04.2014', year: 2011, field: 'צרכנות', status: 'settled', kind: 'החלטה באישור הסדר פשרה', doc: true,
+      kw: ['מזון', 'סימון', 'מטעה', 'הטעי', 'חלב', 'שומן', 'צרכנ'],
+      cause: 'סימון מטעה של אחוזי השומן במשקאות חלב', amount: '10,080,000 ₪',
+      sum: 'נטען שהמשיבה שיווקה משקאות חלב שעל אריזתם צוין "0% שומן", בעוד שבדיקת מעבדה מצאה בהם 1.5% שומן.',
+      outcome: 'הסתיים בהסדר פשרה שאושר ב־2014: הנחה של 15% על מוצרי הסדרה לשנה ותיקון הסימון.',
+      quote: 'הצרכן הסביר מסתמך על הסימון שעל גבי האריזה, ואין לצפות ממנו לבחון את רשימת הרכיבים כדי לגלות שהסימון אינו מדויק.' },
+    { id: 'c2', num: '14948-06-11', pl: 'יוסי לוי', df: 'טעמי הגליל בע"מ', court: 'בית המשפט המחוזי תל אביב־יפו', date: '09.07.2013', year: 2011, field: 'צרכנות', status: 'approved', kind: 'החלטה באישור תובענה ייצוגית', doc: false,
+      kw: ['מזון', 'סימון', 'מטעה', 'הטעי', 'סוכר', 'יוגורט', 'צרכנ'],
+      cause: 'סימון "ללא תוספת סוכר" על יוגורט שמכיל סוכר מוסף', amount: '11,437,500 ₪',
+      sum: 'נטען שיוגורט הפירות של המשיבה שווק כ"ללא תוספת סוכר", אף שרשימת הרכיבים כוללת סירופ גלוקוז.',
+      outcome: 'הבקשה אושרה כתובענה ייצוגית ב־2013, וההליך העיקרי תלוי ועומד.',
+      quote: 'קיימת אפשרות סבירה שהשאלות המשותפות יוכרעו לטובת הקבוצה, ותובענה ייצוגית היא הדרך היעילה וההוגנת להכריע בהן.' },
+    { id: 'c3', num: '34490-04-11', pl: 'אבי אברהם', df: 'מאפיית השרון בע"מ', court: 'בית המשפט המחוזי חיפה', date: '15.11.2012', year: 2011, field: 'צרכנות', status: 'rejected', kind: 'החלטה בבקשה לאישור', doc: true,
+      kw: ['מזון', 'סימון', 'מטעה', 'הטעי', 'קלורי', 'חטיף', 'תזונ'],
+      cause: 'ערך קלורי שגוי בסימון התזונתי של חטיפים', amount: '2,900,000 ₪',
+      sum: 'נטען שחטיף סומן כמכיל 50 קלוריות ל־100 גרם, בעוד שבדיקת מעבדה מצאה 113 קלוריות.',
+      outcome: 'הבקשה נדחתה ב־2012: לא הוכח קשר סיבתי בין הסימון לבין החלטת הרכישה.',
+      quote: 'המבקש לא הראה שהערך הקלורי שצוין היה שיקול בהחלטתו לרכוש את המוצר, ולכן לא הוכח נזק.' },
+    { id: 'c4', num: '52107-02-19', pl: 'שרה פרץ', df: 'רשת חיסכון בע"מ', court: 'בית המשפט המחוזי מרכז', date: '11.02.2019', year: 2019, field: 'צרכנות', status: 'pending', kind: 'בקשה לאישור תובענה ייצוגית', doc: true,
+      kw: ['מזון', 'תפוגה', 'סופר', 'הטעי', 'צרכנ'],
+      cause: 'מכירת מוצרי מזון אחרי תאריך התפוגה', amount: '4,500,000 ₪',
+      sum: 'נטען שבסניפי הרשת נמכרו באופן שיטתי מוצרי חלב ובשר אחרי תאריך התפוגה. לבקשה צורף תיעוד מ־14 סניפים.',
+      outcome: 'תלוי ועומד. נקבע דיון בבקשת האישור.',
+      quote: 'במהלך ביקורים בארבעה עשר סניפים נמצאו על המדפים מוצרים שתאריך התפוגה שלהם חלף.' },
+    { id: 'c6', num: '47302-05-20', pl: 'נועה שלום', df: 'מגן ביטוח ישיר בע"מ', court: 'בית המשפט המחוזי ירושלים', date: '30.03.2022', year: 2020, field: 'ביטוח', status: 'settled', kind: 'החלטה באישור הסדר פשרה', doc: false,
+      kw: ['ביטוח', 'פרמיה', 'החזר', 'ביטול', 'רכב', 'פוליסה'],
+      cause: 'אי־החזר פרמיה יחסית בביטול פוליסת ביטוח רכב', amount: '3,100,000 ₪',
+      sum: 'נטען שמבוטחים שביטלו פוליסת רכב באמצע התקופה לא קיבלו החזר של החלק היחסי של הפרמיה, בניגוד לתנאי הפוליסה.',
+      outcome: 'הסתיים בהסדר פשרה ב־2022: החזר מלא למבוטחים שזוהו ותרומה לקרן לניהול כספים.',
+      quote: 'במקרה של ביטול הפוליסה ביוזמת המבוטח, יוחזר לו החלק היחסי של הפרמיה בעד התקופה שלאחר הביטול.' },
+    { id: 'c5', num: '20871-11-18', pl: 'אלון מזרחי', df: 'אופק ביטוח בע"מ', court: 'בית המשפט המחוזי תל אביב־יפו', date: '16.08.2020', year: 2018, field: 'ביטוח', status: 'approved', kind: 'החלטה באישור תובענה ייצוגית', doc: true,
+      kw: ['ביטוח', 'פרמיה', 'כיסוי', 'חיוב', 'דירה'],
+      cause: 'גביית פרמיה על כיסוי ביטוחי שבוטל', amount: '7,200,000 ₪',
+      sum: 'נטען שאחרי ביטול כיסוי לנזקי מים בפוליסת דירה, המשיבה המשיכה לגבות את רכיב הפרמיה בעדו.',
+      outcome: 'אושרה כתובענה ייצוגית ב־2020. הצדדים בהליך גישור.',
+      quote: 'גביית פרמיה בעד כיסוי שאינו קיים עוד אינה עולה בקנה אחד עם חובת תום הלב בקיום החוזה.' },
+    { id: 'c9', num: '39276-03-22', pl: 'רחל ביטון', df: 'כוח אדם מקצועי בע"מ', court: 'בית הדין האזורי לעבודה תל אביב', date: '20.03.2022', year: 2022, field: 'עבודה', status: 'pending', kind: 'בקשה לאישור תובענה ייצוגית', doc: true,
+      kw: ['אפליה', 'גיל', 'עבודה', 'קבלה', 'מועמד', 'דרושים'],
+      cause: 'אפליה על רקע גיל בקבלה לעבודה', amount: '6,000,000 ₪',
+      sum: 'נטען שהמשיבה פרסמה מודעות דרושים עם הגבלת גיל מפורשת וסיננה מועמדים מעל גיל 45, בניגוד לחוק שוויון ההזדמנויות בעבודה.',
+      outcome: 'תלוי ועומד. נקבע מועד להגשת סיכומים בבקשת האישור.',
+      quote: 'מודעה שקובעת טווח גילאים למשרה, בלי שהדבר נדרש מאופי התפקיד, מפלה על פניה את מי שמחוץ לטווח.' }
+  ];
+  var STATUS = { pending: 'תלויה ועומדת', approved: 'אושרה כייצוגית', settled: 'הסתיימה בפשרה', rejected: 'הבקשה נדחתה' };
+  var STATUS_LINE = {
+    pending: 'הבקשה לאישור עדיין תלויה ועומדת.',
+    approved: 'בית המשפט אישר אותה כתובענה ייצוגית, וההליך נמשך.',
+    settled: 'היא הסתיימה בהסדר פשרה.',
+    rejected: 'הבקשה לאישור נדחתה.'
+  };
+  var SUGGEST = [
+    'האם הוגשה תובענה ייצוגית נגד חברת סלולר על חיוב בשירותי תוכן שלא הוזמנו?',
+    'תובענות ייצוגיות על סימון מטעה של מוצרי מזון',
+    'האם יש תובענה על אי־החזר פרמיה בביטול ביטוח רכב?',
+    'אפליה על רקע גיל בקבלה לעבודה: מה כבר הוגש?'
+  ];
+  var byId = function (id) { return CASES.filter(function (c) { return c.id === id; })[0]; };
+
+  /* ── search ── */
+  function search(q) {
+    var t = q.toLowerCase();
+    var hits = CASES.map(function (c) {
+      return { c: c, s: c.kw.filter(function (k) { return t.indexOf(k.toLowerCase()) > -1; }).length };
+    }).filter(function (x) { return x.s > 0; });
+    hits.sort(function (a, b) { return b.s - a.s || b.c.year - a.c.year; });
+    var top = hits.length ? hits[0].s : 0;
+    hits.forEach(function (x) { x.strong = x.s >= Math.max(2, top * 0.6); });
+    return hits.slice(0, 5);
+  }
+
+  /* ── answer builders: each returns { verdict, body, sources } ── */
+  function citer(sources) {
+    return function (c) {
+      var n = sources.indexOf(c) + 1;
+      return '<button type="button" class="pc-cite" data-n="' + n + '" aria-label="מקור ' + n + '">' + n + '</button>';
+    };
+  }
+  var name = function (c) { return '<b>' + esc(c.pl) + ' נ\' ' + esc(c.df) + '</b>'; };
+  var num = function (c) { return 'ת"צ <span class="pc-num">' + c.num + '</span>'; };
+  function verdict(kind, title, text) {
+    var ic = kind === 'live' ? svg.alert : kind === 'ended' ? svg.clock : svg.check;
+    return '<div class="pc-verdict pc-v-' + kind + '" role="note">' + ic + '<div><b>' + title + '</b>' + text + '</div></div>';
+  }
+
+  function answerSearch(q) {
+    var hits = search(q);
+    if (!hits.length) {
+      return {
+        verdict: verdict('clear', 'לא נמצאה בפנקס תובענה ייצוגית שמתאימה לתיאור', 'ייתכן שהנושא עדיין פתוח, אבל ייתכן גם שהתיאור כללי מדי.'),
+        body: '<p>כדי לחדד את החיפוש, כדאי לכתוב מי הנתבעת, מה המוצר או השירות, ומה הנזק לציבור. למשל: "חברת ביטוח לא החזירה פרמיה אחרי ביטול פוליסה".</p>',
+        sources: []
+      };
+    }
+    var sources = hits.map(function (x) { return x.c; });
+    var cite = citer(sources);
+    var strong = hits.filter(function (x) { return x.strong; }).map(function (x) { return x.c; });
+    var live = strong.filter(function (c) { return c.status === 'pending' || c.status === 'approved'; });
+    var lead = sources[0];
+    var v = live.length
+      ? verdict('live', 'כבר הוגשה תובענה ייצוגית בנושא הזה, והיא עדיין פעילה', (live.length === 1 ? 'תיק אחד בפנקס עוסק' : live.length + ' תיקים בפנקס עוסקים') + ' באותה עילה ועדיין לא הסתיים.')
+      : strong.length
+        ? verdict('ended', 'הוגשו תובענות בנושא הזה, וכולן הסתיימו', 'כדאי לבדוק אם פסק הדין או הפשרה חלים גם על המקרה שלכם.')
+        : verdict('clear', 'לא נמצאה תובענה באותה עילה בדיוק', 'בפנקס יש תובענות בנושאים קרובים בלבד.');
+    var b = '<p>בפנקס נמצאו ' + (sources.length === 1 ? 'תובענה ייצוגית אחת שקשורה' : sources.length + ' תובענות ייצוגיות שקשורות') + ' לתיאור שלכם. הקרובה ביותר היא ' + name(lead) + ' (' + num(lead) + ') ' + cite(lead) + ', שעוסקת ב' + esc(lead.cause) + '. ' + STATUS_LINE[lead.status] + '</p>';
+    b += '<h3>התובענות שנמצאו בפנקס</h3><ul>' + sources.map(function (c) {
+      return '<li><b>' + esc(c.df) + '</b>, ' + esc(c.court) + ', ' + c.year + ': ' + esc(c.cause) + '. ' + STATUS[c.status] + '. ' + cite(c) + '</li>';
+    }).join('') + '</ul>';
+    b += '<h3>מה זה אומר לגבי תובענה חדשה</h3>';
+    if (live.length) {
+      b += '<p>' + live.map(cite).join('') + ' עדיין ' + (live.length === 1 ? 'פעילה' : 'פעילות') + '. כשכבר תלויה בקשה לאישור באותן שאלות של עובדה ומשפט, בית המשפט בוחן בקשה חדשה לאור ההליך הקיים, ובדרך כלל לא ינהל שני הליכים מקבילים באותה עילה נגד אותה נתבעת.</p><p>אם התובענה שלכם מכוונת לנתבעת אחרת, לתקופה אחרת או למוצר אחר, ייתכן שהיא עדיין אפשרית. כדאי להשוות את הגדרת הקבוצה בתיק הקיים להגדרה שאתם מתכננים.</p>';
+    } else if (strong.length) {
+      b += '<p>התובענות הקרובות הסתיימו ' + strong.map(cite).join('') + '. פשרה או פסק דין בתובענה ייצוגית מחייבים בדרך כלל את כל חברי הקבוצה, ולכן חשוב לבדוק אם המקרה שלכם נכלל בהגדרת הקבוצה ובתקופה שנקבעה בהם.</p>';
+    } else {
+      b += '<p>התיקים שנמצאו ' + sources.map(cite).join('') + ' קרובים בתחום, אבל לא באותה עילה. כדאי לחדד את התיאור: שם הנתבעת, המוצר או השירות, והתקופה.</p>';
+    }
+    b += '<h3>ציטוטים מן המקורות</h3>' + sources.slice(0, 2).map(function (c) {
+      return '<blockquote>"' + esc(c.quote) + '"<footer>' + esc(c.pl) + ' נ\' ' + esc(c.df) + ', ' + num(c) + ' ' + cite(c) + '</footer></blockquote>';
+    }).join('');
+    return { verdict: v, body: b, sources: sources };
+  }
+
+  function answerCompare(prev, picked) {
+    var cite = citer(prev);
+    var b = '<p>השוואה בין ' + (prev.length === 1 ? 'התיק' : prev.length + ' התיקים') + (picked ? ' שבחרתם:' : ' מהתשובה הקודמת:') + '</p><div class="pc-cmpwrap"><table class="pc-cmp"><thead><tr><th>תיק</th><th>נתבעת</th><th>עילה</th><th>מצב</th><th>סכום התביעה</th></tr></thead><tbody>' +
+      prev.map(function (c) {
+        return '<tr><td>' + cite(c) + ' <span class="pc-num">' + c.num + '</span></td><td>' + esc(c.df) + '</td><td>' + esc(c.cause) + '</td><td><span class="pc-status pc-st-' + c.status + '">' + STATUS[c.status] + '</span></td><td class="pc-num">' + c.amount + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    b += prev.length > 1
+      ? '<p>ההבדל המרכזי הוא בנתבעת ובמוצר או השירות. חפיפה בעילה לבדה לא תמיד מונעת הגשה, אם הנתבעת או הגדרת הקבוצה שונות.</p>'
+      : '<p>' + (picked ? 'נבחר תיק אחד בלבד. כדי להשוות, סמנו תיק נוסף ברשימת המקורות.' : 'בתשובה הקודמת היה תיק אחד בלבד. אפשר לשאול על נושא רחב יותר כדי למצוא תיקים נוספים להשוואה.') + '</p>';
+    return { verdict: '', body: b, sources: prev };
+  }
+
+  function answerOutcome(prev) {
+    var cite = citer(prev);
+    return { verdict: '', sources: prev, body: '<p>מה קרה בכל אחד מהתיקים:</p><ul>' + prev.map(function (c) {
+      return '<li><b>' + esc(c.df) + '</b> (<span class="pc-num">' + c.num + '</span>): ' + esc(c.outcome) + ' ' + cite(c) + '</li>';
+    }).join('') + '</ul>' };
+  }
+
+  function answerCase(c) {
+    var src = [c], cite = citer(src);
+    return { verdict: '', sources: src, body: '<p>' + name(c) + ' (' + num(c) + ') ' + cite(c) + ', ' + esc(c.court) + '.</p><p>' + esc(c.sum) + '</p><h3>מצב התיק</h3><p>' + esc(c.outcome) + '</p><h3>ציטוט מן המקור</h3><blockquote>"' + esc(c.quote) + '"<footer>' + esc(c.kind) + ', <span class="pc-num">' + c.date + '</span> ' + cite(c) + '</footer></blockquote>' };
+  }
+
+  /* a free question about the cases the user ticked */
+  function answerPicked(q, cs) {
+    var cite = citer(cs);
+    var live = cs.filter(function (c) { return c.status === 'pending' || c.status === 'approved'; });
+    var b = '<p>שאלתם על ' + cs.length + ' התיקים שבחרתם. ' + (live.length
+      ? (live.length === cs.length ? 'כולם עדיין פעילים' : live.length === 1 ? 'אחד מהם עדיין פעיל' : live.length + ' מהם עדיין פעילים') + ' ' + live.map(cite).join('') + '.'
+      : 'כולם כבר הסתיימו.') + '</p>';
+    b += '<h3>מה עולה מהתיקים</h3><ul>' + cs.map(function (c) {
+      return '<li>' + name(c) + ' (' + num(c) + '): ' + esc(c.cause) + '. ' + esc(c.outcome) + ' ' + cite(c) + '</li>';
+    }).join('') + '</ul>';
+    var fields = cs.map(function (c) { return c.field; }).filter(function (f, i, a) { return a.indexOf(f) === i; });
+    b += '<h3>מה משותף להם</h3><p>' + (fields.length === 1
+      ? 'כל התיקים בתחום ה' + esc(fields[0]) + ', אבל הם מכוונים לנתבעות שונות. לכן חפיפה בעילה לבדה לא בהכרח מונעת תובענה חדשה נגד נתבעת אחרת.'
+      : 'התיקים מתחומים שונים (' + fields.map(esc).join(', ') + '), ולכן כדאי לבחון כל אחד מהם בנפרד מול המקרה שלכם.') + '</p>';
+    b += '<h3>ציטוטים מן המקורות</h3>' + cs.slice(0, 2).map(function (c) {
+      return '<blockquote>"' + esc(c.quote) + '"<footer>' + esc(c.pl) + ' נ\' ' + esc(c.df) + ', ' + num(c) + ' ' + cite(c) + '</footer></blockquote>';
+    }).join('');
+    return { verdict: '', body: b, sources: cs };
+  }
+
+  function answer(q, prev, picked) {
+    if (picked && picked.length) {
+      if (/השוו|השווה|הבדל|השוואה|לעומת/.test(q)) return answerCompare(picked, true);
+      if (/תוצא|הסתיים|נגמר|פשרה|מצב|סטטוס|נדח|מה קרה/.test(q)) return answerOutcome(picked);
+      return picked.length === 1 ? answerCase(picked[0]) : answerPicked(q, picked);
+    }
+    var named = CASES.filter(function (c) { return q.indexOf(c.num) > -1; })[0];
+    if (named) return answerCase(named);
+    if (prev && prev.length && /השוו|השווה|הבדל|השוואה|לעומת/.test(q)) return answerCompare(prev);
+    if (prev && prev.length && /תוצא|הסתיים|נגמר|פשרה|מצב|סטטוס|נדח|מה קרה/.test(q)) return answerOutcome(prev);
+    return answerSearch(q);
+  }
+
+  /* ── rendering ── */
+  var S = { turns: 0, prev: null, sel: [], failNext: location.hash === '#error', busy: false };
+  var thread = $('pcThread');
+
+  function userBlock(q, picked) {
+    var d = document.createElement('div');
+    d.innerHTML = '<div class="pc-who"><span class="pc-av pc-av-user" aria-hidden="true">יכ</span>עו"ד ישראל כהן</div>' +
+      (picked && picked.length ? '<div class="pc-qtag">על ' + (picked.length === 1 ? 'התיק' : picked.length + ' התיקים') + ': ' + picked.map(function (c) { return '<span class="pc-num">' + c.num + '</span>'; }).join('') + '</div>' : '') +
+      '<div class="pc-q"></div>';
+    d.querySelector('.pc-q').textContent = q;
+    return d;
+  }
+
+  function srcCard(c, n, t) {
+    var bid = 'pcb-' + t + '-' + n;
+    var id = c.doc
+      ? '<a href="#" data-doc="' + c.id + '">' + svg.link + num(c) + '</a>'
+      : '<span style="font:600 16px \'Rubik\';color:var(--pc-ink)">' + num(c) + '</span>';
+    var on = S.sel.indexOf(c.id) > -1;
+    return '<li class="pc-src' + (on ? ' is-picked' : '') + '" id="pcs-' + t + '-' + n + '" data-n="' + n + '" data-case="' + c.id + '">' +
+      '<span class="pc-srcn" aria-hidden="true">' + n + '</span>' +
+      '<div class="pc-srcrow" data-toggle>' +
+        '<label class="pc-pick" title="בחירת התיק לשיחה"><input type="checkbox" data-pick="' + c.id + '"' + (on ? ' checked' : '') + ' aria-label="בחירת ת&quot;צ ' + c.num + ' לשיחה"></label>' +
+        '<div class="pc-srcid">' + id + '<div>' + esc(c.pl) + ' נ\' ' + esc(c.df) + '</div></div>' +
+        '<div class="pc-srcmeta"><span>' + esc(c.kind) + '</span><span>' + esc(c.court) + '</span></div>' +
+        '<div class="pc-srcdate pc-num">' + c.date + '</div>' +
+        '<span class="pc-status pc-st-' + c.status + '">' + STATUS[c.status] + '</span>' +
+        '<button type="button" class="pc-chev" aria-expanded="false" aria-controls="' + bid + '" aria-label="פרטי מקור ' + n + '">' + svg.chev + '</button>' +
+      '</div>' +
+      '<div class="pc-srcbody" id="' + bid + '" hidden>' +
+        '<dl><dt>עילה</dt><dd>' + esc(c.cause) + '</dd><dt>תקציר</dt><dd>' + esc(c.sum) + '</dd><dt>מצב התיק</dt><dd>' + esc(c.outcome) + '</dd><dt>סכום התביעה</dt><dd><span class="pc-num">' + c.amount + '</span></dd></dl>' +
+        '<blockquote>"' + esc(c.quote) + '"</blockquote>' +
+        '<div class="pc-srcacts">' +
+          (c.doc ? '<button type="button" class="pc-btn" data-doc="' + c.id + '">' + svg.doc + 'צפייה במסמך</button>'
+                 : '<button type="button" class="pc-btn" disabled title="לתיק הזה לא נסרקו מסמכים">' + svg.doc + 'אין מסמך סרוק</button>') +
+          '<button type="button" class="pc-linkbtn" data-ask="' + c.num + '">שאלה על התיק הזה</button>' +
+        '</div>' +
+      '</div></li>';
+  }
+
+  function answerBlock(res, t) {
+    var a = document.createElement('article');
+    a.className = 'pc-a';
+    a.id = 'pca-' + t;
+    var n = res.sources.length;
+    a.innerHTML =
+      '<div class="pc-ahead"><div class="pc-who"><span class="pc-av pc-av-bot" aria-hidden="true">' + svg.scale + '</span>פנקס התובענות' +
+        (n ? '<small>· מבוסס על ' + (n === 1 ? 'מקור אחד' : n + ' מקורות') + '</small>' : '') + '</div>' +
+        '<div class="pc-acts"><button type="button" class="cvs-iconbtn" data-copy title="העתקת התשובה" aria-label="העתקת התשובה">' + svg.copy + '</button>' +
+        '<button type="button" class="cvs-iconbtn" data-rate aria-pressed="false" title="תשובה מועילה" aria-label="תשובה מועילה">' + svg.up + '</button>' +
+        '<button type="button" class="cvs-iconbtn" data-rate aria-pressed="false" title="תשובה לא מועילה" aria-label="תשובה לא מועילה">' + svg.down + '</button></div></div>' +
+      '<div class="pc-body">' + res.verdict + res.body + '</div>' +
+      (n ? '<div class="pc-srchead"><h3>' + (n === 1 ? 'מקור אחד' : n + ' מקורות') + '</h3><span>סמנו תיקים כדי לשוחח עליהם יחד</span></div><ol class="pc-sources">' +
+        res.sources.map(function (c, i) { return srcCard(c, i + 1, t); }).join('') + '</ol>' : '');
+    return a;
+  }
+
+  function loadingBlock() {
+    var a = document.createElement('article');
+    a.className = 'pc-a pc-loading';
+    a.setAttribute('aria-busy', 'true');
+    a.innerHTML = '<div class="pc-ahead"><div class="pc-who"><span class="pc-av pc-av-bot" aria-hidden="true">' + svg.scale + '</span>פנקס התובענות</div></div>' +
+      '<div class="pc-step" role="status"><span class="pc-spin" aria-hidden="true"></span><span>מחפש בפנקס…</span></div>' +
+      '<div class="pc-sk" style="width:92%"></div><div class="pc-sk" style="width:84%"></div><div class="pc-sk" style="width:66%"></div>' +
+      '<div class="pc-sk pc-skcard"></div><div class="pc-sk pc-skcard"></div>';
+    return a;
+  }
+
+  function errorBlock(q, picked) {
+    var d = document.createElement('div');
+    d.className = 'pc-notice';
+    d.setAttribute('role', 'alert');
+    d.innerHTML = svg.alert + '<span>לא הצלחנו להשלים את החיפוש בפנקס. השאלה שלכם נשמרה, ואפשר לנסות שוב.</span><button type="button" class="pc-linkbtn">נסה שוב</button>';
+    d.querySelector('button').addEventListener('click', function () { d.remove(); respond(q, false, picked); });
+    return d;
+  }
+
+  function respond(q, instant, picked) {
+    var t = ++S.turns;
+    var res = answer(q, S.prev, picked);
+    if (instant) { thread.appendChild(answerBlock(res, t)); S.prev = res.sources.length ? res.sources : S.prev; return; }
+    S.busy = true; syncSend();
+    var ld = loadingBlock();
+    thread.appendChild(ld);
+    ld.scrollIntoView({ block: 'nearest', behavior: reduce() ? 'auto' : 'smooth' });
+    var step = ld.querySelector('.pc-step span:last-child');
+    setTimeout(function () { step.textContent = res.sources.length ? 'נמצאו ' + res.sources.length + ' תיקים רלוונטיים, קורא אותם…' : 'בודק ניסוחים קרובים…'; }, 600);
+    setTimeout(function () { step.textContent = 'מנסח תשובה עם מקורות…'; }, 1200);
+    setTimeout(function () {
+      ld.remove();
+      S.busy = false; syncSend();
+      if (S.failNext) { S.failNext = false; thread.appendChild(errorBlock(q, picked)); return; }
+      var a = answerBlock(res, t);
+      thread.appendChild(a);
+      if (res.sources.length) S.prev = res.sources;
+      a.scrollIntoView({ block: 'start', behavior: reduce() ? 'auto' : 'smooth' });
+    }, 1750);
+  }
+
+  function ask(q, opts) {
+    q = (q || '').trim();
+    if (!q || S.busy) return;
+    opts = opts || {};
+    var picked = opts.solo ? null : S.sel.map(byId);
+    showChat();
+    thread.appendChild(userBlock(q, picked));
+    respond(q, !!opts.instant, picked);
+    $('pcAskHome').value = ''; $('pcAskDock').value = ''; grow($('pcAskDock')); syncSend();
+  }
+
+  function showChat() { $('pcWelcome').hidden = true; $('pcChat').hidden = false; $('pcNew').hidden = false; }
+  function reset() {
+    thread.innerHTML = ''; S.turns = 0; S.prev = null;
+    setSel([]);
+    $('pcChat').hidden = true; $('pcWelcome').hidden = false; $('pcNew').hidden = true;
+    window.scrollTo(0, 0);
+    $('pcAskHome').focus();
+  }
+  var reduce = function () { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; };
+
+
+  /* ── selection: ticked source cards become the subject of the next questions ── */
+  function setSel(ids) {
+    S.sel = ids;
+    thread.querySelectorAll('.pc-src[data-case]').forEach(function (li) {
+      var on = ids.indexOf(li.dataset.case) > -1;
+      li.classList.toggle('is-picked', on);
+      li.querySelector('[data-pick]').checked = on;
+    });
+    var bar = $('pcSel');
+    bar.hidden = !ids.length;
+    $('pcAskDock').placeholder = ids.length
+      ? (ids.length === 1 ? 'שאלו על התיק שבחרתם' : 'שאלו על ' + ids.length + ' התיקים שבחרתם, למשל: מה ההבדל ביניהם?')
+      : 'שאלו שאלת המשך, למשל: מה ההבדל בין התיקים?';
+    if (!ids.length) { bar.innerHTML = ''; return; }
+    bar.innerHTML = '<span><b>' + (ids.length === 1 ? 'תיק אחד נבחר' : ids.length + ' תיקים נבחרו') + '</b> לשיחה</span>' +
+      '<div class="pc-selchips">' + ids.map(function (id) {
+        var c = byId(id);
+        return '<span class="pc-selchip"><span class="pc-num">' + c.num + '</span><button type="button" data-unpick="' + id + '" aria-label="הסרת ת&quot;צ ' + c.num + ' מהבחירה">' + svg.x + '</button></span>';
+      }).join('') + '</div>' +
+      '<div class="pc-selacts">' +
+        (ids.length > 1 ? '<button type="button" class="pc-btn" data-q="מה ההבדל בין התיקים שבחרתי?">השוואה בין התיקים</button>' : '') +
+        '<button type="button" class="pc-btn" data-q="מה קרה בתיקים שבחרתי?">מה קרה בתיקים</button>' +
+        '<button type="button" class="pc-linkbtn" data-clear>ניקוי בחירה</button>' +
+      '</div>';
+  }
+  thread.addEventListener('change', function (e) {
+    var cb = e.target.closest('[data-pick]'); if (!cb) return;
+    var id = cb.dataset.pick, ids = S.sel.filter(function (x) { return x !== id; });
+    if (cb.checked) ids.push(id);
+    setSel(ids);
+  });
+  $('pcSel').addEventListener('click', function (e) {
+    var t = e.target;
+    var un = t.closest('[data-unpick]');
+    if (un) { setSel(S.sel.filter(function (x) { return x !== un.dataset.unpick; })); $('pcAskDock').focus(); return; }
+    if (t.closest('[data-clear]')) { setSel([]); $('pcAskDock').focus(); return; }
+    var qb = t.closest('[data-q]'); if (qb) ask(qb.dataset.q);
+  });
+  $('pcNew').addEventListener('click', reset);
+
+  /* ── composers ── */
+  function grow(t) { t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 180) + 'px'; }
+  function syncSend() {
+    [['pcAskHome', 'pcFormHome'], ['pcAskDock', 'pcFormDock']].forEach(function (p) {
+      $(p[1]).querySelector('.pc-send').disabled = S.busy || !$(p[0]).value.trim();
+    });
+  }
+  [['pcAskHome', 'pcFormHome'], ['pcAskDock', 'pcFormDock']].forEach(function (p) {
+    var t = $(p[0]), f = $(p[1]);
+    t.addEventListener('input', function () { grow(t); syncSend(); });
+    t.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask(t.value); } });
+    f.addEventListener('submit', function (e) { e.preventDefault(); ask(t.value); });
+  });
+  $('pcSuggest').innerHTML = SUGGEST.map(function (s) {
+    return '<button type="button" class="pc-sugg">' + svg.msg + '<span>' + esc(s) + '</span></button>';
+  }).join('');
+  $('pcSuggest').addEventListener('click', function (e) {
+    var b = e.target.closest('.pc-sugg'); if (b) ask(b.textContent);
+  });
+
+  /* ── answer interactions: citations, source cards, actions ── */
+  function openSrc(li, open) {
+    li.classList.toggle('is-open', open);
+    li.querySelector('.pc-srcbody').hidden = !open;
+    li.querySelector('.pc-chev').setAttribute('aria-expanded', open);
+  }
+  thread.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t.closest('.pc-pick')) return;
+    var cite = t.closest('.pc-cite');
+    if (cite) {
+      var art = cite.closest('.pc-a');
+      var li = art.querySelector('.pc-src[data-n="' + cite.dataset.n + '"]');
+      art.querySelectorAll('.pc-src.is-active').forEach(function (x) { if (x !== li) x.classList.remove('is-active'); });
+      li.classList.add('is-active');
+      openSrc(li, true);
+      li.scrollIntoView({ block: 'center', behavior: reduce() ? 'auto' : 'smooth' });
+      li.querySelector('.pc-chev').focus({ preventScroll: true });
+      return;
+    }
+    var doc = t.closest('[data-doc]');
+    if (doc) { e.preventDefault(); openDoc(doc.dataset.doc, doc); return; }
+    var askB = t.closest('[data-ask]');
+    if (askB) { var c = CASES.filter(function (x) { return x.num === askB.dataset.ask; })[0]; ask('ספר לי עוד על ת"צ ' + c.num + ' (' + c.pl + ' נ\' ' + c.df + ')', { solo: true }); return; }
+    var copy = t.closest('[data-copy]');
+    if (copy) {
+      var text = copy.closest('.pc-a').querySelector('.pc-body').innerText;
+      var done = function () { copy.setAttribute('aria-pressed', 'true'); copy.title = 'הועתק'; setTimeout(function () { copy.setAttribute('aria-pressed', 'false'); copy.title = 'העתקת התשובה'; }, 1600); };
+      try { navigator.clipboard.writeText(text).then(done, done); } catch (err) { done(); }
+      return;
+    }
+    var rate = t.closest('[data-rate]');
+    if (rate) {
+      var on = rate.getAttribute('aria-pressed') !== 'true';
+      rate.parentNode.querySelectorAll('[data-rate]').forEach(function (r) { r.setAttribute('aria-pressed', 'false'); });
+      rate.setAttribute('aria-pressed', on);
+      return;
+    }
+    var row = t.closest('[data-toggle]');
+    if (row) { var item = row.closest('.pc-src'); openSrc(item, !item.classList.contains('is-open')); }
+  });
+
+  /* ── document panel ── */
+  var lastFocus = null;
+  function openDoc(id, from) {
+    var c = byId(id); lastFocus = from;
+    $('pcDocTitle').innerHTML = num(c) + ' · ' + esc(c.kind);
+    $('pcPaper').innerHTML = '<div class="c">' + esc(c.court) + '</div><div class="n">ת"צ <span class="pc-num">' + c.num + '</span></div>' +
+      '<p><b>המבקש/ת:</b> ' + esc(c.pl) + '<br><b>המשיבה:</b> ' + esc(c.df) + '</p><h4>' + esc(c.kind) + '</h4>' +
+      '<p>1. עניינו של ההליך ב' + esc(c.cause) + '.</p><p>2. ' + esc(c.sum) + '</p><p>3. <mark>' + esc(c.quote) + '</mark></p>' +
+      '<p>4. ' + esc(c.outcome) + '</p><p style="color:#555c6b;font-size:12.5px;margin-top:22px">מסמך לדוגמה באב־טיפוס. התוכן בדוי.</p>';
+    $('pcDoc').hidden = false; $('pcDocBg').hidden = false;
+    $('pcDocClose').focus();
+  }
+  function closeDoc() {
+    if ($('pcDoc').hidden) return;
+    $('pcDoc').hidden = true; $('pcDocBg').hidden = true;
+    if (lastFocus) lastFocus.focus();
+  }
+  $('pcDocClose').addEventListener('click', closeDoc);
+  $('pcDocBg').addEventListener('click', closeDoc);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDoc(); });
+
+  syncSend();
+  /* #chat opens straight on an answered question, so the screen can be linked */
+  if (location.hash === '#chat') { ask(SUGGEST[0], { instant: true }); }
+})();
+
+/* ── mobile drawer (≤860): the rail slides in from the right ── */
+(function () {
+  var open = function (on) {
+    document.body.classList.toggle('md-drawer-open', on);
+    var b = document.getElementById('mdBurger'); if (b) b.setAttribute('aria-expanded', on);
+  };
+  var b = document.getElementById('mdBurger');
+  if (b) b.addEventListener('click', function () { open(true); });
+  var x = document.getElementById('mdDrawerClose');
+  if (x) x.addEventListener('click', function () { open(false); });
+  document.getElementById('mdBackdrop').addEventListener('click', function () { open(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') open(false); });
+})();
+</script>
+</body>
+</html>

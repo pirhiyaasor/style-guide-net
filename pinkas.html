@@ -1,0 +1,870 @@
+<meta charset="utf-8">
+<title>פנקס התובענות הייצוגיות</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: נט המשפט app shell (header 62 + right rail 68 + dark footer); content = פנקס flow: search → result cards → chat with selected cases */
+:root{
+  --brand-navy:#0a3b8f; --brand-navy-hover:#082e6f; --brand-navy-deep:#062356;
+  --brand-azure:#2a6fdb; --brand-azure-hover:#1f5cba;
+  --brand-tint:#e8eff9; --brand-tint-strong:#cfdcf0; --tint-hover-border:#b8cdec;
+  --cvs-hover:#d6e6fa;
+  --accent-fg:#0a3b8f;             /* navy used as text/icon */
+  --on-accent:#ffffff;
+  --fg-1:#323338; --fg-2:#676879; --fg-3:#9699a6; --fg-table:#001E40; --fg-title:#1a1a1a;
+  --bg-1:#ffffff; --bg-2:#f6f7fb; --bg-app:#f4f8fc; --bg-input:#fbfcfe; --bg-soft:#f1f5fa; --bg-paper:#ffffff;
+  --border-1:#c3c6d4; --border-2:#d0d4e4; --border-rail:#e1e6ef; --border-row:#eef1f6; --border-input:#dce4f0;
+  --negative-color:#d83a52;
+  --st-open-bg:#e8f6ee; --st-open-fg:#00734a;
+  --st-done-bg:#ffe4d9; --st-done-fg:#c2410c;
+  --st-wait-bg:#fdeeda; --st-wait-fg:#854f0b;
+  --warn-bg:#fdf3e2; --warn-border:#f2d39c; --warn-fg:#7a4a06;
+  --ok-bg:#eaf6ef; --ok-border:#bfe3cd; --ok-fg:#00613f;
+  --err-bg:#fdeeeb; --err-fg:#b33d2b;
+  --footer-bg:#001e40; --footer-fg:#ffffff; --footer-accent:#f26b4f;
+  --shadow-hdr:0 1px 6px rgba(20,40,80,.07);
+  --shadow-card:0 2px 10px rgba(20,40,80,.07);
+  --shadow-card-hover:0 8px 22px rgba(20,40,80,.12);
+  --shadow-medium:0 6px 20px rgba(0,0,0,.15);
+  --shadow-large:0 15px 50px rgba(0,0,0,.22);
+  --shadow-focus:0 0 0 2px var(--brand-tint), 0 0 0 4px var(--brand-azure);
+  --backdrop:rgba(6,30,64,.32);
+  --font:"Rubik","Segoe UI",Roboto,Arial,sans-serif;
+  --shell-header-h:62px; --shell-rail-w:68px;
+  --t:100ms cubic-bezier(.4,0,.2,1);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --brand-navy:#2f63c4; --brand-navy-hover:#3a70d4; --brand-navy-deep:#2556b0;
+  --brand-tint:#1b2a44; --brand-tint-strong:#27406a; --tint-hover-border:#355689; --cvs-hover:#22385c;
+  --accent-fg:#9dbcf0; --on-accent:#ffffff;
+  --fg-1:#e3e6ee; --fg-2:#a9afc0; --fg-3:#7f879b; --fg-table:#dfe7f5; --fg-title:#f2f4f8;
+  --bg-1:#161d2b; --bg-2:#1d2636; --bg-app:#0f1521; --bg-input:#121927; --bg-soft:#1f2a3d; --bg-paper:#f7f8fa;
+  --border-1:#3a4559; --border-2:#2f394b; --border-rail:#273041; --border-row:#232c3c; --border-input:#34405a;
+  --st-open-bg:#123527; --st-open-fg:#6fd6a5; --st-done-bg:#3d2116; --st-done-fg:#f59a6c;
+  --st-wait-bg:#3a2a12; --st-wait-fg:#f0c27a;
+  --warn-bg:#33270f; --warn-border:#5c4517; --warn-fg:#f0c98a;
+  --ok-bg:#12301f; --ok-border:#1f5236; --ok-fg:#7fdcae;
+  --err-bg:#3a1d19; --err-fg:#f29a8a;
+  --footer-bg:#0a1424;
+  --shadow-hdr:0 1px 0 #232c3c; --shadow-card:0 1px 0 rgba(0,0,0,.3); --shadow-card-hover:0 8px 22px rgba(0,0,0,.4);
+  --shadow-medium:0 8px 24px rgba(0,0,0,.5);
+  --backdrop:rgba(0,0,0,.5);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --brand-navy:#2f63c4; --brand-navy-hover:#3a70d4; --brand-navy-deep:#2556b0;
+  --brand-tint:#1b2a44; --brand-tint-strong:#27406a; --tint-hover-border:#355689; --cvs-hover:#22385c;
+  --accent-fg:#9dbcf0; --on-accent:#ffffff;
+  --fg-1:#e3e6ee; --fg-2:#a9afc0; --fg-3:#7f879b; --fg-table:#dfe7f5; --fg-title:#f2f4f8;
+  --bg-1:#161d2b; --bg-2:#1d2636; --bg-app:#0f1521; --bg-input:#121927; --bg-soft:#1f2a3d; --bg-paper:#f7f8fa;
+  --border-1:#3a4559; --border-2:#2f394b; --border-rail:#273041; --border-row:#232c3c; --border-input:#34405a;
+  --st-open-bg:#123527; --st-open-fg:#6fd6a5; --st-done-bg:#3d2116; --st-done-fg:#f59a6c;
+  --st-wait-bg:#3a2a12; --st-wait-fg:#f0c27a;
+  --warn-bg:#33270f; --warn-border:#5c4517; --warn-fg:#f0c98a;
+  --ok-bg:#12301f; --ok-border:#1f5236; --ok-fg:#7fdcae;
+  --err-bg:#3a1d19; --err-fg:#f29a8a;
+  --footer-bg:#0a1424;
+  --shadow-hdr:0 1px 0 #232c3c; --shadow-card:0 1px 0 rgba(0,0,0,.3); --shadow-card-hover:0 8px 22px rgba(0,0,0,.4);
+  --shadow-medium:0 8px 24px rgba(0,0,0,.5);
+  --backdrop:rgba(0,0,0,.5);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{direction:rtl}
+body{margin:0;font:400 14px/20px var(--font);color:var(--fg-1);background:var(--bg-app);padding-right:var(--shell-rail-w);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg-1)}
+button,input,select,textarea{font:inherit;color:inherit}
+input,select,button,summary,a,textarea{transition:background-color var(--t),border-color var(--t),color var(--t)}
+a{color:var(--brand-azure)}
+:focus-visible{outline:2px solid var(--brand-azure);outline-offset:2px}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.num{direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums}
+
+/* ───── Header ───── */
+.hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--bg-1);box-shadow:var(--shadow-hdr)}
+.hdr-in{height:var(--shell-header-h);display:flex;align-items:center;gap:24px;padding-inline:max(32px,env(safe-area-inset-right,0px)) max(32px,env(safe-area-inset-left,0px))}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--accent-fg);flex:none}
+.logo svg{width:30px;height:36px}
+.logo b{display:block;font:700 17px/1.1 var(--font);letter-spacing:-.2px}
+.logo small{display:block;font:400 13px/1.2 var(--font);color:var(--accent-fg);opacity:.85}
+.find{flex:1;display:flex;justify-content:center;align-items:center;gap:8px;min-width:0}
+.cvs-select,.cvs-in{height:36px;border:1px solid var(--border-1);border-radius:6px;background:var(--bg-1);padding:4px 10px;font-size:14px}
+.cvs-select{width:150px;appearance:none;padding-inline:12px 28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23676879' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 10px center}
+.cvs-in{text-align:center;direction:ltr}
+.cvs-select:hover,.cvs-in:hover{border-color:var(--fg-2)}
+.cvs-select:focus,.cvs-in:focus{outline:none;border-color:var(--brand-azure)}
+.dash{color:var(--fg-3)}
+.btn-soft{height:36px;padding:0 16px;border-radius:6px;border:1px solid transparent;background:var(--brand-tint);color:var(--accent-fg);font-weight:500;cursor:pointer}
+.btn-soft:hover{background:var(--tint-hover-border);border-color:var(--tint-hover-border)}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent-fg);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:14px}
+.linkbtn:hover{color:var(--brand-azure-hover)}
+.user{display:flex;align-items:center;gap:12px;flex:none}
+.bell{position:relative;width:34px;height:34px;border-radius:50%;border:1px solid var(--border-1);background:var(--bg-1);color:var(--accent-fg);display:grid;place-items:center;cursor:pointer}
+.bell:hover{background:var(--brand-tint);border-color:var(--brand-tint-strong)}
+.bell .badge{position:absolute;top:-8px;left:-3px;width:16px;height:16px;border-radius:50%;background:var(--negative-color);color:#fff;font-size:10px;line-height:16px;text-align:center}
+details.dd{position:relative}
+details.dd>summary{list-style:none;cursor:pointer}
+details.dd>summary::-webkit-details-marker{display:none}
+.avatar{display:flex;align-items:center;gap:7px;padding:2px 6px 2px 4px;border-radius:6px}
+.avatar:hover,details[open]>.avatar{background:rgba(0,30,64,.06)}
+.avatar .c{width:34px;height:34px;border-radius:50%;background:var(--brand-tint);color:var(--accent-fg);font:600 14px/34px var(--font);text-align:center}
+.avatar .r{font:500 13px var(--font);color:var(--accent-fg)}
+.avatar svg{width:14px;height:14px;color:var(--fg-3);transition:transform .15s}
+details[open]>.avatar svg{transform:rotate(180deg)}
+.menu{position:absolute;top:calc(100% + 6px);left:0;z-index:40;width:282px;background:var(--bg-1);border-radius:8px;padding:8px;box-shadow:var(--shadow-medium)}
+.menu h4{margin:0;padding:8px 12px 6px;font:600 16px var(--font);color:var(--fg-1)}
+.menu .mi{display:flex;align-items:center;gap:8px;min-height:34px;padding:8px 12px;border-radius:4px;font-size:14px;color:var(--fg-1);cursor:pointer}
+.menu .mi:hover{background:var(--cvs-hover)}
+.menu .mi.on{background:var(--brand-tint);cursor:default}
+.menu .mi.on::after{content:"✓";margin-inline-start:auto;color:var(--accent-fg)}
+.menu hr{border:0;border-top:1px solid var(--border-row);margin:6px 0}
+.burger{display:none;width:40px;height:40px;border-radius:8px;border:0;background:none;color:var(--accent-fg);cursor:pointer;place-items:center}
+.burger:hover{background:var(--cvs-hover)}
+
+/* ───── Rail ───── */
+.rail{position:fixed;top:0;right:0;bottom:0;width:var(--shell-rail-w);z-index:40;background:var(--bg-1);padding-top:env(safe-area-inset-top,0px)}
+.rail::before{content:"";position:absolute;inset:0 auto 0 0;width:1px;background:var(--border-rail)}
+.rail-in{height:100%;display:flex;flex-direction:column;align-items:center;gap:4px;padding:0 3px 4px}
+.rail-head{display:none}
+.ri{position:relative;width:62px}
+.ri>summary,.ri>a{list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:4px;color:var(--accent-fg);text-decoration:none;cursor:pointer;font:400 11px/1.25 var(--font);text-align:center;transition:background-color .12s ease}
+.ri>summary::-webkit-details-marker{display:none}
+.ri>summary:hover,.ri>a:hover,.ri[open]>summary{background:var(--cvs-hover)}
+.ri svg.i{width:19px;height:19px}
+.ri.dash{margin:4px 2px 2px}
+.ri.dash>a{height:54px;padding:8px 2px 2px;border-radius:8px;justify-content:center}
+.ri.dash svg{width:26px;height:26px}
+.ri.app{margin-top:auto}
+.fly{position:absolute;top:0;right:72px;z-index:30;width:230px;background:var(--bg-1);border-radius:8px;padding:8px;box-shadow:var(--shadow-medium)}
+.fly a{display:block;padding:9px 12px;border-radius:4px;font:400 15px/1.35 var(--font);color:var(--fg-1);text-decoration:none}
+.fly a:hover{background:var(--cvs-hover)}
+.ri.app .fly{top:auto;bottom:0}
+.scrim{position:fixed;inset:0;background:var(--backdrop);z-index:35}
+
+/* ───── Page ───── */
+main{padding-block:28px 64px;padding-inline:max(32px,env(safe-area-inset-right,0px)) max(32px,env(safe-area-inset-left,0px));min-height:calc(100vh - var(--shell-header-h))}
+.ph{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.dc-title{margin:0;font:700 26px/1.25 var(--font);color:var(--fg-title);letter-spacing:-.2px;text-wrap:balance}
+.ph p{margin:6px 0 0;color:var(--fg-2);font-size:15px;max-width:68ch}
+.crumbs{font-size:13px;color:var(--fg-3);margin-bottom:6px}
+.crumbs a{color:var(--fg-2);text-decoration:none}
+.crumbs a:hover{color:var(--accent-fg);text-decoration:underline}
+.card{background:var(--bg-1);border-radius:12px;box-shadow:var(--shadow-card)}
+.view{display:flex;flex-direction:column;gap:24px}
+
+/* buttons */
+.btn{height:38px;padding:0 22px;border-radius:6px;font:500 14px var(--font);display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;border:1px solid transparent;white-space:nowrap;text-decoration:none}
+.btn svg.i{width:16px;height:16px}
+.btn-primary{background:var(--brand-navy);color:var(--on-accent)}
+.btn-primary:hover{background:var(--brand-navy-hover)}
+.btn-primary:disabled{background:var(--brand-tint-strong);color:var(--accent-fg);cursor:not-allowed;opacity:.8}
+.btn-ghost{background:var(--bg-1);border-color:var(--border-1);color:var(--accent-fg)}
+.btn-ghost:hover{background:var(--brand-tint);border-color:var(--brand-tint)}
+.btn-ghost:disabled{color:var(--fg-3);background:var(--bg-2);border-color:var(--border-2);cursor:not-allowed}
+.btn-sm{height:32px;padding:0 12px;font-size:13px;border-radius:8px}
+.iconbtn{width:28px;height:28px;border-radius:6px;border:0;background:none;color:var(--fg-2);display:grid;place-items:center;cursor:pointer}
+.iconbtn:hover{background:var(--brand-tint);color:var(--accent-fg)}
+.iconbtn svg.i{width:16px;height:16px}
+
+/* search card */
+.sc{padding:24px 28px 22px;display:flex;flex-direction:column;gap:14px}
+.sc-top{display:flex;align-items:center;gap:8px}
+.dc-label{font:400 13px var(--font);color:var(--fg-2)}
+.sc-top .dc-label{font:500 15px var(--font);color:var(--fg-1)}
+.info{position:relative}
+.info>button{width:24px;height:24px;border-radius:50%;border:0;background:none;color:var(--fg-3);display:grid;place-items:center;cursor:pointer}
+.info>button:hover,.info>button[aria-expanded="true"]{background:var(--bg-soft);color:var(--accent-fg)}
+.info>button svg.i{width:16px;height:16px}
+.pop{position:absolute;top:30px;right:-8px;z-index:20;width:300px;background:var(--bg-1);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow-medium);font-size:13.5px;line-height:1.6;color:var(--fg-1)}
+.pop b{color:var(--accent-fg);font-weight:500}
+.q-wrap{position:relative}
+.q{width:100%;min-height:96px;resize:vertical;border:1px solid var(--border-input);border-radius:11px;background:var(--bg-input);padding:14px 16px;font-size:16px;line-height:1.55;color:var(--fg-1)}
+.q::placeholder{color:var(--fg-3)}
+.q:hover{border-color:var(--fg-2)}
+.q:focus{outline:none;border-color:var(--brand-azure);background:var(--bg-1);box-shadow:0 0 0 4px rgba(42,111,219,.1)}
+.dc-fieldhint{font-size:12.5px;color:var(--fg-3);margin-top:-6px}
+.sc-foot{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chips .lbl{font-size:13px;color:var(--fg-2);margin-inline-end:2px}
+.chip{height:30px;padding:0 13px;border-radius:999px;border:1px solid var(--brand-tint-strong);background:var(--bg-1);color:var(--accent-fg);font-size:13px;cursor:pointer;white-space:nowrap}
+.chip:hover{background:var(--brand-tint)}
+.sc-actions{margin-inline-start:auto;display:flex;gap:10px}
+
+/* empty */
+.res-card{padding:18px 22px 22px}
+.res-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.res-head h2{margin:0;font:500 17px var(--font);color:var(--fg-2)}
+.res-head .cnt{font-size:13px;color:var(--fg-3)}
+.dc-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:72px 16px 80px;color:var(--fg-3)}
+.dc-empty svg.i{width:34px;height:34px;stroke-width:1.6;margin-bottom:6px}
+.dc-empty b{font:500 16px var(--font);color:var(--fg-2)}
+.how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:8px;max-width:820px;margin-inline:auto;text-align:right}
+.how div{border:1.5px solid var(--brand-tint-strong);border-radius:10px;padding:14px 14px 12px}
+.how em{font-style:normal;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--brand-tint);color:var(--accent-fg);font:600 12px var(--font);margin-bottom:6px}
+.how b{display:block;font:500 14px var(--font);color:var(--fg-1);margin-bottom:2px}
+.how span{font-size:13px;color:var(--fg-2);line-height:1.5}
+
+/* summary strip */
+.dc-summary{display:flex;align-items:center;gap:10px;padding:14px 22px;cursor:pointer;min-width:0}
+.dc-summary:hover{background:var(--brand-tint)}
+.dc-summary .mode{color:var(--accent-fg);font-weight:500;flex:none}
+.dc-summary .v{color:var(--fg-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
+.dc-summary .e{display:flex;align-items:center;gap:4px;color:var(--accent-fg);font-size:14px;flex:none}
+.dc-summary .e svg{width:14px;height:14px}
+.dc-summary svg.lead{color:var(--accent-fg)}
+
+/* toolbar */
+.tb{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tb h2{margin:0;font:500 17px var(--font);color:var(--fg-1)}
+.tb .cnt{color:var(--fg-2);font-size:14px}
+.tb .sp{flex:1}
+.dc-select{height:34px;border:1px solid var(--border-1);border-radius:6px;padding:0 11px 0 30px;appearance:none;background:var(--bg-1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23676879' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat left 10px center;font-size:14px;color:var(--fg-1)}
+.dc-select:hover{border-color:var(--fg-2)}
+.legend{display:flex;gap:6px;flex-wrap:wrap;font-size:12.5px;color:var(--fg-2);align-items:center}
+
+/* result cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:16px}
+.rc{position:relative;display:flex;flex-direction:column;gap:10px;padding:16px 18px 16px;background:var(--bg-1);border:1.5px solid var(--border-2);border-radius:12px;box-shadow:var(--shadow-card);cursor:pointer;transition:box-shadow .15s, border-color .15s, background-color .15s}
+.rc:hover{box-shadow:var(--shadow-card-hover);border-color:var(--brand-tint-strong)}
+.rc.sel{border-color:var(--brand-navy);background:var(--brand-tint)}
+.rc-top{display:flex;align-items:center;gap:10px}
+.ck{width:18px;height:18px;accent-color:var(--brand-navy);margin:0;cursor:pointer;flex:none}
+.casepill{white-space:nowrap;font:600 14px/1 var(--font);color:var(--accent-fg);background:var(--brand-tint);padding:6px 11px;border-radius:999px}
+.rc.sel .casepill{background:var(--bg-1)}
+.st{margin-inline-start:auto;font:500 12px/1 var(--font);padding:5px 9px;border-radius:999px;white-space:nowrap}
+.st-pending{background:var(--brand-tint);color:var(--accent-fg)}
+.rc.sel .st-pending{background:var(--bg-1)}
+.st-approved{background:var(--st-open-bg);color:var(--st-open-fg)}
+.st-settled{background:var(--st-wait-bg);color:var(--st-wait-fg)}
+.st-rejected{background:var(--st-done-bg);color:var(--st-done-fg)}
+.rc h3{margin:2px 0 0;font:500 17px/1.35 var(--font);color:var(--fg-title)}
+.meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:13px;color:var(--fg-2)}
+.meta span+span{border-inline-start:1px solid var(--border-2);padding-inline-start:10px}
+.cause{font-size:14px;color:var(--fg-1);line-height:1.5}
+.cause b{font-weight:500;color:var(--accent-fg)}
+.rel{display:inline-flex;align-items:center;gap:6px;font:500 12px var(--font);color:var(--fg-2)}
+.rel i{display:inline-flex;gap:2px}
+.rel i::before,.rel i::after,.rel i span{content:"";width:6px;height:10px;border-radius:2px;background:var(--border-2);display:block}
+.rel[data-l="3"] i::before,.rel[data-l="3"] i span,.rel[data-l="3"] i::after,
+.rel[data-l="2"] i::before,.rel[data-l="2"] i span,
+.rel[data-l="1"] i::before{background:var(--brand-navy)}
+.sum{font-size:14px;line-height:1.6;color:var(--fg-2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;border-top:1px solid var(--border-row);padding-top:10px}
+.rc.open .sum{-webkit-line-clamp:unset;display:block}
+.rc-foot{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:4px}
+.more{background:none;border:0;padding:4px 0;color:var(--accent-fg);font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:3px}
+.more:hover{text-decoration:underline}
+.more svg{width:14px;height:14px;transition:transform .15s}
+.rc.open .more svg{transform:rotate(180deg)}
+.rc-foot .btn{margin-inline-start:auto}
+
+/* selection bar */
+.selbar{position:sticky;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;display:flex;align-items:center;gap:14px;padding:10px 12px 10px 10px;padding-inline-start:18px;background:var(--bg-1);border:1px solid var(--border-2);border-radius:12px;box-shadow:var(--shadow-medium);flex-wrap:wrap}
+.selbar .n{font:500 14px var(--font);color:var(--accent-fg);background:var(--brand-tint);padding:6px 12px;border-radius:999px}
+.selbar .hint{color:var(--fg-2);font-size:13px;flex:1;min-width:160px}
+.selbar .btn-primary{height:40px}
+
+/* doc panel */
+.docp{position:fixed;top:0;bottom:0;left:0;z-index:50;width:min(640px,94vw);background:var(--bg-2);box-shadow:var(--shadow-large);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-left:env(safe-area-inset-left,0px)}
+.docp-h{display:flex;align-items:center;gap:10px;padding:14px 18px;background:var(--bg-1);border-bottom:1px solid var(--border-2)}
+.docp-h h3{margin:0;font:500 16px var(--font);color:var(--fg-1);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.docp-b{flex:1;overflow:auto;padding:24px}
+.paper{background:var(--bg-paper);color:#1d2330;max-width:560px;margin:0 auto;padding:44px 48px;border-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,.12);font-size:14px;line-height:1.8}
+.paper .court{text-align:center;font-weight:600;margin-bottom:2px}
+.paper .no{text-align:center;color:#555c6b;margin-bottom:22px}
+.paper h4{text-align:center;font:600 16px var(--font);margin:20px 0 12px;text-decoration:underline;text-underline-offset:4px}
+.paper p{margin:0 0 12px}
+.paper .parties{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin-bottom:8px}
+.paper .parties span:nth-child(odd){color:#555c6b}
+
+/* ───── Chat ───── */
+.chat{display:grid;grid-template-columns:260px minmax(0,1fr);gap:24px;align-items:start}
+.cases{position:sticky;top:calc(var(--shell-header-h) + 20px);display:flex;flex-direction:column;max-height:calc(100vh - var(--shell-header-h) - 140px)}
+.cases-h{display:flex;align-items:center;gap:8px;padding:16px 16px 12px;border-bottom:1px solid var(--border-row)}
+.cases-h h2{margin:0;font:500 17px var(--font);color:var(--accent-fg);flex:1}
+.cnt-b{min-width:22px;height:22px;border-radius:999px;background:var(--brand-tint);color:var(--accent-fg);font:600 12px/22px var(--font);text-align:center;padding:0 6px}
+.cases ul{list-style:none;margin:0;padding:8px;display:flex;flex-direction:column;gap:6px;overflow:auto}
+.cases li{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:8px;border:1px solid var(--border-2)}
+.cases li:hover{background:var(--cvs-hover);border-color:transparent}
+.cases li div{flex:1;min-width:0}
+.cases li b{display:block;font:500 14px/1.35 var(--font);color:var(--fg-table)}
+.cases li small{display:block;font-size:12.5px;color:var(--fg-2);margin-top:2px}
+.cases li .num{color:var(--accent-fg);font-weight:500}
+.cases-f{padding:12px 16px 16px;border-top:1px solid var(--border-row);display:flex;flex-direction:column;gap:8px}
+.cases-f .btn{width:100%}
+.cw{display:flex;flex-direction:column;height:calc(100vh - var(--shell-header-h) - 140px);min-height:520px;overflow:hidden}
+.cw-h{display:flex;align-items:center;gap:10px;padding:14px 22px;border-bottom:1px solid var(--border-row)}
+.cw-h h2{margin:0;font:500 17px var(--font);color:var(--fg-1);flex:1}
+.cw-h .goal{font-size:13px;color:var(--fg-2)}
+.msgs{flex:1;overflow:auto;padding:22px 22px 8px;display:flex;flex-direction:column;gap:14px}
+.sysmsg{align-self:center;max-width:640px;text-align:center;background:var(--brand-tint);color:var(--accent-fg);font-size:13.5px;line-height:1.5;padding:8px 16px;border-radius:999px}
+.sugg{display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 0 4px}
+.sugg .lbl{font-size:13px;color:var(--fg-2)}
+.sugg .chips{justify-content:center}
+.m{max-width:min(760px,88%);font-size:15px;line-height:1.65}
+.m.u{align-self:flex-start;background:var(--brand-navy);color:var(--on-accent);padding:11px 16px;border-radius:12px 4px 12px 12px}
+.m.a{align-self:flex-end;background:var(--bg-1);border:1px solid var(--border-2);color:var(--fg-1);padding:14px 18px;border-radius:4px 12px 12px 12px}
+.m.a p{margin:0 0 10px}
+.m.a p:last-child{margin-bottom:0}
+.m.a ul{margin:0 0 10px;padding-inline-start:18px}
+.m.a li{margin-bottom:6px}
+.m.a .disc{font-size:12px;color:var(--fg-3);margin-top:10px;padding-top:8px;border-top:1px solid var(--border-row)}
+.ref{display:inline-block;white-space:nowrap;font:500 13px/1 var(--font);color:var(--accent-fg);background:var(--brand-tint);padding:4px 8px;border-radius:999px;border:0;cursor:pointer;direction:ltr}
+.ref:hover{background:var(--brand-tint-strong)}
+.verdict{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;margin-bottom:12px;border:1px solid}
+.verdict svg.i{margin-top:2px}
+.verdict b{display:block;font-weight:500}
+.verdict span{font-size:13.5px}
+.v-warn{background:var(--warn-bg);border-color:var(--warn-border);color:var(--warn-fg)}
+.v-ok{background:var(--ok-bg);border-color:var(--ok-border);color:var(--ok-fg)}
+.cmp-wrap{overflow-x:auto;margin:4px 0 10px;border:1px solid var(--border-2);border-radius:8px}
+.cmp{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
+.cmp th{background:var(--bg-soft);color:var(--fg-2);font-weight:500;text-align:right;padding:8px 10px}
+.cmp td{padding:8px 10px;border-top:1px solid var(--border-row);color:var(--fg-table);vertical-align:top}
+.m.err{align-self:flex-end;display:flex;gap:10px;align-items:center;background:var(--err-bg);color:var(--err-fg);border:0;padding:12px 16px;border-radius:4px 12px 12px 12px;font-size:14.5px}
+.m.err .linkbtn{color:var(--err-fg);font-weight:500}
+.typing{align-self:flex-end;display:flex;gap:5px;padding:14px 18px;background:var(--bg-1);border:1px solid var(--border-2);border-radius:4px 12px 12px 12px}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--accent-fg);opacity:.35;animation:dot 1.1s infinite}
+.typing i:nth-child(2){animation-delay:.18s}.typing i:nth-child(3){animation-delay:.36s}
+@keyframes dot{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:.9;transform:translateY(-3px)}}
+.composer{display:flex;gap:10px;align-items:flex-end;padding:14px 22px 18px;border-top:1px solid var(--border-row)}
+.composer textarea{flex:1;min-height:46px;max-height:140px;resize:none;border:1px solid var(--border-input);border-radius:11px;background:var(--bg-input);padding:12px 14px;font-size:15px;line-height:1.4}
+.composer textarea:hover{border-color:var(--fg-2)}
+.composer textarea:focus{outline:none;border-color:var(--brand-azure);background:var(--bg-1);box-shadow:0 0 0 4px rgba(42,111,219,.1)}
+.send{width:46px;height:46px;border-radius:11px;border:0;background:var(--brand-navy);color:var(--on-accent);display:grid;place-items:center;cursor:pointer;flex:none}
+.send:hover{background:var(--brand-navy-hover)}
+.send:disabled{background:var(--brand-tint-strong);color:var(--accent-fg);cursor:not-allowed}
+.send svg.i{transform:scaleX(-1)}
+
+/* ───── Footer ───── */
+footer{background:var(--footer-bg);color:var(--footer-fg)}
+.ft{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px;padding-block:64px 72px;padding-inline:max(72px,env(safe-area-inset-right,0px)) max(72px,env(safe-area-inset-left,0px))}
+.ft h3{margin:14px 0 18px;font:700 19px var(--font)}
+.ft svg.fi{width:34px;height:34px;color:var(--footer-accent);stroke-width:1.6}
+.ft ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.ft a{color:var(--footer-fg);text-decoration:none;font-size:17px;display:inline-flex;align-items:center;gap:8px}
+.ft a::before{content:"‹";color:var(--footer-accent);font-size:22px;line-height:0}
+.ft a:hover{text-decoration:underline}
+.ft .hrs{font-size:15px;line-height:1.6;margin-bottom:16px}
+.ft .tel{display:flex;gap:24px;flex-wrap:wrap}
+.ft .tel b{display:block;font:700 19px var(--font);direction:ltr;text-align:right}
+.ft .tel small{font-size:15px}
+
+/* ───── Responsive ───── */
+@media (max-width:1180px){ .ft{grid-template-columns:repeat(2,minmax(0,1fr));padding-inline:max(40px,env(safe-area-inset-right,0px)) max(40px,env(safe-area-inset-left,0px));padding-block:56px} }
+@media (max-width:1000px){ .chat{grid-template-columns:1fr} .cases{position:static;max-height:none} .cases ul{flex-direction:row;overflow-x:auto} .cases li{min-width:220px} .cases-f{flex-direction:row} .cw{height:calc(100vh - var(--shell-header-h) - 120px)} }
+@media (max-width:860px){
+  body{padding-right:0}
+  .burger{display:grid}
+  .hdr-in{height:auto;min-height:56px;flex-wrap:wrap;gap:8px 12px;padding-block:8px;padding-inline:max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-left,0px))}
+  .find{order:3;flex-basis:100%;justify-content:flex-start;overflow-x:auto;padding-bottom:2px}
+  .user{margin-inline-start:auto}
+  .logo svg{width:26px;height:32px}
+  .rail{width:284px;max-width:86vw;transform:translateX(100%);transition:transform .22s ease;box-shadow:-8px 0 24px rgba(20,40,80,.14)}
+  body.drawer .rail{transform:none}
+  .rail-in{align-items:stretch;padding:0 8px 8px;gap:2px}
+  .rail-head{display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:1px solid var(--border-rail);margin:0 -8px 6px;padding:0 16px}
+  .rail-head b{font:600 17px var(--font);color:var(--fg-1)}
+  .ri{width:auto}
+  .ri>summary,.ri>a,.ri.dash>a{flex-direction:row;gap:12px;padding:12px;height:auto;font-size:16px;text-align:right;justify-content:flex-start}
+  .ri br{display:none}
+  .ri.dash{margin:0}
+  .fly{position:static;width:auto;box-shadow:none;padding:0 31px 4px 0}
+  .ri.app{border-top:1px solid var(--border-rail);padding-top:4px}
+  main{padding-block:20px 48px;padding-inline:max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-left,0px))}
+  .sc{padding:18px 16px}
+  .how{grid-template-columns:1fr}
+  .dc-title{font-size:22px}
+  .ft{grid-template-columns:1fr;padding-block:44px;padding-inline:max(20px,env(safe-area-inset-right,0px)) max(20px,env(safe-area-inset-left,0px))}
+  .m{max-width:94%}
+  .msgs,.composer{padding-inline:14px}
+  .cw-h{padding-inline:14px}
+}
+@media (max-width:640px){ .selbar .hint{display:none} .selbar .btn-primary{flex:1 1 100%} .avatar .r{display:none} .sc-actions{width:100%} .sc-actions .btn{flex:1} .cw-h .goal{display:none} .paper{padding:28px 22px} .docp-b{padding:12px} }
+@media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-fileplus" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M9 15h6M12 18v-6"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-filecheck" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m9 15 2 2 4-4"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8M16 17H8M10 9H8"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1ZM2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
+  <symbol id="i-life" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="m4.93 4.93 4.24 4.24M14.83 14.83l4.24 4.24M14.83 9.17l4.24-4.24M4.93 19.07l4.24-4.24"/></symbol>
+  <symbol id="i-web" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M2 8h20M9 14h6"/></symbol>
+</svg>
+
+<header class="hdr">
+  <div class="hdr-in">
+    <button class="burger" id="burger" aria-label="פתיחת התפריט" aria-expanded="false"><svg class="i"><use href="#i-menu"/></svg></button>
+    <a class="logo" href="#" aria-label="מדינת ישראל, הרשות השופטת — לדף הבית">
+      <svg viewBox="0 0 30 36" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 2h24v20c0 7-6 11-12 12C9 33 3 29 3 22Z"/><path d="M15 9v17M9 12v6a6 6 0 0 0 12 0v-6M11.5 12v6a3.5 3.5 0 0 0 7 0v-6M12 27h6"/></svg>
+      <span><b>הרשות השופטת</b><small>מדינת ישראל</small></span>
+    </a>
+    <form class="find" id="caseFind" role="search" aria-label="איתור תיק">
+      <label class="sr" for="fType">סוג תיק</label>
+      <select class="cvs-select" id="fType"><option>תיק בית משפט</option><option>תיק תעבורה</option><option>תיק ישן</option></select>
+      <label class="sr" for="fMy">חודש ושנה</label>
+      <input class="cvs-in" id="fMy" placeholder="00-00" style="width:56px" maxlength="5">
+      <span class="dash">-</span>
+      <label class="sr" for="fNum">מספר סידורי</label>
+      <input class="cvs-in" id="fNum" placeholder="00000" style="width:64px" maxlength="5">
+      <button class="btn-soft" type="submit">חיפוש</button>
+      <button class="linkbtn" type="button" id="fClear">נקה</button>
+    </form>
+    <div class="user">
+      <button class="bell" aria-label="התראות, 3 חדשות"><svg class="i"><use href="#i-bell"/></svg><span class="badge">3</span></button>
+      <details class="dd" id="avatarDd">
+        <summary class="avatar" aria-label="תפריט משתמש"><span class="c">יכ</span><span class="r">עו״ד</span><svg class="i"><use href="#i-chev"/></svg></summary>
+        <div class="menu">
+          <h4>יעל כהן</h4>
+          <div class="mi on">עו״ד, מ.ר 45213</div>
+          <div class="mi">ת.ז 012345678</div>
+          <div class="mi">ת.ז 012345678, חברת אלפא בע״מ</div>
+          <hr>
+          <div class="mi">יציאה</div>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<nav class="rail" id="rail" aria-label="ניווט ראשי">
+  <div class="rail-in">
+    <div class="rail-head"><b>תפריט</b><button class="iconbtn" id="railClose" aria-label="סגירת התפריט"><svg class="i"><use href="#i-x"/></svg></button></div>
+    <div class="ri dash"><a href="#">
+      <svg viewBox="0 0 26 26" aria-hidden="true"><rect x="2" y="5" width="22" height="16" rx="3" fill="#e8eff9" stroke="#0a3b8f" stroke-width="1.4"/><circle cx="8.5" cy="12" r="2.6" fill="#f26b4f"/><path d="M5 18c.6-2 2-3 3.5-3s2.9 1 3.5 3" stroke="#0a3b8f" stroke-width="1.4" fill="none"/><path d="M15 10.5h6M15 13.5h6M15 16.5h4" stroke="#0a3b8f" stroke-width="1.4"/><rect x="10" y="3" width="6" height="4" rx="1" fill="#c8a24a"/></svg>
+      <span>האזור שלי</span></a></div>
+    <details class="ri"><summary><svg class="i"><use href="#i-search"/></svg><span>איתור<br>תיקים</span></summary>
+      <div class="fly"><a href="#">תיקים לפי מס׳ תיק מקור</a><a href="#">תיקים לתאריך פתיחה</a><a href="#">התיקים שלי</a></div></details>
+    <details class="ri"><summary><svg class="i"><use href="#i-fileplus"/></svg><span>פתיחת<br>תיק</span></summary>
+      <div class="fly"><a href="#">פתיחת תיק</a><a href="#">הגשת תביעה בדיון מהיר בבית הדין לעבודה</a></div></details>
+    <details class="ri"><summary><svg class="i"><use href="#i-download"/></svg><span>הגשות</span></summary>
+      <div class="fly"><a href="#">בקשה חדשה</a><a href="#">כתב טענות לבקשה קיימת</a><a href="#">הגשות אחרות</a><a href="#">איתור הגשות לפי אסמכתא</a></div></details>
+    <details class="ri"><summary><svg class="i"><use href="#i-cal"/></svg><span>יומן<br>דיונים</span></summary>
+      <div class="fly"><a href="#">יומן בית משפט</a><a href="#">דיונים לשופט ליום דיונים</a><a href="#">הדיונים שלי</a></div></details>
+    <div class="ri"><a href="#"><svg class="i"><use href="#i-filecheck"/></svg><span>איתור<br>החלטות</span></a></div>
+    <details class="ri"><summary><svg class="i"><use href="#i-card"/></svg><span>תשלומים</span></summary>
+      <div class="fly"><a href="#">תשלום שוברים</a><a href="#">תשלום אגרת בקשה מראש</a></div></details>
+    <details class="ri app"><summary><svg class="i"><use href="#i-phone"/></svg><span>אפליקציה</span></summary>
+      <div class="fly"><a href="#">הורדה ל־iPhone</a><a href="#">הורדה ל־Android</a></div></details>
+  </div>
+</nav>
+<div class="scrim" id="scrim" hidden></div>
+
+<main id="main">
+  <div class="ph">
+    <div>
+      <div class="crumbs"><a href="#">פנקסים, רשימות והנחיות</a> ‹ <span>פנקס התובענות הייצוגיות</span></div>
+      <h1 class="dc-title">פנקס התובענות הייצוגיות</h1>
+      <p>לפני שמגישים בקשה לאישור תובענה ייצוגית, בודקים כאן אם כבר הוגשה תובענה באותו נושא. מתארים את המקרה, בוחרים תיקים מהתוצאות ושואלים עליהם בצ׳ט.</p>
+    </div>
+  </div>
+
+  <!-- ── 1: search ── -->
+  <section class="view" id="v-search" aria-label="חיפוש בפנקס">
+    <form class="card sc" id="searchForm">
+      <div class="sc-top">
+        <label class="dc-label" for="q">תארו את המקרה בשפה חופשית</label>
+        <div class="info">
+          <button type="button" id="infoBtn" aria-expanded="false" aria-controls="infoPop" aria-label="למה לבדוק בפנקס"><svg class="i"><use href="#i-info"/></svg></button>
+          <div class="pop" id="infoPop" hidden>
+            <b>למה לבדוק לפני ההגשה?</b><br>
+            אם כבר הוגשה בקשה לאישור תובענה ייצוגית באותן שאלות של עובדה ומשפט, בקשה נוספת בנושא זהה בדרך כלל לא תתקדם. החיפוש מאתר תובענות דומות לפי המהות, גם אם הניסוח שונה.
+          </div>
+        </div>
+      </div>
+      <textarea class="q" id="q" placeholder="למשל: חברת סלולר מחייבת אותי כל חודש על שירות תוכן שלא הזמנתי"></textarea>
+      <div class="dc-fieldhint">כדאי לציין מי הנתבע, מה המוצר או השירות, ומה הנזק לציבור.</div>
+      <div class="sc-foot">
+        <div class="chips">
+          <span class="lbl">חיפושים נפוצים:</span>
+          <button type="button" class="chip" data-q="הטעיה צרכנית במוצרי מזון">הטעיה צרכנית במזון</button>
+          <button type="button" class="chip" data-q="חיוב יתר בביטוח">חיוב יתר בביטוח</button>
+          <button type="button" class="chip" data-q="חיוב יתר בחשבון טלפון סלולרי">חיוב יתר בסלולר</button>
+          <button type="button" class="chip" data-q="אפליה בקבלה לעבודה">אפליה בקבלה לעבודה</button>
+        </div>
+        <div class="sc-actions">
+          <button type="button" class="btn btn-ghost" id="qClear">נקה</button>
+          <button type="submit" class="btn btn-primary" id="qGo"><svg class="i"><use href="#i-search"/></svg>חיפוש</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="card res-card" id="emptyCard">
+      <div class="res-head"><h2>תוצאות חיפוש</h2></div>
+      <div class="dc-empty">
+        <svg class="i"><use href="#i-search"/></svg>
+        <b>עדיין לא בוצע חיפוש</b>
+        <span>מתארים את המקרה ולוחצים חיפוש, או בוחרים אחד מהחיפושים הנפוצים</span>
+        <div class="how">
+          <div><em>1</em><b>מתארים את המקרה</b><span>במילים שלכם, בלי צורך במונחים משפטיים.</span></div>
+          <div><em>2</em><b>בוחרים תיקים דומים</b><span>מסמנים את התובענות שנראות קרובות לנושא שלכם.</span></div>
+          <div><em>3</em><b>שואלים בצ׳ט</b><span>האם הנושא כבר הוגש, מה ההבדלים ומה קרה בתיק.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 2/3: results ── -->
+  <section class="view" id="v-results" aria-label="תוצאות" hidden>
+    <div class="card dc-summary" id="summary" role="button" tabindex="0" aria-label="עריכת החיפוש">
+      <svg class="i lead"><use href="#i-search"/></svg>
+      <span class="mode">תיאור המקרה</span>
+      <span class="v" id="sumQ"></span>
+      <span class="e">עריכת חיפוש <svg class="i"><use href="#i-chev"/></svg></span>
+    </div>
+    <div class="tb">
+      <h2>תוצאות חיפוש</h2>
+      <span class="cnt" id="resCount"></span>
+      <span class="sp"></span>
+      <label class="sr" for="sort">מיון</label>
+      <select class="dc-select" id="sort"><option value="rel">מיון: רלוונטיות</option><option value="new">מיון: החדשות קודם</option><option value="old">מיון: הישנות קודם</option></select>
+    </div>
+    <div class="grid" id="grid" role="list"></div>
+    <div class="selbar" id="selbar" hidden>
+      <span class="n" id="selN"></span>
+      <span class="hint">אפשר לבחור כמה תיקים ולהשוות ביניהם בשיחה</span>
+      <button class="linkbtn" type="button" id="selClear">ניקוי בחירה</button>
+      <button class="btn btn-primary" type="button" id="toChat"><svg class="i"><use href="#i-msg"/></svg><span id="toChatTxt">שוחח עם התיקים</span></button>
+    </div>
+  </section>
+
+  <!-- ── 4/5: chat ── -->
+  <section id="v-chat" aria-label="שיחה עם התיקים" hidden>
+    <div class="chat">
+      <aside class="card cases" aria-label="תיקים בשיחה">
+        <div class="cases-h"><h2>תיקים בשיחה</h2><span class="cnt-b" id="caseCnt">0</span></div>
+        <ul id="caseList"></ul>
+        <div class="cases-f">
+          <button class="btn btn-ghost" type="button" id="backRes">חזרה לתוצאות</button>
+        </div>
+      </aside>
+      <div class="card cw">
+        <div class="cw-h"><h2>שיחה עם התיקים</h2><span class="goal" id="goal"></span><button class="linkbtn" type="button" id="newChat">שיחה חדשה</button></div>
+        <div class="msgs" id="msgs" aria-live="polite"></div>
+        <form class="composer" id="composer">
+          <label class="sr" for="ask">שאלה על התיקים שנבחרו</label>
+          <textarea id="ask" rows="1" placeholder="שאלו על התיקים שנבחרו, למשל: האם כבר הוגשה תובענה על אותה עילה?"></textarea>
+          <button class="send" id="send" type="submit" aria-label="שליחה" disabled><svg class="i"><use href="#i-send"/></svg></button>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<aside class="docp" id="docp" hidden aria-label="צפייה במסמך">
+  <div class="docp-h">
+    <span class="casepill num" id="docNum"></span>
+    <h3 id="docTitle"></h3>
+    <button class="iconbtn" id="docClose" aria-label="סגירת המסמך"><svg class="i"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="docp-b"><div class="paper" id="paper"></div></div>
+</aside>
+<div class="scrim" id="docScrim" hidden style="z-index:49"></div>
+
+<footer>
+  <div class="ft">
+    <div><svg class="i fi"><use href="#i-web"/></svg><h3>מידע שימושי</h3>
+      <ul><li><a href="#">הגשת תביעה קטנה</a></li><li><a href="#">הגשת תביעה בדיון מהיר בבית הדין לעבודה</a></li><li><a href="#">בקשה לשינוי מועד דיון</a></li><li><a href="#">בקשה לפטור מאגרה בשל חוסר יכולת כלכלית</a></li></ul></div>
+    <div><svg class="i fi"><use href="#i-scale"/></svg><h3>אודות</h3>
+      <ul><li><a href="#">משוב</a></li><li><a href="#">תנאי שימוש</a></li><li><a href="#">שימוש בקבצי cookies</a></li><li><a href="#">הצהרת נגישות</a></li></ul></div>
+    <div><svg class="i fi"><use href="#i-life"/></svg><h3>מוקד מידע ושירות ארצי</h3>
+      <div class="hrs">שעות מענה אנושי:<br>ימים א׳–ה׳: 8:00 עד 17:00<br>ימי ו׳, ערבי חג וחול המועד: 8:00 עד 12:30</div>
+      <div class="tel"><div><small>טלפון</small><b>077-2703333 | *3852</b></div><div><small>ווטסאפ</small><b>050-6255727</b></div></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ico=(id,cls)=>`<svg class="i ${cls||""}"><use href="#i-${id}"/></svg>`;
+
+/* נתוני דוגמה — כל השמות והתיקים בדויים */
+const CASES=[
+ {id:"c1",num:"11138-09-11",pl:"כהן",df:"מחלבות הרים בע״מ",court:"מחוזי מרכז",year:2011,field:"צרכנות",status:"settled",kw:["מזון","הטעיה","הטעי","צרכנ","סימון","חלב"],
+  cause:"הטעיה בסימון אחוזי השומן במשקאות חלב",amount:"10,080,000 ₪",doc:true,
+  sum:"נטען כי המשיבה שיווקה משקאות חלב שעל אריזתם צוין \"0% שומן\", בעוד שבדיקת מעבדה מצאה בהם 1.5% שומן. הקבוצה המיוצגת: כל מי שרכש את המוצרים בשבע השנים שקדמו להגשה. הסעדים: השבת ההפרש במחיר ופיצוי בגין פגיעה באוטונומיה.",
+  outcome:"הסתיים בהסדר פשרה שאושר ב־2014: הנחה של 15% על מוצרי הסדרה לתקופה של שנה ותיקון הסימון."},
+ {id:"c2",num:"14948-06-11",pl:"לוי",df:"טעמי הגליל בע״מ",court:"מחוזי תל אביב",year:2011,field:"צרכנות",status:"approved",kw:["מזון","הטעיה","הטעי","צרכנ","סוכר","סימון"],
+  cause:"סימון \"ללא תוספת סוכר\" על יוגורט שמכיל סוכר מוסף",amount:"11,437,500 ₪",doc:false,
+  sum:"התובעת טוענת כי יוגורט הפירות של המשיבה שווק כ\"ללא תוספת סוכר\", אף שרשימת הרכיבים כוללת סירופ גלוקוז. לטענתה הצרכנים שילמו מחיר גבוה יותר בהסתמך על הסימון. העילות: הטעיה לפי סעיף 2 לחוק הגנת הצרכן ועשיית עושר ולא במשפט.",
+  outcome:"הבקשה אושרה כתובענה ייצוגית ב־2013. ההליך העיקרי תלוי ועומד."},
+ {id:"c3",num:"34490-04-11",pl:"אברהם",df:"מאפיית השרון בע״מ",court:"מחוזי חיפה",year:2011,field:"צרכנות",status:"rejected",kw:["מזון","הטעיה","הטעי","צרכנ","קלורי","סימון"],
+  cause:"ערך קלורי שגוי בסימון התזונתי של חטיפים",amount:"2,900,000 ₪",doc:true,
+  sum:"נטען כי החטיף \"קל־קריספ\" סומן כמכיל 50 קלוריות ל־100 גרם, בעוד שבדיקת מעבדה גילתה 113 קלוריות. התובע טען לפגיעה בצרכנים המקפידים על תזונה, והפרת תקנות בריאות הציבור (מזון) (סימון תזונתי).",
+  outcome:"הבקשה נדחתה ב־2012: בית המשפט קבע שלא הוכח קשר סיבתי בין הסימון להחלטת הרכישה."},
+ {id:"c4",num:"52107-02-19",pl:"פרץ",df:"רשת חיסכון בע״מ",court:"מחוזי מרכז",year:2019,field:"צרכנות",status:"pending",kw:["מזון","הטעיה","צרכנ","תפוגה","סופרמרקט"],
+  cause:"מכירת מוצרי מזון לאחר תאריך התפוגה",amount:"4,500,000 ₪",doc:true,
+  sum:"התובע טוען כי בסניפי הרשת נמכרו באופן שיטתי מוצרי חלב ובשר לאחר תאריך התפוגה שעל האריזה. לבקשה צורפו תיעוד מ־14 סניפים. העילות: הפרת חוק הגנת הצרכן, הפרת חובה חקוקה ורשלנות.",
+  outcome:"תלוי ועומד. דיון בבקשת האישור נקבע לשנה הקרובה."},
+ {id:"c5",num:"20871-11-18",pl:"מזרחי",df:"אופק ביטוח בע״מ",court:"מחוזי תל אביב",year:2018,field:"ביטוח",status:"approved",kw:["ביטוח","חיוב","יתר","פרמיה","פוליסה"],
+  cause:"גביית פרמיה על כיסוי ביטוחי שבוטל",amount:"7,200,000 ₪",doc:true,
+  sum:"נטען כי לאחר ביטול כיסוי לנזקי מים בפוליסת דירה, המשיבה המשיכה לגבות את רכיב הפרמיה עבורו. הקבוצה: מבוטחים שביטלו כיסוי ונמשך החיוב לפחות חודש אחד. הסעד: השבת הפרמיה העודפת בצירוף ריבית.",
+  outcome:"אושרה כתובענה ייצוגית ב־2020. הצדדים מנהלים הליך גישור."},
+ {id:"c6",num:"47302-05-20",pl:"שלום",df:"מגן ביטוח ישיר בע״מ",court:"מחוזי ירושלים",year:2020,field:"ביטוח",status:"settled",kw:["ביטוח","חיוב","יתר","החזר","פוליסה","רכב"],
+  cause:"אי־החזר פרמיה יחסית בביטול פוליסת רכב",amount:"3,100,000 ₪",doc:false,
+  sum:"התובע טוען כי מבוטחים שביטלו פוליסת רכב באמצע התקופה לא קיבלו החזר של החלק היחסי של הפרמיה, בניגוד לתנאי הפוליסה ולחוזר הממונה על שוק ההון.",
+  outcome:"הסתיים בהסדר פשרה ב־2022: החזר מלא למבוטחים שזוהו ותרומה לקרן."},
+ {id:"c7",num:"8814-01-21",pl:"דוד",df:"נתיב תקשורת סלולרית בע״מ",court:"מחוזי מרכז",year:2021,field:"תקשורת",status:"pending",kw:["סלולר","טלפון","חיוב","יתר","תוכן","חשבון"],
+  cause:"חיוב על שירותי תוכן שלא הוזמנו",amount:"18,000,000 ₪",doc:true,
+  sum:"נטען כי המשיבה חייבה מנויים בתשלום חודשי עבור שירותי תוכן (משחקים והתראות) בלי הסכמה מפורשת, בניגוד לסעיף 13ב לחוק הגנת הצרכן ולרישיון המפעיל. הקבוצה: כל מנויי המשיבה שחויבו בשירותי תוכן מ־2014.",
+  outcome:"תלוי ועומד. הוגשה תשובה לבקשת האישור."},
+ {id:"c8",num:"61530-08-17",pl:"נחום",df:"גל־קו תקשורת בע״מ",court:"מחוזי חיפה",year:2017,field:"תקשורת",status:"rejected",kw:["טלפון","סלולר","חיוב","מחיר","חבילה","חשבון"],
+  cause:"העלאת מחיר חבילה בניגוד להתחייבות למחיר קבוע",amount:"5,600,000 ₪",doc:true,
+  sum:"התובעת טענה כי המשיבה העלתה את מחיר חבילת הגלישה אחרי שנה, אף שבפרסום הובטח \"מחיר קבוע לתמיד\". לטענתה מדובר בהטעיה ובהפרת חוזה אחיד.",
+  outcome:"הבקשה נדחתה ב־2019: נקבע שתנאי ההתקשרות הבהירו כי המחיר קבוע ל־12 חודשים."},
+ {id:"c9",num:"39276-03-22",pl:"ביטון",df:"כוח אדם מקצועי בע״מ",court:"אזורי לעבודה תל אביב",year:2022,field:"עבודה",status:"pending",kw:["אפליה","עבודה","קבלה","גיל","מועמד"],
+  cause:"אפליה על רקע גיל בקבלה לעבודה",amount:"6,000,000 ₪",doc:false,
+  sum:"נטען כי המשיבה פרסמה מודעות דרושים עם הגבלת גיל מפורשת וסיננה מועמדים מעל גיל 45, בניגוד לחוק שוויון ההזדמנויות בעבודה. הקבוצה: מועמדים שפנו למשיבה ונדחו בשלוש השנים שקדמו להגשה.",
+  outcome:"תלוי ועומד. נקבע מועד להגשת סיכומים בבקשת האישור."}
+];
+const STATUS={pending:"תלויה ועומדת",approved:"אושרה כייצוגית",settled:"הסתיימה בפשרה",rejected:"הבקשה נדחתה"};
+const REL={3:"התאמה גבוהה",2:"התאמה בינונית",1:"התאמה חלקית"};
+const byId=id=>CASES.find(c=>c.id===id);
+
+const S={query:"",results:[],selected:new Set(),chatIds:[],sent:0,erroredOnce:false};
+
+/* ── search ── */
+function score(c,q){let s=0;c.kw.forEach(k=>{if(q.includes(k))s++});return s}
+function runSearch(q){
+  q=q.trim(); if(!q) { $("#q").focus(); return; }
+  S.query=q;
+  let r=CASES.map(c=>({c,s:score(c,q)})).filter(x=>x.s>0);
+  if(!r.length) r=CASES.map(c=>({c,s:0}));
+  r.forEach(x=>x.l=x.s>=3?3:x.s>=2?2:1);
+  S.results=r; S.selected=new Set([...S.selected].filter(id=>r.some(x=>x.c.id===id)));
+  renderResults(); go("results");
+}
+function sortedResults(){
+  const v=$("#sort").value, r=S.results.slice();
+  if(v==="rel") r.sort((a,b)=>b.s-a.s||b.c.year-a.c.year);
+  if(v==="new") r.sort((a,b)=>b.c.year-a.c.year);
+  if(v==="old") r.sort((a,b)=>a.c.year-b.c.year);
+  return r;
+}
+function renderResults(){
+  $("#sumQ").textContent=S.query;
+  $("#resCount").innerHTML=`נמצאו <b>${S.results.length}</b> תובענות רלוונטיות`;
+  $("#grid").innerHTML=sortedResults().map(({c,l})=>{
+    const sel=S.selected.has(c.id);
+    return `<article class="rc${sel?" sel":""}" data-id="${c.id}" role="listitem">
+      <div class="rc-top">
+        <input type="checkbox" class="ck" id="ck-${c.id}" ${sel?"checked":""} aria-label="בחירת תיק ${c.num}">
+        <span class="casepill num">${c.num}</span>
+        <span class="st st-${c.status}">${STATUS[c.status]}</span>
+      </div>
+      <h3>${esc(c.pl)} נגד ${esc(c.df)}</h3>
+      <div class="meta"><span>${c.court}</span><span>${c.field}</span><span>הוגשה ב־${c.year}</span></div>
+      <div class="cause"><b>עילה:</b> ${esc(c.cause)}</div>
+      <div class="sum">${esc(c.sum)}</div>
+      <div class="rc-foot">
+        <span class="rel" data-l="${l}"><i><span></span></i>${REL[l]}</span>
+        <button class="more" type="button" aria-expanded="false">הצג עוד ${ico("chev")}</button>
+        ${c.doc?`<button class="btn btn-ghost btn-sm" type="button" data-doc="${c.id}">${ico("doc")}צפייה במסמך</button>`
+               :`<button class="btn btn-ghost btn-sm" type="button" disabled title="לתיק זה לא נסרקו מסמכים">אין מסמכים זמינים</button>`}
+      </div></article>`}).join("");
+  renderSelbar();
+}
+function renderSelbar(){
+  const n=S.selected.size;
+  $("#selbar").hidden=!n;
+  $("#selN").textContent=n===1?"תיק אחד נבחר":`${n} תיקים נבחרו`;
+  $("#toChatTxt").textContent=`שוחח עם התיקים (${n})`;
+}
+function toggleSel(id){
+  S.selected.has(id)?S.selected.delete(id):S.selected.add(id);
+  const card=document.querySelector(`.rc[data-id="${id}"]`);
+  if(card){card.classList.toggle("sel",S.selected.has(id));card.querySelector(".ck").checked=S.selected.has(id)}
+  renderSelbar();
+}
+$("#grid").addEventListener("click",e=>{
+  const card=e.target.closest(".rc"); if(!card) return;
+  const id=card.dataset.id;
+  const more=e.target.closest(".more");
+  if(more){const o=card.classList.toggle("open");more.setAttribute("aria-expanded",o);more.firstChild.textContent=o?"הצג פחות ":"הצג עוד ";return}
+  const d=e.target.closest("[data-doc]"); if(d){openDoc(d.dataset.doc);return}
+  if(e.target.closest("button")) return;
+  if(e.target.classList.contains("ck")){e.preventDefault();setTimeout(()=>toggleSel(id));return}
+  toggleSel(id);
+});
+
+/* ── doc panel ── */
+let lastFocus=null;
+function openDoc(id){
+  const c=byId(id); lastFocus=document.activeElement;
+  $("#docNum").textContent=c.num; $("#docTitle").textContent=`${c.pl} נגד ${c.df}`;
+  $("#paper").innerHTML=`<div class="court">בית המשפט ה${c.court.replace("מחוזי","מחוזי ב")}</div><div class="no">ת״צ <span class="num">${c.num}</span></div>
+   <div class="parties"><span>המבקש/ת:</span><span>${esc(c.pl)} (בשם הקבוצה)</span><span>המשיבה:</span><span>${esc(c.df)}</span></div>
+   <h4>בקשה לאישור תובענה כייצוגית</h4>
+   <p>1. עניינה של בקשה זו ב${esc(c.cause)}.</p>
+   <p>2. ${esc(c.sum)}</p>
+   <p>3. סכום התביעה הכולל לכלל חברי הקבוצה מוערך ב־${c.amount}.</p>
+   <p>4. המבקש/ת יטען/תטען כי מתקיימים התנאים לאישור התובענה כייצוגית לפי סעיף 8 לחוק תובענות ייצוגיות, התשס״ו–2006: התובענה מעוררת שאלות מהותיות של עובדה ומשפט המשותפות לכלל חברי הקבוצה, ותובענה ייצוגית היא הדרך היעילה וההוגנת להכרעה במחלוקת.</p>
+   <p style="color:#555c6b;font-size:12.5px;margin-top:22px">מסמך לדוגמה באב־טיפוס. התוכן בדוי.</p>`;
+  $("#docp").hidden=false; $("#docScrim").hidden=false; $("#docClose").focus();
+}
+function closeDoc(){ $("#docp").hidden=true; $("#docScrim").hidden=true; lastFocus&&lastFocus.focus&&lastFocus.focus(); }
+$("#docClose").onclick=closeDoc; $("#docScrim").onclick=closeDoc;
+
+/* ── chat ── */
+function startChat(){
+  S.chatIds=[...S.selected]; S.sent=0; S.erroredOnce=false;
+  renderCases(); resetMsgs(); go("chat");
+}
+function renderCases(){
+  $("#caseCnt").textContent=S.chatIds.length;
+  $("#caseList").innerHTML=S.chatIds.map(id=>{const c=byId(id);return `<li>
+    <div><b>${esc(c.pl)} נגד ${esc(c.df)}</b><small><span class="num">${c.num}</span> · ${STATUS[c.status]}</small></div>
+    ${S.chatIds.length>1?`<button class="iconbtn" data-rm="${id}" aria-label="הסרת תיק ${c.num} מהשיחה">${ico("x")}</button>`:""}</li>`}).join("");
+  $("#goal").textContent=S.query?`הנושא שלכם: ${S.query}`:"";
+}
+$("#caseList").addEventListener("click",e=>{const b=e.target.closest("[data-rm]");if(!b)return;
+  S.chatIds=S.chatIds.filter(x=>x!==b.dataset.rm); S.selected.delete(b.dataset.rm); renderCases(); renderResults();
+  sys(`התיק הוסר מהשיחה. נשארו ${S.chatIds.length} תיקים.`)});
+function resetMsgs(){
+  const n=S.chatIds.length;
+  $("#msgs").innerHTML=`<div class="sysmsg">נטענו ${n===1?"תיק אחד":n+" תיקים"} לשיחה. אפשר לשאול אם הנושא שלכם כבר הוגש, להשוות בין התיקים או לבקש תקציר.</div>
+   <div class="sugg" id="sugg"><span class="lbl">שאלות שאפשר להתחיל בהן</span><div class="chips">
+    <button type="button" class="chip">האם כבר הוגשה תובענה על אותה עילה?</button>
+    <button type="button" class="chip">השווה בין התיקים</button>
+    <button type="button" class="chip">תקציר התובענה</button>
+    <button type="button" class="chip">מה תוצאת התובענה?</button></div></div>`;
+}
+function sys(t){const d=document.createElement("div");d.className="sysmsg";d.textContent=t;$("#msgs").append(d);scroll()}
+function scroll(){const m=$("#msgs");m.scrollTop=m.scrollHeight}
+$("#msgs").addEventListener("click",e=>{
+  const ch=e.target.closest(".sugg .chip"); if(ch){ask(ch.textContent);return}
+  const r=e.target.closest(".ref"); if(r){const c=byId(r.dataset.id); c.doc?openDoc(c.id):sys(`לתיק ${c.num} אין מסמכים זמינים לצפייה.`);return}
+  const rt=e.target.closest("[data-retry]"); if(rt){const q=rt.dataset.retry; rt.closest(".m").remove(); reply(q);}
+});
+function ask(q){
+  q=q.trim(); if(!q) return;
+  const s=$("#sugg"); if(s) s.remove();
+  const u=document.createElement("div"); u.className="m u"; u.textContent=q; $("#msgs").append(u);
+  $("#ask").value=""; autosize(); $("#send").disabled=true; S.sent++;
+  reply(q);
+}
+function reply(q){
+  const t=document.createElement("div"); t.className="typing"; t.setAttribute("aria-label","מכין תשובה"); t.innerHTML="<i></i><i></i><i></i>";
+  $("#msgs").append(t); scroll();
+  setTimeout(()=>{
+    t.remove();
+    const a=document.createElement("div");
+    if(S.sent===3 && !S.erroredOnce){ S.erroredOnce=true;
+      a.className="m err"; a.innerHTML=`${ico("alert")}<span>לא הצלחנו לעבד את השאלה. בדרך כלל זה עובר בניסיון נוסף.</span><button class="linkbtn" type="button" data-retry="${esc(q)}">נסה שוב</button>`;
+    } else { a.className="m a"; a.innerHTML=answer(q); }
+    $("#msgs").append(a); scroll();
+  },1100);
+}
+const refp=c=>`<button type="button" class="ref" data-id="${c.id}">${c.num}</button>`;
+const DISC=`<div class="disc">התשובה מבוססת על המסמכים בתיקים שנבחרו בלבד, ואינה ייעוץ משפטי.</div>`;
+function answer(q){
+  const cs=S.chatIds.map(byId);
+  const lvl=c=>{const r=S.results.find(x=>x.c.id===c.id);return r?r.l:1};
+  if(/הוגש|דומה|עילה|כבר|להגיש|חפיפ|זהה/.test(q)){
+    const hi=cs.filter(c=>lvl(c)>=2), live=hi.filter(c=>c.status==="pending"||c.status==="approved");
+    const v=hi.length
+      ?`<div class="verdict v-warn">${ico("alert")}<div><b>נמצאה תובענה בנושא קרוב לשלכם</b><span>${hi.length===1?"תיק אחד":hi.length+" תיקים"} מהנבחרים עוסקים באותה עילה${live.length?`, ו־${live.length===1?"אחד מהם":live.length+" מהם"} עדיין פעיל`:""}.</span></div></div>`
+      :`<div class="verdict v-ok">${ico("check")}<div><b>לא נמצאה חפיפה מלאה בתיקים שנבחרו</b><span>התיקים קרובים בתחום אבל לא באותה עילה בדיוק.</span></div></div>`;
+    return v+`<p>כך כל תיק מתייחס לנושא שתיארתם (״${esc(S.query||q)}״):</p><ul>`+
+      cs.map(c=>`<li>${refp(c)} <b>${esc(c.df)}</b>: ${esc(c.cause)}. ${STATUS[c.status]}. חפיפה ${lvl(c)>=3?"גבוהה":lvl(c)===2?"בינונית":"חלקית"}.</li>`).join("")+`</ul>
+      <p>${live.length?"כשיש בקשה תלויה באותן שאלות של עובדה ומשפט, בקשה חדשה נגד אותו נתבע בדרך כלל לא תתקדם. אם הנתבע, התקופה או המוצר שונים, ייתכן שהנושא שלכם עדיין פתוח.":"התיקים הקרובים כבר הסתיימו. כדאי לבדוק אם ההכרעה או הסדר הפשרה חלים גם על התקופה והמוצר שלכם."}</p>`+DISC;
+  }
+  if(/השוו|השווה|הבדל|השוואה/.test(q)){
+    return `<p>השוואה בין ${cs.length===1?"התיק":cs.length+" התיקים"}:</p><div class="cmp-wrap"><table class="cmp"><thead><tr><th>תיק</th><th>נתבעת</th><th>עילה</th><th>סטטוס</th><th>סכום</th></tr></thead><tbody>`+
+      cs.map(c=>`<tr><td>${refp(c)}</td><td>${esc(c.df)}</td><td>${esc(c.cause)}</td><td><span class="st st-${c.status}">${STATUS[c.status]}</span></td><td class="num">${c.amount}</td></tr>`).join("")+
+      `</tbody></table></div><p>${cs.length>1?"ההבדל המרכזי הוא בנתבעת ובמוצר. אם התובענה שלכם מכוונת לנתבעת אחרת, חפיפה בעילה לבדה לא תמיד מונעת הגשה.":"בחרו תיקים נוספים בתוצאות כדי להשוות ביניהם."}</p>`+DISC;
+  }
+  if(/תקציר|סכם|סיכום|על מה/.test(q)){
+    return cs.map(c=>`<p>${refp(c)} <b>${esc(c.pl)} נגד ${esc(c.df)}</b> (${c.court}, ${c.year})<br>${esc(c.sum)}</p>`).join("")+DISC;
+  }
+  if(/תוצא|הסתיים|נגמר|פסק|פשרה|מצב|סטטוס/.test(q)){
+    return `<ul>`+cs.map(c=>`<li>${refp(c)} <b>${esc(c.df)}</b>: ${esc(c.outcome)}</li>`).join("")+`</ul>`+DISC;
+  }
+  return `<p>בתיקים שנבחרו לא מצאתי התייחסות ישירה לשאלה. אפשר לנסח אותה מחדש, או לשאול על אחד מאלה: האם הנושא כבר הוגש, מה ההבדלים בין התיקים, תקציר, או מה קרה בתיק.</p><p>התיקים בשיחה: ${cs.map(refp).join(" ")}</p>`+DISC;
+}
+function autosize(){const t=$("#ask");t.style.height="auto";t.style.height=Math.min(t.scrollHeight,140)+"px"}
+$("#ask").addEventListener("input",()=>{$("#send").disabled=!$("#ask").value.trim();autosize()});
+$("#ask").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();ask($("#ask").value)}});
+$("#composer").addEventListener("submit",e=>{e.preventDefault();ask($("#ask").value)});
+$("#newChat").onclick=()=>{S.sent=0;S.erroredOnce=false;resetMsgs()};
+$("#backRes").onclick=()=>go("results");
+
+/* ── routing ── */
+const VIEWS={search:"#v-search",results:"#v-results",chat:"#v-chat"};
+function show(v){
+  Object.entries(VIEWS).forEach(([k,s])=>$(s).hidden=k!==v);
+  window.scrollTo(0,0);
+}
+function go(v){ const h=v==="search"?"":"#"+v; if(location.hash!==h){ history.pushState(null,"",h||location.pathname+location.search); } route(); }
+function route(){
+  const h=location.hash.slice(1);
+  if(h==="results"||h==="chat"){
+    if(!S.query){ $("#q").value="הטעיה צרכנית במוצרי מזון"; S.query=$("#q").value;
+      S.results=CASES.map(c=>({c,s:score(c,S.query)})).filter(x=>x.s>0); S.results.forEach(x=>x.l=x.s>=3?3:x.s>=2?2:1); renderResults(); }
+    if(h==="chat"){
+      if(!S.chatIds.length){ if(!S.selected.size) sortedResults().slice(0,2).forEach(x=>S.selected.add(x.c.id)); S.chatIds=[...S.selected]; renderCases(); resetMsgs(); renderResults(); }
+    }
+    show(h);
+  } else show("search");
+}
+window.addEventListener("popstate",route);
+window.addEventListener("hashchange",route);
+
+$("#searchForm").addEventListener("submit",e=>{e.preventDefault();runSearch($("#q").value)});
+$("#q").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();runSearch($("#q").value)}});
+document.querySelectorAll("#searchForm .chip").forEach(b=>b.onclick=()=>{$("#q").value=b.dataset.q;runSearch(b.dataset.q)});
+$("#qClear").onclick=()=>{$("#q").value="";$("#q").focus()};
+const editSearch=()=>{go("search");$("#q").value=S.query;$("#q").focus()};
+$("#summary").onclick=editSearch;
+$("#summary").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();editSearch()}};
+$("#sort").onchange=renderResults;
+$("#selClear").onclick=()=>{S.selected.clear();renderResults()};
+$("#toChat").onclick=startChat;
+
+/* info popover */
+const ib=$("#infoBtn"),ip=$("#infoPop");
+ib.onclick=e=>{e.stopPropagation();const o=ip.hidden;ip.hidden=!o;ib.setAttribute("aria-expanded",o)};
+
+/* ── shell: dropdowns, rail fly-outs, drawer ── */
+const drops=()=>document.querySelectorAll("details.ri, details.dd");
+drops().forEach(d=>d.addEventListener("toggle",()=>{if(d.open)drops().forEach(o=>{if(o!==d)o.open=false})}));
+document.addEventListener("click",e=>{
+  drops().forEach(d=>{if(d.open&&!d.contains(e.target))d.open=false});
+  if(!ip.hidden&&!ip.contains(e.target)&&e.target!==ib){ip.hidden=true;ib.setAttribute("aria-expanded","false")}
+});
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Escape")return;
+  drops().forEach(d=>d.open=false); ip.hidden=true; ib.setAttribute("aria-expanded","false");
+  if(!$("#docp").hidden)closeDoc(); if(document.body.classList.contains("drawer"))drawer(false);
+});
+function drawer(o){document.body.classList.toggle("drawer",o);$("#scrim").hidden=!o;$("#burger").setAttribute("aria-expanded",o);document.body.style.overflow=o?"hidden":""}
+$("#burger").onclick=()=>drawer(true); $("#railClose").onclick=()=>drawer(false); $("#scrim").onclick=()=>drawer(false);
+document.querySelectorAll('a[href="#"]').forEach(a=>a.addEventListener("click",e=>e.preventDefault()));
+$("#caseFind").addEventListener("submit",e=>e.preventDefault());
+$("#fClear").onclick=()=>{$("#fMy").value="";$("#fNum").value="";$("#fNum").focus()};
+
+route();
+})();
+</script>

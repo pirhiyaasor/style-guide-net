@@ -1,0 +1,2269 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>איתור תיקים</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* ── פוטר במסכים צרים ──
+     הפוטר בנוי לרוחב קבוע: ריפוד 96px מכל צד, ועמודת "מוקד מידע ושירות"
+     רוחבה 501px לבדה — שלושה בלוקים בשורה ומספרי טלפון עם white-space:nowrap
+     שמסרבים להישבר. רוחבו הטבעי 997px, ויחד עם 68px של פס הצד הוא חרג
+     מהמסך בכל רוחב שמתחת ל-1130px: חלון לא ממוקסם, מסך 1280 עם סרגל צד,
+     או חצי מסך. מכאן ומטה הוא מתרכך. */
+  @media (max-width: 1180px) {
+    #siteFooter > div { padding: 56px 40px !important; gap: 40px !important; }
+    #siteFooter > div > div { flex-wrap: wrap !important; gap: 40px !important; }
+    #siteFooter > div > div > div { flex: 1 1 300px !important; }
+  }
+</style>
+<style>
+  /* header search: a quiet "נקה" beside חיפוש, so the case number can be emptied
+     without selecting and deleting it by hand */
+  .cvs-headerclear {
+    height: 36px; padding: 0 4px; flex-shrink: 0;
+    background: none; border: 0; color: var(--brand-navy);
+    font: 400 14px 'Rubik'; cursor: pointer; white-space: nowrap;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .cvs-headerclear:hover { color: var(--brand-navy-hover); }
+
+  /* ═══ איתור החלטות — a standalone search page.
+         Shares styles.css (tokens, Rubik, rail, header, footer, and the
+         side-by-side document pane) with the case screen; only this page's own
+         blocks live here.
+
+         Structure follows the existing screen: two search modes, איתור לפי תיק
+         and איתור לפי פרמטרים, as tabs on the card. Once a search runs the card
+         folds to a one-line strip and the results take the screen. ═══ */
+
+  /* every block on this page is toggled with .hidden, and an author display
+     rule outranks the browser's own [hidden] { display: none } — without this a
+     "hidden" notice still paints as an empty tinted bar. */
+  [hidden] { display: none !important; }
+
+  .dc-pagehead { margin: 22px 0 16px; }
+  .dc-title { font: 700 26px/1.25 'Rubik'; color: #1a1a1a; }
+
+  .dc-card {
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(20,40,80,.07);
+    padding: 0 22px;
+  }
+
+  /* the two search modes — underline tabs on the card's top edge */
+  .dc-tabs {
+    display: flex; flex-wrap: wrap; gap: 2px;
+    margin: 0 0 20px; padding: 12px 0 0;
+    border-bottom: 1.5px solid var(--border-1);
+  }
+  .dc-tab {
+    border: 0; background: none; color: var(--fg-2);
+    font: 500 15px 'Rubik'; padding: 13px 14px 12px;
+    border-radius: 8px 8px 0 0; cursor: pointer; white-space: nowrap;
+    border-bottom: 2.5px solid transparent; margin-bottom: -1.5px;
+    transition: color .15s ease, border-color .15s ease;
+  }
+  .dc-tab:hover:not(.dc-tab-active) { color: var(--brand-navy); border-bottom-color: var(--brand-tint); }
+  .dc-tab-active { color: var(--brand-navy); border-bottom-color: var(--brand-navy); }
+  .dc-tabbody[hidden] { display: none; }
+
+  /* folded state: the search shrinks to what it asked for, so the results get
+     the screen and the two roles stop competing */
+  .dc-card.dc-collapsed > .dc-tabs,
+  .dc-card.dc-collapsed > .dc-tabbody,
+  .dc-card.dc-collapsed > .dc-cardfoot { display: none; }
+  .dc-summary {
+    width: 100%; margin: 0 -22px; padding: 14px 22px; box-sizing: content-box;
+    display: flex; align-items: center; gap: 10px;
+    background: none; border: 0; cursor: pointer; text-align: start;
+    font: 400 15px 'Rubik'; color: var(--fg-1);
+    border-radius: 12px; transition: background .15s ease;
+  }
+  .dc-summary:hover { background: var(--brand-tint); }
+  /* while the form is open the strip stays as its header, so the same click
+     that opened it closes it again */
+  .dc-card:not(.dc-collapsed) .dc-summary { border-bottom: 1px solid #eef1f6; border-radius: 12px 12px 0 0; }
+  .dc-summary-open .dc-summary-edit svg { transform: rotate(180deg); }
+  .dc-summary-ico { width: 17px; height: 17px; flex-shrink: 0; color: var(--brand-navy); }
+  .dc-summary-mode { font-weight: 500; color: var(--brand-navy); flex-shrink: 0; }
+  .dc-summary-vals { color: var(--fg-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dc-summary-edit {
+    margin-inline-start: auto; flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px;
+    font: 400 14px 'Rubik'; color: var(--brand-navy);
+  }
+  .dc-summary-edit svg { width: 14px; height: 14px; }
+
+  .dc-fields {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px 18px;
+  }
+  .dc-span2 { grid-column: span 2; }
+  .dc-span4 { grid-column: span 4; }
+  @media (max-width: 1180px) {
+    .dc-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dc-span4 { grid-column: span 2; }
+  }
+  @media (max-width: 700px) {
+    .dc-fields { grid-template-columns: minmax(0, 1fr); }
+    .dc-span2, .dc-span4 { grid-column: span 1; }
+  }
+
+  .dc-caserow { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px 48px; }
+  .dc-caserow .dc-field { flex: 0 0 auto; }
+  .dc-caserow .dc-oldfield { flex: 0 0 230px; }
+
+  .dc-infowrap { position: relative; display: inline-flex; align-items: center; align-self: center; }
+  .dc-info {
+    width: 24px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; color: var(--fg-3); transition: color .15s ease, background .15s ease;
+  }
+  .dc-info svg { width: 16px; height: 16px; display: block; }
+  .dc-info:hover, .dc-info[aria-expanded="true"] { color: var(--brand-navy); background: #f1f5fa; }
+  .dc-infopop {
+    position: absolute; top: calc(100% + 8px); inset-inline-start: -8px; z-index: 40;
+    width: 300px; padding: 14px 16px;
+    background: #fff; border-radius: 10px; box-shadow: var(--box-shadow-medium);
+  }
+  .dc-infopop-title { font: 600 15px 'Rubik'; color: #1a1a1a; margin-bottom: 6px; }
+  .dc-infopop p { margin: 0 0 8px; font: 400 14px/1.5 'Rubik'; color: var(--fg-2); }
+  .dc-infopop p:last-child { margin-bottom: 0; }
+  .dc-infopop-todo {
+    font-style: italic; color: var(--fg-3) !important;
+    border-top: 1px solid #eef1f6; padding-top: 8px;
+  }
+
+  .dc-field { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .dc-field[hidden] { display: none; }
+  .dc-label { font: 400 13px 'Rubik'; color: var(--fg-2); }
+  .dc-fieldhint { font: 400 12.5px 'Rubik'; color: var(--fg-3); }
+
+  /* case kind / decision nature — options laid open, not folded into a select */
+  .dc-radios { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; min-height: 38px; }
+  .dc-radio {
+    display: inline-flex; align-items: center; gap: 7px;
+    height: 38px; padding: 0 10px;
+    border: 0; border-radius: 999px;
+    background: transparent; font: 400 14px 'Rubik'; color: var(--fg-1);
+    cursor: pointer; white-space: nowrap;
+    transition: background .15s ease, color .15s ease;
+  }
+  .dc-radio:hover { background: #f1f5fa; }
+  .dc-radio input { accent-color: var(--brand-navy); width: 15px; height: 15px; margin: 0; cursor: pointer; }
+  .dc-radio:has(input:checked) { color: var(--brand-navy); font-weight: 500; }
+
+  /* pick from it → a box */
+  .dc-select, .dc-input.dc-date {
+    height: 38px; min-width: 0; width: 100%;
+    padding: 4px 11px; background: #fff;
+    border: 1px solid var(--border-1); border-radius: 6px;
+    font: 400 14px 'Rubik'; color: var(--fg-1);
+    transition: border-color .15s ease;
+  }
+  .dc-select:hover, .dc-input.dc-date:hover { border-color: var(--secondary-text-color); }
+  .dc-select:focus, .dc-input.dc-date:focus { outline: none; border-color: var(--brand-navy); }
+  .dc-select {
+    appearance: none; -webkit-appearance: none; cursor: pointer;
+    padding-inline-end: 28px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235B6472' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+    background-repeat: no-repeat; background-position: left 10px center;
+  }
+
+  /* type into it → a line to write on */
+  .dc-input {
+    height: 38px; min-width: 0; width: 100%;
+    padding: 2px 2px; background: transparent;
+    border: 0; border-bottom: 1.5px solid #cbd6e6; border-radius: 0;
+    font: 400 15px 'Rubik'; color: var(--fg-1);
+    transition: border-color .15s ease;
+  }
+  .dc-input::placeholder { color: #c2c9d4; }
+  .dc-input:hover { border-bottom-color: var(--secondary-text-color); }
+  .dc-input:focus { outline: none; border-bottom-color: var(--brand-navy); }
+  .dc-group { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .dc-group .dc-sep { color: var(--fg-3); flex-shrink: 0; }
+
+  /* the case number: its serial first, then the date — two digits for an old
+     case, four with a hyphen for a current one. Width plus a shaped
+     placeholder carry the format; no words. */
+  .dc-caseserial { flex: 0 0 104px; text-align: start; }
+  .dc-casedate { flex: 0 0 84px; text-align: start; }
+  .dc-casedate.dc-casedate-short { flex: 0 0 54px; }
+  .dc-date { flex: 1 1 0; }
+
+  /* a field waiting on another one: greyed, still readable */
+  .dc-field-off .dc-label { color: var(--fg-3); }
+  .dc-select:disabled { background-color: #f7f9fc; color: var(--fg-3); cursor: not-allowed; opacity: 1; }
+  .dc-select:disabled:hover { border-color: var(--border-1); }
+
+  /* card footer — נקה beside the primary action */
+  .dc-cardfoot {
+    margin: 4px 0 0; padding: 18px 0 20px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .dc-btns { margin-inline-start: auto; display: flex; align-items: center; gap: 10px; }
+  .dc-btn {
+    height: 38px; padding: 0 22px; border-radius: 6px; cursor: pointer;
+    font: 500 14px 'Rubik'; white-space: nowrap;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .dc-btn-primary { background: var(--brand-navy); color: #fff; border: 1px solid var(--brand-navy); }
+  .dc-btn-primary:hover { background: var(--brand-navy-hover); border-color: var(--brand-navy-hover); }
+  .dc-btn-ghost { background: #fff; color: var(--brand-navy); border: 1px solid var(--border-1); }
+  .dc-btn-ghost:hover { background: var(--brand-tint); border-color: var(--brand-tint); }
+
+  /* ── results ─────────────────────────────────────────────────────────────
+     A row, like the documents card in the case screen: the list on one side,
+     the decision that opens from it on the other. */
+  .dc-results {
+    margin-top: 24px; background: #fff; border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(20,40,80,.07);
+    display: flex; flex-direction: row; overflow: hidden;
+    height: calc(100vh - 260px); min-height: 420px;
+  }
+  /* a column flex child will not shrink below its content unless told to.
+     The inline-start inset is 34 rather than 22: the extra 12 is the white
+     gutter the ⋮ sits in, and head, notices and table all shift together so
+     nothing skews. */
+  .dc-results .cvs-docsmain { min-height: 0; padding-inline: 34px 22px; }
+  .dc-resulthead {
+    display: flex; align-items: center; gap: 10px;
+    padding: 16px 0 12px; flex-shrink: 0;
+  }
+  .dc-resulttitle { font: 500 17px 'Rubik'; color: var(--fg-2); }
+  /* the header's checkbox sits where the ticks below it sit: the cell centres
+     them, so the one control in this box has to be centred too */
+  #dcTable .dc-th-pick .cvs-pickhead { justify-content: center; }
+  /* the ⋮ rides the column-header row, in the gutter the card's inline-start
+     inset opens for it (see .cvs-colscfg in styles.css). The bar takes no
+     height of its own, so nothing below it moves. */
+  .dc-colscfgbar { position: relative; height: 0; z-index: 3; }
+  .dc-colscfgbar[hidden] { display: none; }
+  .dc-colscfgbar .cvs-colscfg { inset-inline-start: -28px; }
+  /* opens INWARDS from the glyph, which sits at the table's outer edge */
+  .dc-cols-menu {
+    position: absolute; top: 37px; inset-inline-start: -28px; z-index: 40;
+    background: #fff; border-radius: 8px; box-shadow: var(--box-shadow-medium);
+    padding: 6px; min-width: 190px;
+  }
+  /* the draggable edge on a header, on its inline-end (left in RTL) */
+  .dc-colresize { position: absolute; inset-inline-end: 0; top: 0; bottom: 0; width: 9px; cursor: col-resize; z-index: 3; }
+  .dc-colresize::after {
+    content: ''; position: absolute; inset-inline-end: 3px; top: 20%; bottom: 20%;
+    width: 2px; border-radius: 1px; background: transparent; transition: background .12s;
+  }
+  .dc-colresize:hover::after { background: var(--brand-navy); opacity: .45; }
+  body.cvs-col-resizing { cursor: col-resize; user-select: none; }
+  body.cvs-col-resizing iframe { pointer-events: none; }
+
+  #dcTable .dc-th-pick, #dcTable .dc-td-pick { text-align: center; padding-inline: 4px; }
+  #dcTable .dc-th-pick input, #dcTable .dc-pick { accent-color: var(--brand-navy); width: 15px; height: 15px; margin: 0; cursor: pointer; }
+
+  .dc-notices { display: flex; flex-direction: column; flex-shrink: 0; }
+  .dc-notice {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+    padding: 9px 14px; border-radius: 8px;
+    background: #f4f8fd; font: 400 13.5px 'Rubik'; color: var(--fg-2);
+  }
+  .dc-notice svg { width: 15px; height: 15px; flex-shrink: 0; color: var(--brand-navy); }
+  .dc-notice button {
+    border: 0; background: none; padding: 0 2px; margin-inline-start: 6px; cursor: pointer;
+    font: 400 13.5px 'Rubik'; color: var(--brand-navy);
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+
+  .dc-tablewrap[hidden] { display: none; }
+  .dc-tablewrap {
+    padding-inline: 0; direction: ltr;
+    scrollbar-gutter: stable;
+    margin-right: calc(-1 * var(--dc-sbw, 10px));
+  }
+  #dcTable { direction: rtl; }
+  #dcTable .dc-stick-0 { padding-inline-start: 12px; padding-inline-end: 2px; }
+  #dcTable [data-key="doc"], #dcTable .dc-stick-60 { padding-inline: 2px; }
+  #dcTable tr > :last-child { padding-inline-end: 22px; }
+  #dcTable { width: 100%; table-layout: fixed; border-collapse: collapse; min-width: 720px; }
+  #dcTable th {
+    position: sticky; top: 0; z-index: 2; background: #eff5fd;
+    text-align: start; font: 500 14px 'Rubik'; color: var(--fg-2);
+    padding: 8px; white-space: nowrap;
+  }
+  /* the label and its control read as one thing when they sit close */
+  #dcTable thead tr:first-child th { padding-bottom: 4px; }
+  #dcTable .dc-th-sort { cursor: pointer; }
+  #dcTable .dc-th-sort:hover { color: var(--brand-navy); }
+  /* Every sortable header shows a cue before it is touched: a muted pair of
+     chevrons on the columns that can order the grid, and a solid single one on
+     the column that currently does. Without the muted pair, nothing on the
+     header row says it is clickable at all. */
+  .dc-sortind { width: 12px; height: 12px; color: var(--brand-navy); vertical-align: -2px; margin-inline-start: 4px; }
+  .dc-sortind.dc-sortup { transform: rotate(180deg); }
+  .dc-sortind.dc-sortidle { color: #a8b6cb; opacity: .8; }
+  .dc-th-sort:hover .dc-sortidle { color: var(--brand-navy); opacity: 1; }
+  .dc-th-sorted { color: var(--brand-navy); }
+  #dcTable td {
+    padding: 8px; font: 400 15px 'Rubik'; color: #001E40;
+    vertical-align: middle; border-bottom: 1px solid #eef1f6;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  #dcTable tbody tr { cursor: pointer; transition: background .12s ease; }
+  #dcTable tbody td { background: #fff; }
+  #dcTable tbody tr:hover > td { background: var(--cvs-hover); }
+  /* same two marks as the documents table: .dc-rowactive while the decision is
+     open (aria-current), .dc-rowlast once it is closed, until another opens */
+  #dcTable tbody tr.dc-rowactive > td,
+  #dcTable tbody tr.dc-rowactive:hover > td { background: #cadcf5; }
+  #dcTable tbody tr.dc-rowlast > td { background: #e3ecf9; }
+  #dcTable tbody tr.dc-rowlast:hover > td { background: var(--cvs-hover); }
+  #dcTable tbody tr.dc-rowlast .dc-name { color: var(--brand-navy); }
+  .dc-norows { text-align: center; color: var(--fg-3); font: 400 14px 'Rubik'; padding: 28px 6px !important; }
+
+  /* ── the two action columns are pinned to the start edge ──────────────────
+     With a decision open beside the list the table keeps its widths and scrolls,
+     and in RTL the start edge is the RIGHT one. Pinning the picker and the view
+     icons there means the row you are reading never loses the controls that act
+     on it, whatever the horizontal scroll is doing. */
+  #dcTable .dc-stick { position: sticky; z-index: 3; background: #fff; }
+  #dcTable .dc-stick-0 { inset-inline-start: 0; }
+  #dcTable .dc-stick-60 { inset-inline-start: 44px; }
+  /* only once something is actually hidden behind them */
+  .dc-tablewrap.dc-scrolled #dcTable .dc-stick-60 { box-shadow: -7px 0 7px -7px rgba(20, 40, 80, .22); }
+  #dcTable thead tr:first-child .dc-stick { background: #eff5fd; z-index: 6; }
+  #dcTable .cvs-filtrow .dc-stick { background: #eff5fd; z-index: 6; }
+  .dc-cell { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dc-muted { font: 400 14px 'Rubik'; color: #5b6472; }
+  .dc-name { font-weight: 500; }
+  /* the case number is the way back into the case itself */
+  .dc-casenum { font: 500 14px 'Rubik'; color: var(--brand-navy); white-space: nowrap; text-decoration: none; }
+  a.dc-casenum:hover { text-decoration: underline; }
+  .dc-tag {
+    display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; vertical-align: middle;
+    font: 400 13px 'Rubik'; padding: 2px 10px; border-radius: 999px;
+    background: var(--brand-tint); color: var(--brand-navy);
+  }
+  .dc-tag-verdict { background: #e8f6ee; color: #00734a; }
+  .dc-tag-order   { background: #fff1e0; color: #b45309; }
+  .dc-tag-proto   { background: #f3f0fb; color: #5b3fa0; }
+  .dc-rowactions { display: flex; align-items: center; justify-content: flex-end; gap: 2px; }
+  .dc-iconbtn {
+    width: 28px; height: 28px; flex-shrink: 0; padding: 0; border: 0; background: none;
+    border-radius: 6px; color: var(--fg-2); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .12s ease, color .12s ease;
+  }
+  .dc-iconbtn:hover { background: var(--brand-tint); color: var(--brand-navy); }
+  .dc-iconbtn svg { width: 16px; height: 16px; display: block; }
+  .dc-view-window svg { transform: scaleX(-1); }
+
+  /* ── filtering what came back ────────────────────────────────────────────
+     One control per column, under the header it narrows — the same idea as
+     the side panel in the live screen, without spending 230px of width on it,
+     and the same controls the documents table uses (styles.css carries them
+     both). Each menu offers only the values actually present in the result
+     set, with counts. Only the bits particular to THIS table live here. */
+  .dc-results:not(.cvs-filters-open) .cvs-filtrow { display: none; }
+  /* the controls row is its own band, white against the header's tint, so the
+     labels above read as headings and these read as things you can change.
+     The ID selector on #dcTable th outranks a plain class rule, so these have
+     to carry the ID too — otherwise the header keeps its own top/background
+     and the neighbouring cell paints over an open menu. */
+  #dcTable .cvs-filtrow th {
+    position: sticky; top: var(--dc-headh, 31px); z-index: 2; background: #eff5fd;
+    padding: 0 8px 8px; vertical-align: top; border-bottom: 1px solid #e6ecf5;
+  }
+  #dcTable .cvs-filtrow th:has(.cvs-filtcell-open) { z-index: 30; }
+  .cvs-filtrow .dc-th-pick { text-align: center; vertical-align: middle; }
+
+  /* ── the decision, open beside its list ──────────────────────────────────
+     Same arrangement as תיק נייר in the case screen: the pane's own styling
+     (.cvs-docspdf / .cvs-pdfclose / .cvs-pdfwide / .cvs-docssplit) is shared
+     from styles.css; only the withpdf state for THIS card lives here. */
+  .dc-results.cvs-withpdf .cvs-docspdf {
+    width: var(--pdf-w, 46%); max-width: var(--pdf-max, 680px);
+    opacity: 1; padding: 16px 5px 0 16px;
+  }
+  .dc-results.cvs-withpdf .cvs-docssplit {
+    display: block; flex: 0 0 auto; width: 9px; align-self: stretch;
+    position: relative; cursor: col-resize; z-index: 3;
+  }
+  /* with a document open no column is dropped — the cells tighten and the
+     table scrolls sideways, exactly as the documents table decided */
+  .dc-results.cvs-withpdf #dcTable th,
+  .dc-results.cvs-withpdf #dcTable td { padding-left: 4px; padding-right: 4px; }
+  .cvs-docspdfframe { flex: 1; width: 100%; border: 0; border-radius: 4px; background: #fff; display: block; }
+
+  /* the rail item for the page we are on */
+  .dc-railactive { background: var(--brand-tint); }
+  .dc-railactive svg { stroke: var(--brand-navy); }
+  .dc-railactive span { color: var(--brand-navy) !important; font-weight: 500; }
+
+  /* the card is tall, so dead-centre put this a long way down the page —
+     it sits nearer the top, in the reading path rather than below it */
+  .dc-empty {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    gap: 10px; padding: 110px 24px 56px; text-align: center; color: var(--fg-3);
+  }
+  .dc-empty svg { width: 34px; height: 34px; stroke: currentColor; }
+  .dc-empty-main { font: 500 16px 'Rubik'; color: var(--fg-2); }
+  .dc-empty-sub { font: 400 14px 'Rubik'; color: var(--fg-3); }
+</style>
+<style>
+  /* ═══ איתור תיקים — built on the איתור החלטות page: the same card, folding
+         summary strip, results grid and side pane. What differs lives here.
+
+         The three search modes are the live system's own (the rail fly-out
+         lists them): by the number of the case in the body it came from, by
+         court and opening date, and the lawyer's own cases. ═══ */
+
+  /* a required field says so in its label, and says what is missing under it */
+  .dc-req { color: var(--negative-color); margin-inline-start: 2px; }
+  .dc-err { font: 400 12.5px 'Rubik'; color: var(--negative-color); }
+  .dc-field-bad .dc-select { border-color: var(--negative-color); }
+  .dc-field-bad .dc-input { border-bottom-color: var(--negative-color); }
+  .dc-reqnote { font: 400 13px 'Rubik'; color: var(--fg-3); }
+
+  .dc-caserow .dc-extfield { flex: 0 0 260px; }
+  .dc-caserow .dc-extnum { flex: 0 0 240px; }
+  .dc-extnum .dc-input { direction: ltr; text-align: right; }
+  .dc-extnum .dc-input::placeholder { direction: rtl; }
+  .dc-caserow .dc-fieldhint { max-width: 300px; line-height: 1.45; }
+
+  /* the case's state, as a tag in the grid and the pane */
+  .dc-tag-open   { background: #e8f6ee; color: #00734a; }
+  .dc-tag-closed { background: #eef1f6; color: #5b6472; }
+  .dc-tag-stay   { background: #fff1e0; color: #b45309; }
+  /* the lawyer's own cases carry a quiet mark beside the number */
+  .dc-mine {
+    display: inline-block; margin-inline-start: 6px; vertical-align: 1px;
+    font: 500 11px 'Rubik'; padding: 1px 6px; border-radius: 999px;
+    background: var(--brand-tint); color: var(--brand-navy);
+  }
+  .dc-casecell { display: flex; align-items: center; min-width: 0; }
+  .dc-casecell .dc-casenum { overflow: hidden; text-overflow: ellipsis; }
+
+  /* ── the case, open beside its list ──────────────────────────────────────
+     Where איתור החלטות shows the decision itself, a case has no single
+     document to show — so the pane holds the case card: who, where, what's
+     next, and the way into the case screen. */
+  .dc-results.cvs-withpdf .cvs-docspdf { background: var(--bg-app, #f4f8fc); }
+  .cs-pane {
+    flex: 1; min-height: 0; overflow: auto;
+    background: #fff; border: 1px solid #e1e6ef; border-radius: 8px;
+    padding: 22px 24px 20px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .cs-head { padding-inline-end: 72px; display: flex; flex-direction: column; gap: 6px; }
+  .cs-kicker { display: flex; align-items: center; gap: 8px; font: 400 13px 'Rubik'; color: var(--fg-3); }
+  .cs-num { font: 600 21px/1.2 'Rubik'; color: var(--brand-navy); }
+  .cs-name { font: 500 16px/1.4 'Rubik'; color: #001E40; }
+  .cs-sec { display: flex; flex-direction: column; gap: 8px; }
+  .cs-sectitle { font: 500 14px 'Rubik'; color: var(--fg-2); }
+  .cs-facts {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; margin: 0;
+    padding: 14px 16px; background: #f6f9fd; border-radius: 8px;
+  }
+  .cs-facts div { min-width: 0; }
+  .cs-facts dt { font: 400 12.5px 'Rubik'; color: var(--fg-3); margin-bottom: 2px; }
+  .cs-facts dd { margin: 0; font: 400 14.5px 'Rubik'; color: #001E40; overflow-wrap: anywhere; }
+  .cs-list { list-style: none; margin: 0; padding: 0; }
+  .cs-list li {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 9px 0; border-bottom: 1px solid #eef1f6; font: 400 14.5px 'Rubik'; color: #001E40;
+  }
+  .cs-list li:last-child { border-bottom: 0; }
+  .cs-role { flex: 0 0 74px; font-size: 13px; color: var(--fg-3); }
+  .cs-who { flex: 1; min-width: 0; }
+  .cs-rep { display: block; font-size: 13px; color: var(--fg-2); margin-top: 2px; }
+  .cs-date { flex: 0 0 80px; font-size: 13.5px; color: #5b6472; }
+  .cs-hearing {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border-radius: 8px; background: var(--brand-tint);
+  }
+  .cs-hearing svg { width: 18px; height: 18px; color: var(--brand-navy); flex-shrink: 0; }
+  .cs-hearing b { display: block; font: 500 15px 'Rubik'; color: var(--brand-navy); }
+  .cs-hearing span { font: 400 13px 'Rubik'; color: var(--fg-2); }
+  .cs-none { font: 400 14px 'Rubik'; color: var(--fg-3); }
+  .cs-foot { margin-top: auto; padding-top: 4px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .cs-foot .dc-btn { display: inline-flex; align-items: center; gap: 7px; text-decoration: none; }
+  .cs-foot .dc-btn svg { width: 15px; height: 15px; }
+
+  /* the rail fly-out names the tab that is showing */
+  .cvs-railnav [data-tab][aria-current="true"] { background: var(--brand-tint); color: var(--brand-navy) !important; font-weight: 500 !important; }
+  .cvs-railnav [data-tab]:hover { background: var(--cvs-hover); }
+</style>
+
+</head>
+<body style="display:flex;flex-direction:column;min-height:100vh;padding-right:68px">
+
+<div class="cvs-thinscroll" style="position:fixed;top:0;right:0;bottom:0;width:68px;background:#fff;overflow:visible;z-index:40;font-family:'Rubik',sans-serif">
+  <div class="cvs-railInner" dir="rtl" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:20px 3px 4px;min-height:100%">
+    <!-- the personal area: the lawyer's own cases, decisions and payments. It sits
+         in the header band, above the rule, apart from the general navigation below. -->
+    <div class="cvs-raildash" role="button" tabindex="0" title="האזור שלי — סקירה כללית (אזור אישי ישן)" aria-label="האזור שלי">
+      <img class="cvs-dashillus" src="assets/illus-card.svg" width="26" height="26" alt="">
+      <span class="cvs-dashmain">האזור שלי</span>
+    </div>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary class="dc-railactive" aria-current="page" style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">איתור<br>תיקים</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <a href="#ext" data-tab="ext" style="display:block;text-decoration:none;padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">תיקים לפי מס' תיק מקור</a>
+        <a href="#date" data-tab="date" style="display:block;text-decoration:none;padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">תיקים לתאריך פתיחה</a>
+        <a href="#mine" data-tab="mine" style="display:block;text-decoration:none;padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">התיקים שלי</a>
+      </div>
+    </details>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M9 15h6"></path><path d="M12 18v-6"></path></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">פתיחת<br>תיק</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">פתיחת תיק</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">הגשת תביעה בדיון מהיר בבית הדין לעבודה</div>
+      </div>
+    </details>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">הגשות</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">בקשה חדשה</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">כתב טענות לבקשה קיימת</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">הגשות אחרות</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">איתור הגשות לפי אסמכתא</div>
+      </div>
+    </details>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">יומן<br>דיונים</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">יומן בית משפט</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">דיונים לשופט ליום דיונים</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">הדיונים שלי</div>
+      </div>
+    </details>
+    <a href="https://case-view-lawyer-docs-inline.vercel.app/decisions.html" style="text-decoration:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="m9 15 2 2 4-4"></path></svg>
+      <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">איתור<br>החלטות</span>
+    </a>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">תשלומים</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">תשלום שוברים</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">תשלום אגרת בקשה מראש</div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div id="cvsTopHeader" style="background:#fff;position:sticky;top:0;z-index:30">
+  <div style="max-width:1840px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;gap:0;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
+
+    <!-- logo column: same width as the accordion sidebar below, so their right edges align -->
+    <div style="width:260px;flex-shrink:0;display:flex;justify-content:flex-start">
+      <a href="https://case-view-lawyer-docs-inline.vercel.app/home.html" title="לדף הבית" style="display:flex">
+        <img id="cvsLogo" src="assets/42f818ae-3d00-4df0-9bfa-da8197a00c3c.png" alt="מדינת ישראל, הרשות השופטת — לדף הבית" style="height:36px">
+      </a>
+    </div>
+
+    <!-- search-bar column: same start edge as the main content below, so it aligns with the case card.
+         Case type now carries three options; picking תיק ישן reveals בית משפט + סוג תיק inline,
+         before the case number, replacing the old standalone "תיק ישן" flyout. -->
+    <div style="flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding-right:6px">
+        <div style="position:relative">
+          <select id="cvsCaseType" class="cvs-select" style="height:36px;padding:4px 28px 4px 10px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';color:var(--fg-1);background:#fff;width:150px">
+            <option value="court" selected>תיק בית משפט</option>
+            <option value="traffic">תיק תעבורה</option>
+            <option value="old">תיק ישן</option>
+          </select>
+          <span style="position:absolute;top:50%;left:8px;transform:translateY(-50%);pointer-events:none;color:var(--fg-2);display:flex"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+        </div>
+        <div id="cvsOldCaseFields" style="display:none;align-items:center;gap:8px">
+          <div style="position:relative">
+            <select class="cvs-select" style="height:36px;padding:4px 12px 4px 28px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';color:var(--fg-2);background:#fff;width:176px">
+              <option selected disabled>בית משפט</option>
+              <option>בית משפט השלום חדרה</option>
+            </select>
+            <span style="position:absolute;top:50%;left:8px;transform:translateY(-50%);pointer-events:none;color:var(--fg-2);display:flex"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+          </div>
+          <div style="position:relative">
+            <select class="cvs-select" style="height:36px;padding:4px 12px 4px 28px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';color:var(--fg-2);background:#fff;width:120px">
+              <option selected disabled>סוג תיק</option>
+              <option>אזרחי</option>
+            </select>
+            <span style="position:absolute;top:50%;left:8px;transform:translateY(-50%);pointer-events:none;color:var(--fg-2);display:flex"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+          </div>
+        </div>
+        <input id="cvsCaseNumA" value="09-24" aria-label="חודש ושנה" title="חודש ושנה" maxlength="5" style="height:36px;width:56px;padding:4px 6px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';text-align:center;background:#fff">
+        <span style="color:var(--fg-3)">-</span>
+        <input id="cvsCaseNumB" value="70137" aria-label="מספר התיק" title="מספר התיק" maxlength="5" placeholder="00000" style="height:36px;width:64px;padding:4px 6px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';text-align:center;background:#fff">
+        <button id="cvsHeaderSearch" onclick="location.href='https://case-view-lawyer-docs-inline.vercel.app/index.html'" class="cvs-btn" style="height:36px;padding:0 16px;background:var(--brand-tint);color:var(--brand-navy);border:1px solid var(--brand-tint);border-radius:6px;font:500 14px 'Rubik';cursor:pointer;white-space:nowrap">חיפוש</button>
+        <button type="button" id="cvsHeaderClear" class="cvs-headerclear">נקה</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <button class="cvs-bellbtn" aria-label="הודעות">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg>
+        <span class="cvs-bellbadge">3</span>
+      </button>
+      <details class="cvs-avatarmenu" style="position:relative">
+        <!-- The hat is worn in the header. The initials alone said WHO but not in
+             WHICH capacity, and that only showed once the menu was open — so the
+             role stands beside them, and the chevron says there is more inside. -->
+        <summary class="cvs-avatartrig" style="list-style:none">
+          <span class="cvs-avatarcircle">יכ</span>
+          <span class="cvs-avatarrole">עו"ד</span>
+          <svg class="cvs-avatarchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <div style="position:absolute;top:calc(100% + 6px);left:0;background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;min-width:210px;z-index:30">
+          <!-- active account — tinted + checked so the current identity is obvious;
+               no divider between the two accounts, the tint carries the separation -->
+          <div class="cvs-menuitem cvs-acctactive" style="padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <div>
+              <div style="font:600 15px 'Rubik';color:var(--fg-1)">עו"ד ישראל כהן</div>
+              <div style="font:400 13px 'Rubik';color:var(--fg-3);margin-top:2px">מ.ר 45213</div>
+            </div>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <!-- switchable private account, same visual style as the active one -->
+          <div class="cvs-menuitem" style="padding:8px 12px">
+            <div style="font:600 15px 'Rubik';color:var(--fg-1)">ת.ז 012345678</div>
+          </div>
+          <div style="border-top:1px solid var(--border-1);margin:4px -8px"></div>
+          <div class="cvs-menuitem" style="display:flex;align-items:center;gap:8px;padding:9px 12px;font:400 15px 'Rubik';color:var(--fg-1);white-space:nowrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>יציאה
+          </div>
+        </div>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<div style="flex:1 0 auto;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
+  <div style="max-width:1840px;margin:0 auto;padding:0 32px 110px">
+
+    <div class="dc-pagehead">
+      <div class="dc-title">איתור תיקים</div>
+    </div>
+
+    <!-- Three search modes, the live system's own: לפי מס׳ תיק מקור, לפי
+         תאריך פתיחה and התיקים שלי. Once a search runs, the whole card folds to
+         the summary strip below so the results get the screen. -->
+    <form class="dc-card" id="dcForm" onsubmit="return false" novalidate>
+
+      <!-- the folded state: what you searched for, one line, click to reopen -->
+      <button type="button" class="dc-summary" id="dcSummary" hidden>
+        <svg class="dc-summary-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        <span class="dc-summary-mode" id="dcSummaryMode"></span>
+        <span class="dc-summary-vals" id="dcSummaryVals"></span>
+        <span class="dc-summary-edit">עריכת חיפוש
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+      </button>
+
+      <div class="dc-tabs" role="tablist">
+        <button type="button" class="dc-tab dc-tab-active" data-tab="ext" role="tab" aria-selected="true">לפי מס׳ תיק מקור</button>
+        <button type="button" class="dc-tab" data-tab="date" role="tab" aria-selected="false">לפי תאריך פתיחה</button>
+        <button type="button" class="dc-tab" data-tab="mine" role="tab" aria-selected="false">התיקים שלי</button>
+      </div>
+
+      <!-- ── לפי מס׳ תיק מקור ──
+           A case that began outside the court — a police file, a traffic ticket,
+           an execution file — is found by that body's own number. Two fields, so
+           one line. -->
+      <div class="dc-tabbody" id="dcTabExt">
+        <div class="dc-caserow">
+          <div class="dc-field dc-extfield" id="fExtType">
+            <label class="dc-label" for="dcExtType">סוג תיק מקור<span class="dc-req" aria-hidden="true">*</span></label>
+            <select class="dc-select" id="dcExtType" required></select>
+            <span class="dc-err" hidden>יש לבחור סוג תיק מקור</span>
+          </div>
+          <div class="dc-field dc-extnum" id="fExtNum">
+            <label class="dc-label" for="dcExtNum">מספר תיק מקור<span class="dc-req" aria-hidden="true">*</span></label>
+            <input class="dc-input" id="dcExtNum" inputmode="numeric" autocomplete="off" required>
+            <span class="dc-err" hidden>יש להקליד את מספר תיק המקור</span>
+          </div>
+          <div class="dc-field">
+            <span class="dc-label">&nbsp;</span>
+            <div class="dc-group">
+              <span class="dc-fieldhint" id="dcExtHint"></span>
+              <span class="dc-infowrap">
+                <button type="button" class="dc-info" id="dcExtInfo" aria-expanded="false" aria-label="מהו תיק מקור?" title="מהו תיק מקור?">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                </button>
+                <div class="dc-infopop" id="dcExtInfoPop" role="dialog" aria-labelledby="dcExtInfoTitle" hidden>
+                  <div class="dc-infopop-title" id="dcExtInfoTitle">מהו תיק מקור?</div>
+                  <p>תיק שנפתח בגוף שמחוץ לבית המשפט, כמו משטרה, רשות מקומית או לשכת ההוצאה לפועל, ועבר משם לבית המשפט.</p>
+                  <p>החיפוש מאתר את תיקי בית המשפט שנפתחו בעקבותיו. מתיק משטרתי אחד יכולים לצאת כמה תיקים, למשל תיק פלילי ובקשה למעצר.</p>
+                </div>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── לפי תאריך פתיחה ── -->
+      <div class="dc-tabbody" id="dcTabDate" hidden>
+        <div class="dc-fields">
+          <div class="dc-field" id="fCourt">
+            <label class="dc-label" for="dcCourt">בית משפט<span class="dc-req" aria-hidden="true">*</span></label>
+            <select class="dc-select" id="dcCourt" required></select>
+            <span class="dc-err" hidden>יש לבחור בית משפט</span>
+          </div>
+          <div class="dc-field">
+            <label class="dc-label" for="dcProc">הליך</label>
+            <select class="dc-select" id="dcProc"></select>
+          </div>
+          <!-- these two open only once a procedure is chosen — their lists
+               depend on it -->
+          <div class="dc-field">
+            <label class="dc-label" for="dcCaseType">סוג תיק</label>
+            <select class="dc-select" id="dcCaseType" disabled></select>
+          </div>
+          <div class="dc-field">
+            <label class="dc-label" for="dcSubject">סוג עניין</label>
+            <select class="dc-select" id="dcSubject" disabled></select>
+          </div>
+
+          <div class="dc-field dc-span2" id="fDate">
+            <label class="dc-label" for="dcFrom">תאריך פתיחה<span class="dc-req" aria-hidden="true">*</span></label>
+            <div class="dc-group">
+              <input class="dc-input dc-date" id="dcFrom" type="date" aria-label="מתאריך פתיחה">
+              <span class="dc-sep">עד</span>
+              <input class="dc-input dc-date" id="dcTo" type="date" aria-label="עד תאריך">
+            </div>
+            <span class="dc-err" hidden>יש לבחור תאריך פתיחה</span>
+          </div>
+
+          <div class="dc-field dc-span2">
+            <span class="dc-label">מצב התיק</span>
+            <div class="dc-radios" role="radiogroup" aria-label="מצב התיק">
+              <label class="dc-radio"><input type="radio" name="dcState" value="" checked><span>הכל</span></label>
+              <label class="dc-radio"><input type="radio" name="dcState" value="פתוח"><span>פתוח</span></label>
+              <label class="dc-radio"><input type="radio" name="dcState" value="סגור"><span>סגור</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── התיקים שלי ──
+           Nothing is required: אתר with every field empty lists them all, and
+           each field only narrows. -->
+      <div class="dc-tabbody" id="dcTabMine" hidden>
+        <div class="dc-fields">
+          <div class="dc-field dc-span2">
+            <label class="dc-label" for="dcMineQ">מספר תיק או שם צד</label>
+            <input class="dc-input" id="dcMineQ" autocomplete="off" placeholder="למשל 70137 או לוי">
+          </div>
+          <div class="dc-field">
+            <label class="dc-label" for="dcMineCourt">בית משפט</label>
+            <select class="dc-select" id="dcMineCourt"></select>
+          </div>
+          <div class="dc-field">
+            <label class="dc-label" for="dcMineProc">הליך</label>
+            <select class="dc-select" id="dcMineProc"></select>
+          </div>
+
+          <div class="dc-field dc-span2">
+            <label class="dc-label" for="dcMineFrom">תאריך פתיחה</label>
+            <div class="dc-group">
+              <input class="dc-input dc-date" id="dcMineFrom" type="date" aria-label="מתאריך פתיחה">
+              <span class="dc-sep">עד</span>
+              <input class="dc-input dc-date" id="dcMineTo" type="date" aria-label="עד תאריך">
+            </div>
+          </div>
+
+          <div class="dc-field dc-span2">
+            <span class="dc-label">מצב התיק</span>
+            <div class="dc-radios" role="radiogroup" aria-label="מצב התיק">
+              <label class="dc-radio"><input type="radio" name="dcMineState" value="" checked><span>הכל</span></label>
+              <label class="dc-radio"><input type="radio" name="dcMineState" value="פתוח"><span>פתוחים</span></label>
+              <label class="dc-radio"><input type="radio" name="dcMineState" value="סגור"><span>סגורים</span></label>
+              <label class="dc-radio"><input type="radio" name="dcMineState" value="hearing"><span>עם דיון קרוב</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dc-cardfoot">
+        <span class="dc-reqnote" id="dcReqNote"><span class="dc-req" aria-hidden="true">*</span> שדה חובה</span>
+        <div class="dc-btns">
+          <button type="button" class="dc-btn dc-btn-ghost" id="dcClear">נקה</button>
+          <button type="submit" class="dc-btn dc-btn-primary" id="dcSearch">אתר</button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Results. The card is a row: table on one side, the case that opens from
+         a row on the other — so a case is glanced at beside its list, and the
+         case screen is one click further. -->
+    <div class="dc-results" id="dcResults">
+      <div class="cvs-docsmain">
+
+        <div class="dc-resulthead">
+          <span class="dc-resulttitle">תוצאות חיפוש</span>
+          <span class="cvs-tablecount" id="dcCount"></span>
+          <div class="cvs-headactions">
+            <button type="button" id="dcClearFilters" class="cvs-clearfilters" hidden>נקה סינון</button>
+            <button type="button" id="dcDownload" class="cvs-dlhead" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>ייצוא לאקסל<span class="cvs-dlcount"></span>
+            </button>
+            <button type="button" id="dcFilterToggle" class="cvs-filtertoggle" title="סינון התוצאות" aria-label="הצג או הסתר שורת סינון">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="dc-notices">
+          <div class="dc-notice" id="dcCap" hidden></div>
+        </div>
+
+        <div class="dc-colscfgbar" id="dcColsBar" hidden>
+          <span class="cvs-colscfg" id="dcColsBtn" role="button" tabindex="0" title="התאמת עמודות" aria-label="התאמת עמודות"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg></span>
+          <div id="dcColsMenu" class="dc-cols-menu" hidden></div>
+        </div>
+
+        <div class="cvs-docstable dc-tablewrap" id="dcTableWrap" hidden>
+          <table id="dcTable"></table>
+        </div>
+
+        <div class="dc-empty" id="dcEmpty">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"></path></svg>
+          <div class="dc-empty-main" id="dcEmptyMain">עדיין לא בוצע חיפוש</div>
+          <div class="dc-empty-sub" id="dcEmptySub">יש למלא את שדות החובה וללחוץ אתר</div>
+        </div>
+
+      </div>
+
+      <div id="dcSplit" class="cvs-docssplit" title="גרירה לשינוי רוחב" aria-hidden="true"></div>
+
+      <div class="cvs-docspdf">
+        <button type="button" id="dcPdfClose" class="cvs-ovclose cvs-pdfclose" aria-label="סגירת כרטיס התיק">×</button>
+        <button type="button" id="dcPdfWide" class="cvs-pdfwide" title="הרחבת כרטיס התיק" aria-label="הרחבת כרטיס התיק"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg></button>
+        <div class="cs-pane" id="csPane" role="region" aria-label="כרטיס תיק"></div>
+      </div>
+    </div>
+
+
+  </div>
+</div>
+
+<div id="siteFooter" style="flex-shrink:0;background:#001e40">
+  <div style="max-width:1840px;margin:0 auto;padding:70px 96px;display:flex;flex-direction:column;gap:60px;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
+    <div style="display:flex;justify-content:space-between;gap:40px">
+
+      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
+        <div style="position:relative;width:40px;height:40px">
+          <div style="position:absolute;top:17.5%;right:6.18%;bottom:15.23%;left:7.5%">
+            <img src="assets/footer-frame.svg" style="position:absolute;inset:0;width:100%;height:100%">
+          </div>
+        </div>
+        <div style="font:600 20px 'Rubik';color:#f4f8fe">מידע שימושי</div>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#f4f8fe;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הגשת תביעה קטנה</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הגשת תביעה בדיון מהיר בבית הדין לעבודה</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> בקשה לשינוי מועד דיון</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> בקשה לפטור מאגרה בשל חוסר יכולת כלכלית</a>
+      </div>
+
+      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
+        <div style="position:relative;width:40px;height:40px">
+          <div style="position:absolute;top:15%;right:7.43%;bottom:15.17%;left:7.5%;overflow:hidden">
+            <div style="position:absolute;top:19.3%;right:60.24%;bottom:16.11%;left:0">
+              <div style="position:absolute;top:-2.77%;right:0;bottom:0;left:0">
+                <img src="assets/footer-group.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:6.48%;right:0;bottom:28.93%;left:60.27%">
+              <div style="position:absolute;top:-2.77%;right:0;bottom:0;left:0">
+                <img src="assets/footer-group1.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:6.48%;right:19.89%;bottom:80.7%;left:19.86%">
+              <div style="position:absolute;top:-13.97%;right:-2.44%;bottom:-13.97%;left:-2.44%">
+                <img src="assets/footer-vector.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:13.57%;right:50.01%;bottom:10.06%;left:49.99%">
+              <div style="position:absolute;top:-2.34%;right:-0.5px;bottom:-2.34%;left:-0.5px">
+                <img src="assets/footer-vector1.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:91.01%;right:39.79%;bottom:8.99%;left:39.76%">
+              <div style="position:absolute;top:-0.5px;right:-7.18%;bottom:-0.5px;left:-7.18%">
+                <img src="assets/footer-vector2.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:98.21%;right:34.09%;bottom:1.79%;left:34.09%">
+              <div style="position:absolute;top:-0.5px;right:-4.62%;bottom:-0.5px;left:-4.62%">
+                <img src="assets/footer-vector3.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:0;right:47.11%;bottom:92.91%;left:47.07%">
+              <img src="assets/footer-vector4.svg" style="position:absolute;inset:0;width:100%;height:100%">
+            </div>
+          </div>
+        </div>
+        <div style="font:600 20px 'Rubik';color:#f4f8fe">אודות</div>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#f4f8fe;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> משוב</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> תנאי שימוש</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> שימוש בקבצי cookies</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הצהרת נגישות</a>
+      </div>
+
+      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
+        <div style="position:relative;width:40px;height:40px">
+          <div style="position:absolute;top:12.5%;right:12.13%;bottom:12.13%;left:12.5%;overflow:hidden">
+            <div style="position:absolute;top:2.72%;right:2.75%;bottom:2.75%;left:2.72%">
+              <div style="position:absolute;top:-1.75%;right:-1.75%;bottom:-1.75%;left:-1.75%">
+                <img src="assets/footer-group2.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:0;right:41.26%;bottom:0;left:41.23%">
+              <img src="assets/footer-group3.svg" style="position:absolute;inset:0;width:100%;height:100%">
+            </div>
+            <div style="position:absolute;top:41.23%;right:0;bottom:41.26%;left:0">
+              <img src="assets/footer-group4.svg" style="position:absolute;inset:0;width:100%;height:100%">
+            </div>
+          </div>
+        </div>
+        <div style="font:600 20px 'Rubik';color:#f4f8fe">מוקד מידע ושירות ארצי</div>
+        <div style="font:400 16px 'Rubik';color:#fff;width:100%">
+          <div>שעות מענה אנושי:</div>
+          <div style="margin-top:4px">ימים א-ה: 8:00 עד 17:00</div>
+          <div>ימי ו, ערבי חג וחול המועד: 8:00 עד 12:30</div>
+        </div>
+        <div style="display:flex;gap:24px;width:100%">
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <div style="font:400 18px 'Rubik';color:#fff">בטלפון</div>
+            <div style="display:flex;align-items:center;gap:16px">
+              <span dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">077-2703333</span>
+              <span style="width:2px;height:18px;background:rgba(255,255,255,.2)"></span>
+              <span dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">*3852</span>
+            </div>
+            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> ניתן לזמן תור לשיחה</a>
+          </div>
+          <div style="width:2px;background:rgba(255,255,255,.2);align-self:stretch"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <div style="font:400 18px 'Rubik';color:#fff">בווטסאפ</div>
+            <div dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">050-6255727</div>
+            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> להתחיל שיחה</a>
+          </div>
+          <div style="width:2px;background:rgba(255,255,255,.2);align-self:stretch"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <div style="font:400 18px 'Rubik';color:#fff">בצ'אט</div>
+            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> להתחיל שיחה</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  /* תיק ישן reveals בית משפט + סוג תיק inline, before the case number — and its
+     number is keyed differently: an old case carries a YEAR only, where a current
+     one carries month and year. Same two boxes, so the first one narrows and
+     relabels itself instead of a second layout appearing. */
+  (function () {
+    var type = document.getElementById('cvsCaseType');
+    var extra = document.getElementById('cvsOldCaseFields');
+    var numA = document.getElementById('cvsCaseNumA');
+    var numB = document.getElementById('cvsCaseNumB');
+    if (!type || !extra) return;
+    var first = true;
+    var sync = function () {
+      var old = type.value === 'old';
+      extra.style.display = old ? 'flex' : 'none';
+      if (numA) {
+        numA.style.width = old ? '44px' : '56px';
+        numA.maxLength = old ? 2 : 5;
+        /* the placeholder is the shape of the value, not a word for it: two
+           digits for an old case, two and two for a current one. Same as the
+           איתור החלטות form. */
+        numA.placeholder = old ? '00' : '00-00';
+        numA.title = old ? 'שנה' : 'חודש ושנה';
+        numA.setAttribute('aria-label', numA.title);
+        /* a number keyed for one format is meaningless in the other — clear it,
+           but not on the first run, which would wipe the open case's number */
+        if (!first) { numA.value = ''; if (numB) numB.value = ''; }
+      }
+      first = false;
+    };
+    type.addEventListener('change', sync);
+    sync();
+
+    /* A fly-out in the rail (or the avatar menu) closed only when its own
+       summary was clicked again — so clicking anywhere else left it hanging
+       open over the page. Any click outside an open one now shuts it. */
+    document.addEventListener('click', function (e) {
+      document.querySelectorAll('.cvs-railnav[open], .cvs-avatarmenu[open]').forEach(function (d) {
+        if (!d.contains(e.target)) d.open = false;
+      });
+    });
+
+    var clear = document.getElementById('cvsHeaderClear');
+    if (clear) clear.addEventListener('click', function () {
+      type.selectedIndex = 0;
+      sync();
+      if (numA) numA.value = '';
+      if (numB) numB.value = '';
+      extra.querySelectorAll('select').forEach(function (s) { s.selectedIndex = 0; });
+      if (numB) numB.focus();   /* the serial is typed first */
+    });
+  })();
+</script>
+
+<script>
+/* ═══ איתור תיקים ═══════════════════════════════════════════════════════════
+   Prototype only — no server. Built on איתור החלטות: the same card, the same
+   folding strip, the same grid with its filter row, column menu and side
+   pane. The result set below is generated, so that a narrow search returns a
+   handful of cases and a broad one a few hundred.
+
+   Three modes, as in the live system's rail:
+     · לפי מס׳ תיק מקור — the number the case carried before it reached the
+       court (police file, traffic ticket, execution file, …);
+     · לפי תאריך פתיחה — a court, and the dates the case was opened on;
+     · התיקים שלי — the cases the signed-in lawyer represents in.
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+
+  var CASE_URL = 'https://case-view-lawyer-docs-inline.vercel.app/index.html';
+  var TODAY = '2026-10-26';
+
+  /* ── the system's taxonomies ─────────────────────────────────────────────
+     Court names as Net HaMishpat writes them. Each procedure carries its own
+     case types and subjects, and the courts that hear it. */
+  var PROC = {
+    'אזרחי': {
+      courts: ['שלום חדרה', 'שלום תל אביב-יפו', 'שלום ירושלים', 'שלום חיפה', 'שלום ראשון לציון', 'שלום באר שבע', 'המחוזי תל אביב-יפו', 'המחוזי מחוז מרכז'],
+      types: ['תיק אזרחי בסדר דין רגיל (ת"א)', 'תיק אזרחי בסדר דין מקוצר (תא"ק)', 'המרצת פתיחה (ה"פ)', 'התנגדות לביצוע שטר (ת"ט)', 'תובענה ייצוגית (ת"צ)'],
+      subjects: ['תביעה כספית', 'נזקי גוף', 'תאונת דרכים', 'חוזים', 'מקרקעין', 'רשלנות רפואית', 'צרכנות', 'בנקים ואשראי']
+    },
+    'פלילי': {
+      courts: ['שלום תל אביב-יפו', 'שלום ירושלים', 'שלום חיפה', 'שלום באר שבע', 'המחוזי תל אביב-יפו', 'המחוזי ירושלים'],
+      types: ['תיק פלילי (ת"פ)', 'מעצר עד תום ההליכים (מ"ת)', 'מעצר ימים (מ"י)'],
+      subjects: ['עבירות רכוש', 'עבירות אלימות', 'עבירות סמים', 'עבירות מרמה', 'הפרת הוראה חוקית']
+    },
+    'משפחה': {
+      courts: ['משפחה תל אביב-יפו', 'משפחה חיפה', 'משפחה ירושלים', 'משפחה ראשון לציון'],
+      types: ['תיק משפחה (תמ"ש)', 'עזבונות (ת"ע)', 'אימוץ (אמ"ץ)'],
+      subjects: ['מזונות', 'משמורת וזמני שהות', 'רכוש', 'צו קיום צוואה', 'צו ירושה']
+    },
+    'תעבורה': {
+      courts: ['תעבורה תל אביב-יפו', 'תעבורה ירושלים', 'תעבורה חיפה'],
+      types: ['תיק תעבורה (פ"ל)', 'בקשה לביטול פסילה מנהלית (בפ"מ)'],
+      subjects: ['מהירות מופרזת', 'נהיגה ללא רישיון', 'מעבר ברמזור אדום', 'שימוש בטלפון בזמן נהיגה']
+    },
+    'עניינים מקומיים': {
+      courts: ['עניינים מקומיים תל אביב-יפו', 'עניינים מקומיים ירושלים', 'עניינים מקומיים חיפה'],
+      types: ['עבירות על חוקי עזר (חע"מ)', 'תכנון ובנייה (תו"ב)'],
+      subjects: ['חניה', 'רישוי עסקים', 'בנייה ללא היתר', 'שימוש חורג']
+    },
+    'עבודה': {
+      courts: ['אזורי לעבודה תל אביב-יפו', 'אזורי לעבודה ירושלים', 'אזורי לעבודה חיפה'],
+      types: ['סכסוך עבודה (סע"ש)', 'ביטוח לאומי (ב"ל)'],
+      subjects: ['פיצויי פיטורים', 'שכר עבודה', 'נכות כללית', 'תאונת עבודה']
+    },
+    'עניינים מנהליים': {
+      courts: ['המחוזי ירושלים', 'המחוזי תל אביב-יפו', 'המחוזי חיפה'],
+      types: ['עתירה מנהלית (עת"מ)', 'ערעור מנהלי (עמ"נ)'],
+      subjects: ['מכרזים', 'תכנון ובנייה', 'רישוי', 'חופש המידע']
+    },
+    'ערעור אזרחי': {
+      courts: ['המחוזי תל אביב-יפו', 'המחוזי ירושלים', 'המחוזי חיפה', 'העליון'],
+      types: ['ערעור אזרחי (ע"א)', 'רשות ערעור אזרחי (רע"א)'],
+      subjects: ['ערעור על פסק דין', 'ערעור על החלטה']
+    },
+    'חדלות פירעון': {
+      courts: ['המחוזי תל אביב-יפו', 'המחוזי חיפה', 'שלום באר שבע'],
+      types: ['חדלות פירעון (חדל"פ)', 'פירוקים (פר"ק)'],
+      subjects: ['צו לפתיחת הליכים', 'בקשה למתן הוראות', 'תביעת חוב']
+    }
+  };
+  var PROCS = Object.keys(PROC);
+  var COURTS = [];
+  PROCS.forEach(function (p) { PROC[p].courts.forEach(function (c) { if (COURTS.indexOf(c) < 0) COURTS.push(c); }); });
+  COURTS.sort(function (a, b) {
+    var rank = function (s) { return s === 'העליון' ? 0 : s.indexOf('המחוזי') === 0 ? 1 : s.indexOf('שלום') === 0 ? 2 : 3; };
+    return rank(a) - rank(b) || a.localeCompare(b, 'he');
+  });
+
+  /* the bodies a case can come from, and the shape of their numbers — the
+     shape is the placeholder, so nobody has to be told the format in words */
+  var EXT = {
+    'תיק משטרתי (פל"א)':    { ph: '412785/2025',    procs: ['פלילי'] },
+    'דו"ח תעבורה':          { ph: '40217753',       procs: ['תעבורה'] },
+    'הודעת תשלום קנס':      { ph: '98120044',       procs: ['תעבורה'] },
+    'דו"ח רשות מקומית':     { ph: '510036271',      procs: ['עניינים מקומיים'] },
+    'תיק הוצאה לפועל':      { ph: '502-18833-24-7', procs: ['אזרחי'] },
+    'כונס הנכסים הרשמי':    { ph: '3381/24',        procs: ['חדלות פירעון'] }
+  };
+  var EXT_TYPES = Object.keys(EXT);
+
+  var JUDGES = ['דנה כהן', 'אבי מזרחי', 'רונית שרון', 'יעל בן-דוד', 'עמית פלד', 'נועה גל', 'מיכל אגמון', 'יוסף בן חיים'];
+  var STATES = ['פתוח', 'סגור', 'מעוכב'];
+  var ME = 'עו"ד ישראל כהן';
+
+  /* ── generated result set ──────────────────────────────────────────────── */
+  var seed = 20261026;
+  function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+  function pick(a) { return a[Math.floor(rnd() * a.length)]; }
+  function pad(n, w) { n = String(n); while (n.length < w) n = '0' + n; return n; }
+  function isoDate(y, m, d) { return y + '-' + pad(m, 2) + '-' + pad(d, 2); }
+  function addDays(iso, n) {
+    var d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n);
+    return isoDate(d.getFullYear(), d.getMonth() + 1, d.getDate());
+  }
+  function abbr(t) { var m = t.match(/\(([^)]+)\)/); return m ? m[1] : ''; }
+
+  var FAMILY = ['כהן', 'לוי', 'מזרחי', 'ברק', 'שגב', 'אלוני', 'פרץ', 'דהן', 'אבוטבול', 'שמש',
+    'נחום', 'רוזן', 'גבאי', 'הרוש', 'סלע', 'בן שימול', 'אזולאי', 'ביטון', 'קורן', 'חזן'];
+  var GIVEN = ['רונית', 'משה', 'דניאלה', 'יעקב', 'אורן', 'טל', 'ליאור', 'שירה', 'עמרי', 'נועם', 'מאיה', 'אסף'];
+  var COMPANIES = ['גלובוס שילוח בע"מ', 'הראל לב ביטוח בע"מ', 'שחר מערכות בע"מ', 'אופק בנייה בע"מ',
+    'בנק הדרום בע"מ', 'פלאפון קל בע"מ', 'נתיבי הצפון בע"מ', 'מגדלי הים בע"מ'];
+  var LAWYERS = ['עו"ד מיכל רז', 'עו"ד אלון גרין', 'עו"ד סיגל עמר', 'עו"ד חיים דגן', 'עו"ד ענבל שפירא', 'עו"ד רועי נבו'];
+  function person() { return pick(GIVEN) + ' ' + pick(FAMILY); }
+
+  /* who stands on each side, by procedure */
+  function partiesFor(proc) {
+    if (proc === 'פלילי' || proc === 'תעבורה') return [['מאשימה', 'מדינת ישראל', 'פרקליטות / תביעות'], ['נאשם/ת', person(), null]];
+    if (proc === 'עניינים מקומיים') return [['מאשימה', 'עיריית ' + pick(['תל אביב-יפו', 'ירושלים', 'חיפה']), 'תובע עירוני'], ['נאשם/ת', person(), null]];
+    if (proc === 'חדלות פירעון') return [['מבקש/ת', rnd() < .5 ? person() : pick(COMPANIES), null], ['משיב/ה', 'הממונה על הליכי חדלות פירעון', null]];
+    if (proc === 'עניינים מנהליים') return [['עותר/ת', person(), null], ['משיב/ה', pick(['הוועדה המקומית לתכנון ובנייה', 'משרד הפנים', 'רשות המסים']), null]];
+    if (proc === 'עבודה') return [['תובע/ת', person(), null], ['נתבע/ת', rnd() < .5 ? pick(COMPANIES) : 'המוסד לביטוח לאומי', null]];
+    if (proc === 'ערעור אזרחי') return [['מערער/ת', rnd() < .5 ? person() : pick(COMPANIES), null], ['משיב/ה', rnd() < .5 ? person() : pick(COMPANIES), null]];
+    if (proc === 'משפחה') { var f = pick(FAMILY); return [['תובע/ת', pick(GIVEN) + ' ' + f, null], ['נתבע/ת', pick(GIVEN) + ' ' + f, null]]; }
+    return [['תובע/ת', rnd() < .7 ? person() : pick(COMPANIES), null], ['נתבע/ת', rnd() < .5 ? person() : pick(COMPANIES), null]];
+  }
+  function titleOf(parties) {
+    var a = parties[0][1], b = parties[1][1];
+    return a + (rnd() < .2 ? ' ואח\'' : '') + ' נ\' ' + b;
+  }
+  function extNumber(type) {
+    var n = function (k) { var s = ''; for (var i = 0; i < k; i++) s += Math.floor(rnd() * 10); return s.replace(/^0/, '1'); };
+    if (type === 'תיק משטרתי (פל"א)') return n(6) + '/' + (2022 + Math.floor(rnd() * 5));
+    if (type === 'תיק הוצאה לפועל') return n(3) + '-' + n(5) + '-' + (22 + Math.floor(rnd() * 5)) + '-' + Math.floor(rnd() * 10);
+    if (type === 'כונס הנכסים הרשמי') return n(4) + '/' + (22 + Math.floor(rnd() * 5));
+    if (type === 'דו"ח רשות מקומית') return n(9);
+    return n(8);
+  }
+
+  var CASES = [];
+  function addCase(c) {
+    c.id = 'c' + CASES.length;
+    c.typeAbbr = abbr(c.caseType);
+    c.ext = c.extType ? c.extType + ' ' + c.extNum : '';
+    c.hearingLabel = c.hearing ? fmtDate(c.hearing) : '—';
+    CASES.push(c);
+    return c;
+  }
+
+  /* fixed cases first, so the screen always has something real to land on:
+     the case the lawyer arrived from, and one police file that spawned three
+     cases — which is exactly what search by source number is for */
+  addCase({ caseNum: '70137-09-24', court: 'שלום חדרה', proc: 'אזרחי', caseType: 'תיק אזרחי בסדר דין רגיל (ת"א)',
+    subject: 'תביעה כספית', judge: 'דנה כהן', opened: '2024-09-12', state: 'פתוח', hearing: '2026-11-18', mine: true,
+    parties: [['תובע/ת', 'פלח לוי ואח\'', ME], ['נתבע/ת', 'אל על נתיבי אויר לישראל בע"מ', 'עו"ד מיכל רז']],
+    title: 'פלח לוי ואח\' נ\' אל על נתיבי אויר לישראל בע"מ' });
+  [['31201-10-25', 'שלום תל אביב-יפו', 'תיק פלילי (ת"פ)', '2025-10-14', 'פתוח', '2026-11-04', 'רונית שרון'],
+   ['31207-10-25', 'שלום תל אביב-יפו', 'מעצר עד תום ההליכים (מ"ת)', '2025-10-14', 'סגור', null, 'עמית פלד'],
+   ['4410-11-25', 'המחוזי תל אביב-יפו', 'מעצר עד תום ההליכים (מ"ת)', '2025-11-03', 'סגור', null, 'יוסף בן חיים']
+  ].forEach(function (d) {
+    addCase({ caseNum: d[0], court: d[1], proc: 'פלילי', caseType: d[2], subject: 'עבירות רכוש', judge: d[6],
+      opened: d[3], state: d[4], hearing: d[5], mine: true, extType: 'תיק משטרתי (פל"א)', extNum: '412785/2025',
+      parties: [['מאשימה', 'מדינת ישראל', 'פרקליטות מחוז תל אביב'], ['נאשם/ת', 'אלון שגיא', ME]],
+      title: 'מדינת ישראל נ\' אלון שגיא' });
+  });
+
+  for (var ci = 0; ci < 330; ci++) {
+    var proc = rnd() < .38 ? 'אזרחי' : pick(PROCS);
+    var P = PROC[proc];
+    var yy = 22 + Math.floor(rnd() * 5);                 /* 22–26 */
+    var mm = 1 + Math.floor(rnd() * 12);
+    if (yy === 26 && mm > 10) mm = 1 + Math.floor(rnd() * 10);
+    var dd = 1 + Math.floor(rnd() * 28);
+    var opened = isoDate(2000 + yy, mm, dd);
+    if (opened > TODAY) opened = TODAY;
+    /* a slice of cases opened in the last fortnight, so a search by date
+       around today has something in it */
+    if (rnd() < .14) { opened = addDays(TODAY, -Math.floor(rnd() * 14)); yy = +opened.slice(2, 4); mm = +opened.slice(5, 7); }
+    var state = yy >= 25 ? (rnd() < .82 ? 'פתוח' : pick(STATES)) : (rnd() < .55 ? 'סגור' : pick(STATES));
+    var mine = rnd() < .2;
+    var parties = partiesFor(proc);
+    if (mine) parties[rnd() < .5 ? 0 : 1][2] = ME;
+    parties.forEach(function (p) { if (!p[2] && !/^(מדינת|עיריית|הממונה|המוסד)/.test(p[1]) && rnd() < .7) p[2] = pick(LAWYERS); });
+    var extType = null, extNum = null;
+    EXT_TYPES.forEach(function (t) { if (!extType && EXT[t].procs.indexOf(proc) >= 0 && rnd() < .55) { extType = t; extNum = extNumber(t); } });
+    addCase({
+      caseNum: (1000 + Math.floor(rnd() * 88999)) + '-' + pad(mm, 2) + '-' + pad(yy, 2),
+      court: pick(P.courts), proc: proc, caseType: pick(P.types), subject: pick(P.subjects), judge: pick(JUDGES),
+      opened: opened, state: state,
+      hearing: state === 'פתוח' && rnd() < .7 ? addDays(TODAY, 1 + Math.floor(rnd() * 120)) : null,
+      mine: mine, extType: extType, extNum: extNum, parties: parties, title: titleOf(parties)
+    });
+  }
+
+  /* ── helpers ─────────────────────────────────────────────────────────────── */
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function val(id) { return ($(id).value || '').trim(); }
+  function radio(name) {
+    var el = document.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : '';
+  }
+  function fmtDate(iso) { var p = iso.split('-'); return p[2] + '.' + p[1] + '.' + p[0]; }
+  function digits(s) { return String(s || '').replace(/\D/g, ''); }
+  function fillSelect(id, list, blank) {
+    var el = $(id); if (!el) return;
+    el.innerHTML = '<option value="">' + (blank || 'בחר') + '</option>'
+      + list.map(function (v) { return '<option>' + esc(v) + '</option>'; }).join('');
+  }
+
+  fillSelect('dcExtType', EXT_TYPES);
+  fillSelect('dcCourt', COURTS);
+  fillSelect('dcProc', PROCS, 'כל ההליכים');
+  fillSelect('dcCaseType', [], 'יש לבחור הליך');
+  fillSelect('dcSubject', [], 'יש לבחור הליך');
+  fillSelect('dcMineCourt', COURTS, 'כל בתי המשפט');
+  fillSelect('dcMineProc', PROCS, 'כל ההליכים');
+
+  /* ── the search form ─────────────────────────────────────────────────────── */
+  var MODES = { ext: 'לפי מס׳ תיק מקור', date: 'לפי תאריך פתיחה', mine: 'התיקים שלי' };
+  var mode = 'ext';
+  var tabs = document.querySelectorAll('.dc-tab');
+  function setMode(m) {
+    mode = m;
+    tabs.forEach(function (b) {
+      var on = b.getAttribute('data-tab') === m;
+      b.classList.toggle('dc-tab-active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    $('dcTabExt').hidden = m !== 'ext';
+    $('dcTabDate').hidden = m !== 'date';
+    $('dcTabMine').hidden = m !== 'mine';
+    $('dcReqNote').style.visibility = m === 'mine' ? 'hidden' : '';
+    document.querySelectorAll('.cvs-railnav [data-tab]').forEach(function (a) {
+      if (a.getAttribute('data-tab') === m) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+    });
+    clearErrors();
+    if (history.replaceState) history.replaceState(null, '', '#' + m);
+  }
+  tabs.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      setMode(btn.getAttribute('data-tab'));
+      /* התיקים שלי needs nothing typed: the list is there the moment the tab
+         is, and the fields only narrow it. The card stays open for that. */
+      if (mode === 'mine') search(false);
+    });
+  });
+
+  /* the rail's fly-out lists the same three modes; picking one there switches
+     the tab here instead of reloading the page */
+  document.querySelectorAll('.cvs-railnav [data-tab]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      a.closest('details').open = false;
+      document.querySelector('.dc-tab[data-tab="' + a.getAttribute('data-tab') + '"]').click();
+    });
+  });
+
+  /* the number's shape follows the body it comes from */
+  function syncExt() {
+    var t = val('dcExtType');
+    $('dcExtNum').placeholder = t ? EXT[t].ph : '';
+    $('dcExtHint').textContent = t
+      ? 'מקלידים את המספר כפי שהוא מופיע במסמך שהתקבל'
+      : 'בוחרים מאיזה גוף הגיע התיק, ומקלידים את המספר שלו שם';
+  }
+  $('dcExtType').addEventListener('change', syncExt);
+
+  (function () {
+    var btn = $('dcExtInfo'), pop = $('dcExtInfoPop');
+    function set(open) { pop.hidden = !open; btn.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+    btn.addEventListener('click', function (e) { e.stopPropagation(); set(pop.hidden); });
+    document.addEventListener('click', function (e) { if (!pop.contains(e.target)) set(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') set(false); });
+  })();
+
+  /* סוג תיק / סוג עניין open only once הליך is chosen — their lists are its */
+  function syncDependants() {
+    var p = val('dcProc');
+    ['dcCaseType', 'dcSubject'].forEach(function (id) {
+      var el = $(id);
+      el.disabled = !p;
+      fillSelect(id, p ? PROC[p][id === 'dcCaseType' ? 'types' : 'subjects'] : [], p ? 'הכל' : 'יש לבחור הליך');
+      el.closest('.dc-field').classList.toggle('dc-field-off', !p);
+    });
+  }
+  $('dcProc').addEventListener('change', syncDependants);
+
+  /* ── required fields ── */
+  function clearErrors() {
+    document.querySelectorAll('.dc-field-bad').forEach(function (f) {
+      f.classList.remove('dc-field-bad');
+      var e = f.querySelector('.dc-err'); if (e) e.hidden = true;
+      f.querySelectorAll('[aria-invalid]').forEach(function (c) { c.removeAttribute('aria-invalid'); });
+    });
+  }
+  function flag(fieldId, ctlId) {
+    var f = $(fieldId);
+    f.classList.add('dc-field-bad');
+    f.querySelector('.dc-err').hidden = false;
+    $(ctlId).setAttribute('aria-invalid', 'true');
+    return $(ctlId);
+  }
+  function validate() {
+    clearErrors();
+    var bad = [];
+    if (mode === 'ext') {
+      if (!val('dcExtType')) bad.push(flag('fExtType', 'dcExtType'));
+      if (!digits(val('dcExtNum'))) bad.push(flag('fExtNum', 'dcExtNum'));
+    } else if (mode === 'date') {
+      if (!val('dcCourt')) bad.push(flag('fCourt', 'dcCourt'));
+      if (!val('dcFrom') && !val('dcTo')) bad.push(flag('fDate', 'dcFrom'));
+    }
+    if (bad.length) { bad[0].focus(); return false; }
+    return true;
+  }
+  /* the mark goes the moment the field is filled */
+  document.querySelectorAll('#dcForm input, #dcForm select').forEach(function (c) {
+    ['input', 'change'].forEach(function (ev) {
+      c.addEventListener(ev, function () {
+        var f = c.closest('.dc-field-bad'); if (!f) return;
+        f.classList.remove('dc-field-bad');
+        f.querySelector('.dc-err').hidden = true;
+        f.querySelectorAll('[aria-invalid]').forEach(function (x) { x.removeAttribute('aria-invalid'); });
+      });
+    });
+  });
+
+  function matchesExt(r) {
+    if (r.extType !== val('dcExtType')) return false;
+    return digits(r.extNum).indexOf(digits(val('dcExtNum'))) !== -1;
+  }
+  function inRange(iso, from, to) { return !(from && iso < from) && !(to && iso > to); }
+  function matchesDate(r) {
+    if (r.court !== val('dcCourt')) return false;
+    var p = val('dcProc');        if (p && r.proc !== p) return false;
+    var ct = val('dcCaseType');   if (ct && r.caseType !== ct) return false;
+    var s = val('dcSubject');     if (s && r.subject !== s) return false;
+    var st = radio('dcState');    if (st && r.state !== st) return false;
+    return inRange(r.opened, val('dcFrom'), val('dcTo'));
+  }
+  function matchesMine(r) {
+    if (!r.mine) return false;
+    var q = val('dcMineQ');
+    if (q && r.caseNum.indexOf(q) === -1 && r.title.indexOf(q) === -1) return false;
+    var c = val('dcMineCourt');   if (c && r.court !== c) return false;
+    var p = val('dcMineProc');    if (p && r.proc !== p) return false;
+    var st = radio('dcMineState');
+    if (st === 'hearing' ? !r.hearing : (st && r.state !== st)) return false;
+    return inRange(r.opened, val('dcMineFrom'), val('dcMineTo'));
+  }
+  var MATCH = { ext: matchesExt, date: matchesDate, mine: matchesMine };
+
+  /* the folded strip: what was searched, in one line */
+  function rangeText(f, t) { return (f ? fmtDate(f) : '…') + ' – ' + (t ? fmtDate(t) : '…'); }
+  function summaryText() {
+    var parts = [];
+    if (mode === 'ext') {
+      parts.push(val('dcExtType'), val('dcExtNum'));
+    } else if (mode === 'date') {
+      ['dcCourt', 'dcProc', 'dcCaseType', 'dcSubject'].forEach(function (id) { if (val(id)) parts.push(val(id)); });
+      var f = val('dcFrom'), t = val('dcTo');
+      parts.push(f && f === t ? fmtDate(f) : rangeText(f, t));
+      if (radio('dcState')) parts.push(radio('dcState'));
+    } else {
+      if (val('dcMineQ')) parts.push('״' + val('dcMineQ') + '״');
+      ['dcMineCourt', 'dcMineProc'].forEach(function (id) { if (val(id)) parts.push(val(id)); });
+      if (val('dcMineFrom') || val('dcMineTo')) parts.push(rangeText(val('dcMineFrom'), val('dcMineTo')));
+      var ms = radio('dcMineState');
+      if (ms) parts.push(ms === 'hearing' ? 'עם דיון קרוב' : ms === 'פתוח' ? 'פתוחים' : 'סגורים');
+      if (!parts.length) return 'כל התיקים שבהם אני מייצג/ת';
+    }
+    return parts.join(' · ');
+  }
+
+  /* The strip describes the search that actually RAN, so it is written once, at
+     search time. Once it exists it stays on screen: folded it is the whole
+     card, open it is the card's header, and clicking it toggles between them. */
+  function showSummary(folded) {
+    var f = $('dcForm');
+    f.classList.toggle('dc-collapsed', folded);
+    f.classList.toggle('dc-summary-open', !folded);
+    $('dcSummary').querySelector('.dc-summary-edit').firstChild.textContent =
+      folded ? 'עריכת חיפוש ' : 'סגירה ';
+  }
+  function writeSummary(fold) {
+    $('dcSummary').hidden = false;
+    $('dcSummaryMode').textContent = MODES[mode];
+    $('dcSummaryVals').textContent = summaryText();
+    showSummary(fold);
+  }
+  $('dcSummary').addEventListener('click', function () {
+    showSummary(!$('dcForm').classList.contains('dc-collapsed'));
+  });
+
+  /* ── the results grid ────────────────────────────────────────────────────
+     Same grid as איתור החלטות: pinned picker and open pair at the start
+     edge, a sort cue on every header that can order the grid, a filter row
+     under the header, a column menu and draggable edges. תיק מקור is shown
+     only for the search that asks about it. */
+  var COLS = [
+    { key: 'pick',     label: '',            w: 44,  stick: 0 },
+    { key: 'doc',      label: 'פתיחה',       w: 76,  stick: 60 },
+    { key: 'caseNum',  label: 'מספר תיק',    w: 168, filter: 'text', on: true, link: true },
+    { key: 'title',    label: 'שם תיק',      w: 210, filter: 'text', on: true },
+    { key: 'state',    label: 'מצב',         w: 88,  filter: 'set',  on: true, tag: true },
+    { key: 'opened',   label: 'תאריך פתיחה', w: 104, filter: 'date', on: true },
+    { key: 'hearing',  label: 'דיון קרוב',   w: 96,  on: true },
+    { key: 'court',    label: 'בית משפט',    w: 150, filter: 'set',  on: true },
+    { key: 'judge',    label: 'שופט/ת',      w: 108, filter: 'set',  on: true },
+    { key: 'proc',     label: 'הליך',        w: 108, filter: 'set',  on: true },
+    { key: 'caseType', label: 'סוג תיק',     w: 165, filter: 'set',  on: true },
+    { key: 'subject',  label: 'סוג עניין',   w: 130, filter: 'set',  on: true },
+    { key: 'ext',      label: 'תיק מקור',    w: 190, filter: 'text', on: false }
+  ];
+  var DATE_KEYS = { opened: 1, hearing: 1 };
+  function stickClass(c) {
+    return c.stick === undefined ? '' : ' dc-stick dc-stick-' + c.stick;
+  }
+  var COLS_DEFAULT_ON = {};
+  COLS.forEach(function (c) { if (c.on !== undefined) COLS_DEFAULT_ON[c.key] = c.on; });
+  var COLS_DEFAULT_ORDER = COLS.map(function (c) { return c.key; });
+  function reorderCol(fromKey, toKey, after) {
+    var fi = -1, ti = -1, i;
+    for (i = 0; i < COLS.length; i++) { if (COLS[i].key === fromKey) fi = i; }
+    if (fi < 0) return;
+    var moved = COLS.splice(fi, 1)[0];
+    for (i = 0; i < COLS.length; i++) { if (COLS[i].key === toKey) ti = i; }
+    if (ti < 0) { COLS.push(moved); return; }
+    COLS.splice(after ? ti + 1 : ti, 0, moved);
+  }
+  var TAG_CLASS = { 'פתוח': 'dc-tag-open', 'סגור': 'dc-tag-closed', 'מעוכב': 'dc-tag-stay' };
+  var MAX_ROWS = 200;
+
+  var hits = [];          /* what the search returned */
+  var colFilters = {};    /* set columns:  key → Set of allowed values */
+  var textFilters = {};   /* text columns: key → substring */
+  var dateFilter = { from: '', to: '' };
+  var colPx = {};         /* key → width in px, once a header edge is dragged */
+  var picked = {};        /* case id → true, for the export button */
+  var sortKey = 'opened'; /* which column orders the grid */
+  var sortDir = -1;       /* -1 = descending; newest first */
+
+  var body, wrap = $('dcTableWrap'), empty = $('dcEmpty'), table = $('dcTable');
+
+  var maxScrollLeft = 0;
+  function pinTableStart() {
+    wrap.style.setProperty('--dc-sbw', (wrap.offsetWidth - wrap.clientWidth) + 'px');
+    wrap.scrollLeft = wrap.scrollWidth;
+    maxScrollLeft = wrap.scrollLeft;
+    wrap.classList.remove('dc-scrolled');
+  }
+  window.addEventListener('resize', pinTableStart);
+  wrap.addEventListener('scroll', function () {
+    wrap.classList.toggle('dc-scrolled', wrap.scrollLeft < maxScrollLeft - 2);
+  });
+
+  function visibleCols() {
+    return COLS.filter(function (c) { return c.on !== false; });
+  }
+
+  function distinct(rows, key) {
+    var m = {};
+    rows.forEach(function (r) { m[r[key]] = (m[r[key]] || 0) + 1; });
+    return Object.keys(m).sort(function (a, b) { return a.localeCompare(b, 'he'); })
+      .map(function (v) { return { value: v, count: m[v] }; });
+  }
+
+  function passesFilters(r) {
+    for (var k in colFilters) {
+      if (colFilters[k] && !colFilters[k].has(r[k])) return false;
+    }
+    for (var t in textFilters) {
+      if (textFilters[t] && String(r[t]).indexOf(textFilters[t]) === -1) return false;
+    }
+    if (dateFilter.from && r.opened < dateFilter.from) return false;
+    if (dateFilter.to && r.opened > dateFilter.to) return false;
+    return true;
+  }
+
+  function anyFilterActive() {
+    if (Object.keys(colFilters).length) return true;
+    if (dateFilter.from || dateFilter.to) return true;
+    for (var t in textFilters) { if (textFilters[t]) return true; }
+    return false;
+  }
+
+  function pickedCount() { return Object.keys(picked).length; }
+
+  function syncDownload() {
+    var n = pickedCount(), btn = $('dcDownload');
+    btn.hidden = !n;
+    btn.querySelector('.cvs-dlcount').textContent = n ? ' (' + n + ')' : '';
+  }
+
+  /* ── the head: labels, sort, and one filter control per column ──────────── */
+  function orderable(c) {
+    return c.key !== 'pick' && c.key !== 'doc' && distinct(hits, c.key).length > 1;
+  }
+
+  var CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>';
+  function dateLabel() {
+    return (dateFilter.from || dateFilter.to)
+      ? (dateFilter.from ? fmtDate(dateFilter.from) : '…') + ' – ' + (dateFilter.to ? fmtDate(dateFilter.to) : '…')
+      : 'הכל';
+  }
+
+  function filterCellHtml(c) {
+    if (!c.filter || distinct(hits, c.key).length < 2) return '';
+    if (c.filter === 'date') {
+      return '<div class="cvs-filtcell" data-col="' + c.key + '" data-kind="date">'
+        + '<button type="button" class="cvs-filtbtn' + ((dateFilter.from || dateFilter.to) ? ' cvs-filtbtn-on' : '') + '">'
+        + '<span>' + esc(dateLabel()) + '</span>' + CHEV
+        + '</button><div class="cvs-filtmenu" hidden></div></div>';
+    }
+    if (c.filter === 'text') {
+      return '<input type="text" class="cvs-filt cvs-filttext" data-col="' + c.key + '" '
+        + 'aria-label="סינון ' + esc(c.label) + '" value="' + esc(textFilters[c.key] || '') + '">';
+    }
+    var sel = colFilters[c.key];
+    return '<div class="cvs-filtcell" data-col="' + c.key + '" data-kind="set">'
+      + '<button type="button" class="cvs-filtbtn' + (sel ? ' cvs-filtbtn-on' : '') + '">'
+      + '<span>' + (sel ? 'נבחרו ' + sel.size : 'הכל') + '</span>' + CHEV
+      + '</button><div class="cvs-filtmenu" hidden></div></div>';
+  }
+
+  function buildHead() {
+    var cols = visibleCols();
+    var grip = '<span class="dc-colresize" aria-hidden="true"></span>';
+
+    var head = '<tr>' + cols.map(function (c) {
+      var w = colPx[c.key] || c.w;
+      var wstyle = w ? ' style="width:' + w + 'px"' : '';
+      if (c.key === 'pick') {
+        return '<th class="dc-stick dc-stick-0 dc-th-pick" data-key="pick"' + wstyle + '>'
+          + '<div class="cvs-pickhead">'
+          + '<input type="checkbox" class="cvs-pickbox" id="dcPickAll" aria-label="בחירת כל השורות המוצגות">'
+          + '</div></th>';
+      }
+      if (c.key === 'doc') return '<th class="dc-stick dc-stick-' + c.stick + '" data-key="' + c.key + '"' + wstyle + '>' + esc(c.label) + '</th>';
+      if (!orderable(c)) {
+        return '<th data-key="' + c.key + '"' + wstyle + '>' + esc(c.label) + grip + '</th>';
+      }
+      var on = sortKey === c.key;
+      var ind = on
+        ? '<svg class="dc-sortind' + (sortDir === 1 ? ' dc-sortup' : '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>'
+        : '<svg class="dc-sortind dc-sortidle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"></path><path d="m7 9 5-5 5 5"></path></svg>';
+      return '<th class="dc-th-sort' + (on ? ' dc-th-sorted' : '') + '" data-key="' + c.key + '" data-sort="' + c.key + '"' + wstyle
+        + ' title="מיון לפי ' + esc(c.label) + '">' + esc(c.label) + ind + grip + '</th>';
+    }).join('') + '</tr>';
+
+    var filt = '<tr class="cvs-filtrow">' + cols.map(function (c) {
+      if (c.key === 'pick') return '<th class="dc-th-pick dc-stick dc-stick-0"></th>';
+      return '<th class="' + stickClass(c).trim() + '">' + filterCellHtml(c) + '</th>';
+    }).join('') + '</tr>';
+
+    return '<thead>' + head + filt + '</thead><tbody id="dcBody"></tbody>';
+  }
+
+  function cellHtml(c, r) {
+    if (c.key === 'pick') {
+      return '<td class="dc-td-pick dc-stick dc-stick-0"><input type="checkbox" class="dc-pick cvs-pickbox" data-id="' + r.id + '"'
+        + (picked[r.id] ? ' checked' : '') + ' aria-label="בחירת תיק ' + esc(r.caseNum) + '"></td>';
+    }
+    if (c.key === 'doc') {
+      return '<td class="dc-stick dc-stick-60"><div class="dc-rowactions">'
+        + '<button type="button" class="dc-iconbtn dc-view-open" title="כרטיס תיק ' + esc(r.caseNum) + ' לצד הטבלה" aria-label="כרטיס תיק ' + esc(r.caseNum) + ' לצד הטבלה">'
+        + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 6H3"/><path d="M10 12H3"/><path d="M10 18H3"/><circle cx="17" cy="15" r="3"/><path d="m21 19-1.9-1.9"/></svg>'
+        + '</button>'
+        + '<button type="button" class="dc-iconbtn dc-view-window" title="פתיחת תיק ' + esc(r.caseNum) + ' בחלון חדש" aria-label="פתיחת תיק ' + esc(r.caseNum) + ' בחלון חדש">'
+        + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>'
+        + '</button></div></td>';
+    }
+    if (c.key === 'opened') return '<td><span class="dc-cell dc-muted">' + fmtDate(r.opened) + '</span></td>';
+    if (c.key === 'hearing') return '<td><span class="dc-cell dc-muted">' + r.hearingLabel + '</span></td>';
+    if (c.tag) return '<td><span class="dc-tag ' + (TAG_CLASS[r[c.key]] || '') + '">' + esc(r[c.key]) + '</span></td>';
+    if (c.link) {
+      return '<td><span class="dc-casecell"><a class="dc-cell dc-casenum" href="' + CASE_URL + '" title="מעבר לתיק" dir="ltr">'
+        + esc(r.typeAbbr ? r.caseNum + ' ' + r.typeAbbr : r.caseNum) + '</a>'
+        + (r.mine && mode !== 'mine' ? '<span class="dc-mine" title="תיק שבו אני מייצג/ת">שלי</span>' : '') + '</span></td>';
+    }
+    if (c.key === 'title') return '<td><span class="dc-cell dc-name" title="' + esc(r.title) + '">' + esc(r.title) + '</span></td>';
+    return '<td><span class="dc-cell dc-muted" title="' + esc(r[c.key]) + '">' + esc(r[c.key] || '—') + '</span></td>';
+  }
+
+  var shownRows = [];
+
+  function sortedRows() {
+    return hits.filter(passesFilters).sort(function (a, b) {
+      var va = a[sortKey] || '', vb = b[sortKey] || '';
+      if (va === vb) return 0;
+      /* a case with no hearing set sorts last whichever way the column runs */
+      if (sortKey === 'hearing' && (!va || !vb)) return va ? -1 : 1;
+      var cmp = DATE_KEYS[sortKey] ? (va < vb ? -1 : 1) : String(va).localeCompare(String(vb), 'he', { numeric: true });
+      return cmp * sortDir;
+    });
+  }
+
+  function renderBody() {
+    var cols = visibleCols();
+    var rows = sortedRows();
+
+    var capped = rows.length > MAX_ROWS;
+    shownRows = capped ? rows.slice(0, MAX_ROWS) : rows;
+
+    $('dcCap').hidden = !capped;
+    if (capped) {
+      $('dcCap').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>'
+        + 'מוצגים ' + MAX_ROWS + ' התיקים הראשונים מתוך ' + rows.length + '. צמצמו את החיפוש או סננו את התוצאות.';
+    }
+
+    $('dcClearFilters').hidden = !anyFilterActive();
+    $('dcCount').textContent = anyFilterActive()
+      ? 'מוצגים ' + rows.length + ' מתוך ' + hits.length + ' תיקים'
+      : (hits.length === 1 ? 'נמצא תיק אחד' : 'נמצאו ' + hits.length + ' תיקים');
+
+    body = $('dcBody');
+    if (!shownRows.length) {
+      body.innerHTML = '<tr><td class="dc-norows" colspan="' + cols.length + '">אין תוצאות שעונות על הסינון</td></tr>';
+    } else {
+      body.innerHTML = shownRows.map(function (r) {
+        return '<tr data-id="' + r.id + '" title="כרטיס תיק ' + esc(r.caseNum) + ' לצד הטבלה">'
+          + cols.map(function (c) { return cellHtml(c, r); }).join('') + '</tr>';
+      }).join('');
+      if (activeId || lastId) {
+        var act = body.querySelector('tr[data-id="' + (activeId || lastId) + '"]');
+        if (act && activeId) { act.classList.add('dc-rowactive'); act.setAttribute('aria-current', 'true'); }
+        else if (act) act.classList.add('dc-rowlast');
+      }
+    }
+    syncPickAll();
+    syncDownload();
+  }
+
+  function syncPickAll() {
+    var all = $('dcPickAll'); if (!all) return;
+    var n = shownRows.filter(function (r) { return picked[r.id]; }).length;
+    all.checked = shownRows.length > 0 && n === shownRows.length;
+    all.indeterminate = n > 0 && n < shownRows.length;
+  }
+
+  function renderTable() {
+    table.innerHTML = buildHead();
+    renderBody();
+    var headRow = table.querySelector('thead tr:first-child');
+    if (headRow) table.style.setProperty('--dc-headh', Math.round(headRow.getBoundingClientRect().height) + 'px');
+    pinTableStart();
+  }
+
+  /* ── running a search ────────────────────────────────────────────────────── */
+  function showEmpty(main, sub) {
+    wrap.hidden = true;
+    $('dcColsBar').hidden = true;
+    empty.style.display = 'flex';
+    $('dcEmptyMain').textContent = main;
+    $('dcEmptySub').textContent = sub;
+    $('dcCap').hidden = true;
+    $('dcClearFilters').hidden = true;
+    syncDownload();
+  }
+
+  function resetResults() {
+    closePane();
+    hits = []; colFilters = {}; textFilters = {}; dateFilter = { from: '', to: '' };
+    picked = {}; shownRows = [];
+    $('dcCount').textContent = '';
+    table.innerHTML = '';
+    showEmpty('עדיין לא בוצע חיפוש', mode === 'mine' ? 'לחצו אתר כדי לראות את כל התיקים שלכם' : 'יש למלא את שדות החובה וללחוץ אתר');
+  }
+
+  var NOT_FOUND = {
+    ext: 'לא נמצא תיק בית משפט שנפתח מתיק המקור הזה. כדאי לבדוק את סוג התיק ואת המספר.',
+    date: 'לא נפתחו תיקים בבית המשפט הזה בתאריכים שנבחרו.',
+    mine: 'אין תיקים שלכם שעונים על הפרמטרים שהוזנו.'
+  };
+
+  function search(fold) {
+    if (!validate()) return;
+    closePane();
+    colFilters = {}; textFilters = {}; dateFilter = { from: '', to: '' };
+    picked = {};
+    hits = CASES.filter(MATCH[mode]);
+    /* the source number is the question the first tab asks, so it is the
+       column that answers it; elsewhere it is noise */
+    COLS.forEach(function (c) { if (c.key === 'ext') c.on = mode === 'ext'; });
+    writeSummary(fold !== false);
+
+    if (!hits.length) {
+      $('dcCount').textContent = '';
+      showEmpty('לא נמצאו תיקים', NOT_FOUND[mode]);
+      return;
+    }
+
+    if (distinct(hits, sortKey).length < 2) { sortKey = 'opened'; sortDir = -1; }
+
+    empty.style.display = 'none';
+    wrap.hidden = false;
+    $('dcColsBar').hidden = false;
+    renderTable();
+  }
+
+  function clearForm() {
+    ['dcExtNum', 'dcFrom', 'dcTo', 'dcMineQ', 'dcMineFrom', 'dcMineTo'].forEach(function (id) { $(id).value = ''; });
+    ['dcExtType', 'dcCourt', 'dcProc', 'dcMineCourt', 'dcMineProc'].forEach(function (id) { $(id).selectedIndex = 0; });
+    document.querySelector('input[name="dcState"][value=""]').checked = true;
+    document.querySelector('input[name="dcMineState"][value=""]').checked = true;
+    $('dcFrom').value = $('dcTo').value = TODAY;
+    syncExt();
+    syncDependants();
+    clearErrors();
+    $('dcSummary').hidden = true;
+    $('dcForm').classList.remove('dc-collapsed', 'dc-summary-open');
+    resetResults();
+    var first = { ext: 'dcExtType', date: 'dcCourt', mine: 'dcMineQ' }[mode];
+    $(first).focus();
+  }
+
+  $('dcForm').addEventListener('submit', function (e) { e.preventDefault(); search(); });
+  $('dcClear').addEventListener('click', clearForm);
+
+  /* ── filtering what came back ────────────────────────────────────────────── */
+  function keepMenuInView(menu) {
+    menu.classList.remove('cvs-filtmenu-flip');
+    menu.style.transform = '';
+    var wr = wrap.getBoundingClientRect();
+    if (menu.getBoundingClientRect().left < wr.left) menu.classList.add('cvs-filtmenu-flip');
+    var mr = menu.getBoundingClientRect();
+    var overStart = wr.left - mr.left;
+    var overEnd = mr.right - wr.right;
+    if (overStart > 0) menu.style.transform = 'translateX(' + Math.ceil(overStart) + 'px)';
+    else if (overEnd > 0) menu.style.transform = 'translateX(' + -Math.ceil(overEnd) + 'px)';
+  }
+
+  function closeMenus(except) {
+    document.querySelectorAll('.cvs-filtmenu').forEach(function (m) {
+      if (m !== except) { m.hidden = true; m.parentNode.classList.remove('cvs-filtcell-open'); }
+    });
+  }
+
+  function setMenuHtml(key) {
+    var opts = distinct(hits, key);
+    var sel = colFilters[key];
+    var searchBox = opts.length > 8
+      ? '<div class="cvs-filtsearch"><input type="text" placeholder="חיפוש..." aria-label="חיפוש בערכים"></div>' : '';
+    var all = !sel || sel.size === opts.length;
+    return searchBox
+      + '<label class="cvs-filtopt cvs-filtopt-all"><input type="checkbox" data-all="1"' + (all ? ' checked' : '') + '><span>(בחר הכל)</span></label>'
+      + '<div class="cvs-filtopts">' + opts.map(function (o) {
+          var on = !sel || sel.has(o.value);
+          return '<label class="cvs-filtopt"><input type="checkbox" value="' + esc(o.value) + '"' + (on ? ' checked' : '') + '>'
+            + '<span class="cvs-filtopt-label">' + esc(o.value) + '</span>'
+            + '<span class="cvs-filtopt-count">' + o.count + '</span></label>';
+        }).join('') + '</div>';
+  }
+
+  function dateMenuHtml() {
+    return '<div class="cvs-daterange">'
+      + '<label><span>מתאריך</span><input type="date" id="dcFiltFrom" value="' + esc(dateFilter.from) + '"></label>'
+      + '<label><span>עד תאריך</span><input type="date" id="dcFiltTo" value="' + esc(dateFilter.to) + '"></label>'
+      + '<button type="button" id="dcFiltDateClear">ניקוי הטווח</button>'
+      + '</div>';
+  }
+
+  function applySetMenu(cell) {
+    var key = cell.getAttribute('data-col');
+    var boxes = cell.querySelectorAll('.cvs-filtopts input[type=checkbox]');
+    var chosen = new Set();
+    boxes.forEach(function (b) { if (b.checked) chosen.add(b.value); });
+    if (chosen.size === boxes.length) delete colFilters[key];
+    else colFilters[key] = chosen;
+    var btn = cell.querySelector('.cvs-filtbtn');
+    btn.classList.toggle('cvs-filtbtn-on', !!colFilters[key]);
+    btn.querySelector('span').textContent = colFilters[key] ? 'נבחרו ' + chosen.size : 'הכל';
+    cell.querySelector('[data-all]').checked = !colFilters[key];
+    renderBody();
+  }
+
+  function refreshDateBtn() {
+    var cell = table.querySelector('.cvs-filtcell[data-kind="date"]');
+    if (!cell) return;
+    var btn = cell.querySelector('.cvs-filtbtn');
+    btn.classList.toggle('cvs-filtbtn-on', !!(dateFilter.from || dateFilter.to));
+    btn.querySelector('span').textContent = dateLabel();
+  }
+
+  table.addEventListener('click', function (e) {
+    if (e.target.closest('.dc-colresize') || justResized) { justResized = false; return; }
+    var sortTh = e.target.closest('.dc-th-sort');
+    if (sortTh) {
+      var key = sortTh.getAttribute('data-sort');
+      if (key === sortKey) sortDir = -sortDir;
+      else { sortKey = key; sortDir = key === 'opened' ? -1 : 1; }
+      renderTable();
+      return;
+    }
+
+    var btn = e.target.closest('.cvs-filtbtn');
+    if (btn) {
+      var cell = btn.closest('.cvs-filtcell');
+      var menu = cell.querySelector('.cvs-filtmenu');
+      var wasOpen = !menu.hidden;
+      closeMenus();
+      if (!wasOpen) {
+        var kind = cell.getAttribute('data-kind');
+        menu.innerHTML = kind === 'date' ? dateMenuHtml() : setMenuHtml(cell.getAttribute('data-col'));
+        menu.hidden = false;
+        cell.classList.add('cvs-filtcell-open');
+        keepMenuInView(menu);
+        var s = menu.querySelector('.cvs-filtsearch input');
+        if (s) s.focus();
+      }
+      return;
+    }
+
+    if (e.target.id === 'dcFiltDateClear') {
+      dateFilter = { from: '', to: '' };
+      closeMenus(); refreshDateBtn(); renderBody();
+      return;
+    }
+    if (e.target.closest('.cvs-filtmenu')) return;
+    if (e.target.closest('.cvs-filttext')) return;
+    if (e.target.closest('.dc-td-pick') || e.target.closest('.dc-th-pick')) return;
+
+    var row = e.target.closest('#dcBody tr');
+    if (!row || !row.getAttribute('data-id') || e.target.closest('.dc-casenum')) return;
+    if (e.target.closest('.dc-view-window')) {
+      window.open(CASE_URL, '_blank');
+      return;
+    }
+    openPane(row);
+  });
+
+  table.addEventListener('change', function (e) {
+    if (e.target.id === 'dcPickAll') {
+      var on = e.target.checked;
+      shownRows.forEach(function (r) { if (on) picked[r.id] = true; else delete picked[r.id]; });
+      body.querySelectorAll('.dc-pick').forEach(function (b) { b.checked = on; });
+      syncDownload();
+      return;
+    }
+    if (e.target.classList.contains('dc-pick')) {
+      var id = e.target.getAttribute('data-id');
+      if (e.target.checked) picked[id] = true; else delete picked[id];
+      syncPickAll();
+      syncDownload();
+      return;
+    }
+    if (e.target.id === 'dcFiltFrom' || e.target.id === 'dcFiltTo') {
+      dateFilter.from = $('dcFiltFrom').value;
+      dateFilter.to = $('dcFiltTo').value;
+      refreshDateBtn();
+      renderBody();
+      return;
+    }
+    var cell = e.target.closest('.cvs-filtcell[data-kind="set"]');
+    if (!cell) return;
+    if (e.target.hasAttribute('data-all')) {
+      var allOn = e.target.checked;
+      cell.querySelectorAll('.cvs-filtopts input[type=checkbox]').forEach(function (b) { b.checked = allOn; });
+    }
+    applySetMenu(cell);
+  });
+
+  table.addEventListener('input', function (e) {
+    if (e.target.closest('.cvs-filtsearch')) {
+      var q = e.target.value.trim();
+      e.target.closest('.cvs-filtmenu').querySelectorAll('.cvs-filtopts .cvs-filtopt').forEach(function (l) {
+        l.hidden = q && l.querySelector('.cvs-filtopt-label').textContent.indexOf(q) === -1;
+      });
+      return;
+    }
+    if (e.target.classList.contains('cvs-filttext')) {
+      textFilters[e.target.getAttribute('data-col')] = e.target.value.trim();
+      renderBody();
+    }
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.cvs-filtcell')) closeMenus();
+  });
+
+  $('dcFilterToggle').addEventListener('click', function () {
+    var on = $('dcResults').classList.toggle('cvs-filters-open');
+    this.classList.toggle('cvs-toggle-on', on);
+    if (!on) closeMenus();
+  });
+
+  $('dcClearFilters').addEventListener('click', function () {
+    colFilters = {}; textFilters = {}; dateFilter = { from: '', to: '' };
+    closeMenus();
+    renderTable();
+  });
+
+  /* ── which columns show, and how wide ── */
+  (function () {
+    var btn = $('dcColsBtn'), menu = $('dcColsMenu');
+    var GRIP = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>';
+    function render() {
+      menu.innerHTML = '<div class="cvs-cols-hint">גררו לשינוי סדר</div>'
+        + COLS.filter(function (c) { return c.on !== undefined; }).map(function (c) {
+            return '<div class="cvs-cols-item" data-key="' + c.key + '" draggable="true">'
+              + '<span class="cvs-cols-grip" aria-hidden="true">' + GRIP + '</span>'
+              + '<input type="checkbox" data-key="' + c.key + '"' + (c.on ? ' checked' : '') + '>'
+              + '<span class="cvs-cols-lbl">' + esc(c.label) + '</span></div>';
+          }).join('')
+        + '<button type="button" class="cvs-cols-reset">איפוס לברירת מחדל</button>';
+    }
+    function toggle(e) {
+      e.stopPropagation();
+      if (menu.hidden) { render(); menu.hidden = false; btn.classList.add('cvs-colscfg-on'); }
+      else { menu.hidden = true; btn.classList.remove('cvs-colscfg-on'); }
+    }
+    btn.addEventListener('click', toggle);
+    btn.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(e); }
+    });
+    menu.addEventListener('click', function (e) { e.stopPropagation(); });
+    menu.addEventListener('change', function (e) {
+      var key = e.target.getAttribute('data-key'); if (!key) return;
+      COLS.forEach(function (c) { if (c.key === key) c.on = e.target.checked; });
+      renderTable();
+    });
+    menu.addEventListener('click', function (e) {
+      var lbl = e.target.closest('.cvs-cols-lbl'); if (!lbl) return;
+      var cb = lbl.parentNode.querySelector('input[type=checkbox]');
+      cb.checked = !cb.checked;
+      COLS.forEach(function (c) { if (c.key === cb.getAttribute('data-key')) c.on = cb.checked; });
+      renderTable();
+    });
+    var dragKey = null;
+    menu.addEventListener('dragstart', function (e) {
+      var item = e.target.closest('.cvs-cols-item'); if (!item) return;
+      dragKey = item.getAttribute('data-key'); item.classList.add('cvs-cols-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', dragKey); } catch (x) {}
+    });
+    menu.addEventListener('dragover', function (e) {
+      if (!dragKey) return;
+      var item = e.target.closest('.cvs-cols-item'); if (!item) return;
+      e.preventDefault();
+      menu.querySelectorAll('.cvs-cols-over-top,.cvs-cols-over-bot').forEach(function (el) {
+        el.classList.remove('cvs-cols-over-top', 'cvs-cols-over-bot');
+      });
+      var r = item.getBoundingClientRect();
+      item.classList.add(e.clientY > r.top + r.height / 2 ? 'cvs-cols-over-bot' : 'cvs-cols-over-top');
+    });
+    menu.addEventListener('drop', function (e) {
+      if (!dragKey) return;
+      var item = e.target.closest('.cvs-cols-item'); if (!item) return;
+      e.preventDefault();
+      var r = item.getBoundingClientRect();
+      var key = item.getAttribute('data-key');
+      if (key !== dragKey) { reorderCol(dragKey, key, e.clientY > r.top + r.height / 2); renderTable(); }
+      render();
+    });
+    menu.addEventListener('dragend', function () {
+      dragKey = null;
+      menu.querySelectorAll('.cvs-cols-dragging,.cvs-cols-over-top,.cvs-cols-over-bot').forEach(function (el) {
+        el.classList.remove('cvs-cols-dragging', 'cvs-cols-over-top', 'cvs-cols-over-bot');
+      });
+    });
+    menu.addEventListener('click', function (e) {
+      if (!e.target.closest('.cvs-cols-reset')) return;
+      COLS.sort(function (a, b) { return COLS_DEFAULT_ORDER.indexOf(a.key) - COLS_DEFAULT_ORDER.indexOf(b.key); });
+      COLS.forEach(function (c) { if (c.key in COLS_DEFAULT_ON) c.on = c.key === 'ext' ? mode === 'ext' : COLS_DEFAULT_ON[c.key]; });
+      colPx = {};
+      render(); renderTable();
+    });
+    document.addEventListener('click', function () {
+      if (!menu.hidden) { menu.hidden = true; btn.classList.remove('cvs-colscfg-on'); }
+    });
+  })();
+
+  /* ── moving a column by its header: click sorts, the edge resizes, a pull
+     on the cell itself moves the column ── */
+  (function () {
+    var HEAD = '#dcTable thead tr:first-child th';
+    var from = null, started = false, startX = 0;
+    function marks() { return document.querySelectorAll('#dcTable .cvs-col-before, #dcTable .cvs-col-after'); }
+    function clearMarks() {
+      marks().forEach(function (el) { el.classList.remove('cvs-col-before', 'cvs-col-after'); });
+    }
+    function movable(th) { return th && th.dataset.key && ['pick', 'doc'].indexOf(th.dataset.key) === -1; }
+    document.addEventListener('mousedown', function (e) {
+      if (e.button !== 0) return;
+      if (e.target.closest('.cvs-colresize') || e.target.closest('.dc-colresize')) return;
+      if (e.target.closest('.cvs-pickhead')) return;
+      var th = e.target.closest(HEAD);
+      if (!movable(th)) return;
+      from = th; started = false; startX = e.clientX;
+    });
+    document.addEventListener('mousemove', function (e) {
+      if (!from) return;
+      if (!started) {
+        if (Math.abs(e.clientX - startX) < 5) return;
+        started = true;
+        from.classList.add('cvs-col-dragging');
+        document.body.classList.add('cvs-col-moving');
+      }
+      e.preventDefault();
+      clearMarks();
+      var el = document.elementFromPoint(e.clientX, e.clientY);
+      var th = el && el.closest ? el.closest(HEAD) : null;
+      if (!movable(th) || th === from) return;
+      var r = th.getBoundingClientRect();
+      th.classList.add(e.clientX < r.left + r.width / 2 ? 'cvs-col-after' : 'cvs-col-before');
+    });
+    document.addEventListener('mouseup', function () {
+      if (!from) return;
+      var src = from, moved = started;
+      from = null; started = false;
+      src.classList.remove('cvs-col-dragging');
+      document.body.classList.remove('cvs-col-moving');
+      var target = marks()[0];
+      var after = !!(target && target.classList.contains('cvs-col-after'));
+      var toKey = target && target.dataset.key;
+      clearMarks();
+      if (!moved || !toKey) return;
+      justResized = true;
+      reorderCol(src.dataset.key, toKey, after);
+      renderTable();
+    });
+  })();
+
+  var justResized = false;
+  (function () {
+    var drag = null;
+    document.addEventListener('mousedown', function (e) {
+      var grip = e.target.closest('#dcTable .dc-colresize'); if (!grip) return;
+      e.preventDefault();
+      var th = grip.closest('th');
+      var nb = th.nextElementSibling || th.previousElementSibling;
+      table.querySelectorAll('thead tr:first-child th').forEach(function (t) {
+        var w = Math.round(t.getBoundingClientRect().width);
+        colPx[t.dataset.key] = w; t.style.width = w + 'px';
+      });
+      drag = { th: th, nb: nb, key: th.dataset.key, nbKey: nb ? nb.dataset.key : null,
+               startX: e.clientX, startW: Math.round(th.getBoundingClientRect().width),
+               startNb: nb ? Math.round(nb.getBoundingClientRect().width) : 0 };
+      document.body.classList.add('cvs-col-resizing');
+    });
+    document.addEventListener('mousemove', function (e) {
+      if (!drag) return;
+      var d = drag.startX - e.clientX;
+      if (drag.nbKey) {
+        d = Math.min(d, drag.startNb - 44);
+        d = Math.max(d, -(drag.startW - 44));
+        colPx[drag.key] = drag.startW + d; drag.th.style.width = colPx[drag.key] + 'px';
+        colPx[drag.nbKey] = drag.startNb - d; drag.nb.style.width = colPx[drag.nbKey] + 'px';
+      } else {
+        colPx[drag.key] = Math.max(44, drag.startW + d);
+        drag.th.style.width = colPx[drag.key] + 'px';
+      }
+    });
+    document.addEventListener('mouseup', function () {
+      if (!drag) return;
+      drag = null; justResized = true;
+      document.body.classList.remove('cvs-col-resizing');
+    });
+  })();
+
+  /* ── exporting the picked cases ──────────────────────────────────────────
+     Where איתור החלטות downloads documents, a list of cases goes out as a
+     sheet: the visible columns, in their order, for the picked rows. */
+  $('dcDownload').addEventListener('click', function () {
+    var rows = sortedRows().filter(function (r) { return picked[r.id]; });
+    if (!rows.length) return;
+    var cols = visibleCols().filter(function (c) { return c.key !== 'pick' && c.key !== 'doc'; });
+    var cellText = function (c, r) {
+      if (c.key === 'opened') return fmtDate(r.opened);
+      if (c.key === 'hearing') return r.hearingLabel;
+      if (c.key === 'caseNum') return r.typeAbbr ? r.typeAbbr + ' ' + r.caseNum : r.caseNum;
+      return r[c.key] || '';
+    };
+    var q = function (s) { return '"' + String(s).replace(/"/g, '""') + '"'; };
+    var csv = [cols.map(function (c) { return q(c.label); }).join(',')]
+      .concat(rows.map(function (r) { return cols.map(function (c) { return q(cellText(c, r)); }).join(','); }))
+      .join('\r\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'איתור תיקים ' + fmtDate(TODAY) + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  });
+
+  /* ── the case opens beside the list, never instead of it ─────────────────── */
+  var results = $('dcResults');
+  var activeId = null, lastId = null;
+  var byId = {};
+  CASES.forEach(function (c) { byId[c.id] = c; });
+
+  function clearRowMarks() {
+    document.querySelectorAll('#dcBody tr.dc-rowactive, #dcBody tr.dc-rowlast').forEach(function (r) {
+      r.classList.remove('dc-rowactive', 'dc-rowlast'); r.removeAttribute('aria-current');
+    });
+  }
+  function setRowActive(row) {
+    clearRowMarks();
+    activeId = row ? row.getAttribute('data-id') : null;
+    lastId = null;
+    if (row) { row.classList.add('dc-rowactive'); row.setAttribute('aria-current', 'true'); }
+  }
+  function setRowLast(row) {
+    clearRowMarks();
+    activeId = null;
+    lastId = row ? row.getAttribute('data-id') : null;
+    if (row) row.classList.add('dc-rowlast');
+  }
+
+  /* the last few decisions in the case — generated from its id so the same
+     case always shows the same ones */
+  var DEC_NAMES = ['החלטה בבקשה לדחיית מועד הדיון', 'החלטה בבקשה להארכת מועד', 'החלטה בבקשה לגילוי מסמכים',
+    'פרוטוקול דיון והחלטה', 'החלטה בבקשה לתיקון כתב טענות', 'החלטה בבקשה לפטור מאגרה', 'החלטה בבקשה לסעד זמני'];
+  function decisionsOf(c) {
+    var n = +c.id.slice(1), out = [], d = c.state === 'סגור' ? addDays(c.opened, 240) : TODAY;
+    if (d > TODAY) d = TODAY;
+    var count = 1 + n % 3;
+    for (var i = 0; i < count; i++) {
+      d = addDays(d, -(9 + (n * 7 + i * 13) % 40));
+      if (d < c.opened) break;
+      out.push([d, i === 0 && c.state === 'סגור' ? 'פסק דין' : DEC_NAMES[(n + i * 3) % DEC_NAMES.length]]);
+    }
+    return out;
+  }
+
+  function paneHtml(c) {
+    var fact = function (k, v, ltr) { return '<div><dt>' + k + '</dt><dd' + (ltr ? ' dir="ltr" style="text-align:right"' : '') + '>' + esc(v) + '</dd></div>'; };
+    var decs = decisionsOf(c);
+    return '<div class="cs-head">'
+      +   '<div class="cs-kicker">' + esc(c.caseType) + '<span class="dc-tag ' + TAG_CLASS[c.state] + '">' + esc(c.state) + '</span></div>'
+      +   '<div class="cs-num" dir="ltr" style="text-align:right">' + esc(c.caseNum + (c.typeAbbr ? ' ' + c.typeAbbr : '')) + '</div>'
+      +   '<div class="cs-name">' + esc(c.title) + '</div>'
+      + '</div>'
+      + '<dl class="cs-facts">'
+      +   fact('בית משפט', c.court) + fact('שופט/ת', c.judge)
+      +   fact('הליך', c.proc) + fact('סוג עניין', c.subject)
+      +   fact('תאריך פתיחה', fmtDate(c.opened))
+      +   (c.extType ? fact(c.extType, c.extNum, true) : fact('תיק מקור', '—'))
+      + '</dl>'
+      + '<div class="cs-sec"><div class="cs-sectitle">דיון קרוב</div>'
+      +   (c.hearing
+            ? '<div class="cs-hearing"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg>'
+              + '<div><b>' + fmtDate(c.hearing) + ' · ' + (9 + (+c.id.slice(1)) % 5) + ':' + ((+c.id.slice(1)) % 2 ? '30' : '00') + '</b>'
+              + '<span>' + esc(c.judge) + ' · אולם ' + (1 + (+c.id.slice(1)) % 12) + '</span></div></div>'
+            : '<div class="cs-none">לא נקבע דיון</div>')
+      + '</div>'
+      + '<div class="cs-sec"><div class="cs-sectitle">צדדים</div><ul class="cs-list">'
+      +   c.parties.map(function (p) {
+            return '<li><span class="cs-role">' + esc(p[0]) + '</span><span class="cs-who">' + esc(p[1])
+              + (p[2] ? '<span class="cs-rep">ב״כ: ' + esc(p[2]) + (p[2] === ME ? ' (אני)' : '') + '</span>' : '') + '</span></li>';
+          }).join('')
+      + '</ul></div>'
+      + '<div class="cs-sec"><div class="cs-sectitle">החלטות אחרונות</div>'
+      +   (decs.length
+            ? '<ul class="cs-list">' + decs.map(function (d) {
+                return '<li><span class="cs-date">' + fmtDate(d[0]) + '</span><span class="cs-who">' + esc(d[1]) + '</span></li>';
+              }).join('') + '</ul>'
+            : '<div class="cs-none">אין החלטות בתיק</div>')
+      + '</div>'
+      + '<div class="cs-foot">'
+      +   '<a class="dc-btn dc-btn-primary" href="' + CASE_URL + '">מעבר לתיק'
+      +     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></a>'
+      +   '<a class="dc-btn dc-btn-ghost" href="' + CASE_URL + '" target="_blank" rel="noopener">פתיחה בחלון חדש</a>'
+      + '</div>';
+  }
+
+  function openPane(row) {
+    setRowActive(row);
+    $('csPane').innerHTML = paneHtml(byId[row.getAttribute('data-id')]);
+    $('csPane').scrollTop = 0;
+    results.classList.add('cvs-withpdf');
+    setTimeout(pinTableStart, 360);
+  }
+  function closePane(e) {
+    results.classList.remove('cvs-withpdf', 'cvs-docwide');
+    results.style.removeProperty('--pdf-w');
+    results.style.removeProperty('--pdf-max');
+    var was = document.querySelector('#dcBody tr.dc-rowactive');
+    var back = was && was.querySelector('.dc-view-open');
+    if (e) setRowLast(was); else setRowActive(null);
+    if (e && back) back.focus();
+    setTimeout(pinTableStart, 360);
+  }
+  $('dcPdfClose').addEventListener('click', closePane);
+  $('dcPdfWide').addEventListener('click', function () {
+    var on = results.classList.toggle('cvs-docwide');
+    if (on) { results.style.setProperty('--pdf-w', '58%'); results.style.setProperty('--pdf-max', 'none'); }
+    else { results.style.removeProperty('--pdf-w'); results.style.removeProperty('--pdf-max'); }
+  });
+
+  (function () {
+    var split = $('dcSplit'), dragging = false;
+    split.addEventListener('mousedown', function (e) {
+      if (!results.classList.contains('cvs-withpdf')) return;
+      dragging = true; document.body.classList.add('cvs-docsplitting'); e.preventDefault();
+    });
+    document.addEventListener('mousemove', function (e) {
+      if (!dragging) return;
+      var box = results.getBoundingClientRect();
+      var pct = Math.min(72, Math.max(24, ((e.clientX - box.left) / box.width) * 100));
+      results.style.setProperty('--pdf-w', pct + '%');
+      results.style.setProperty('--pdf-max', 'none');
+    });
+    document.addEventListener('mouseup', function () {
+      if (!dragging) return;
+      dragging = false; document.body.classList.remove('cvs-docsplitting');
+      pinTableStart();
+    });
+  })();
+
+  /* ── first paint ──
+     Arrive on the tab the URL names (#ext / #date / #mine — the rail links
+     here that way). The source-number tab opens filled with the police file
+     the open case came from, so one click shows what the mode is for. */
+  $('dcFrom').value = $('dcTo').value = TODAY;
+  $('dcFrom').max = $('dcTo').max = TODAY;
+  $('dcExtType').value = 'תיק משטרתי (פל"א)';
+  $('dcExtNum').value = '412785/2025';
+  syncExt();
+  syncDependants();
+  var wanted = (location.hash || '').replace('#', '');
+  setMode(MODES[wanted] ? wanted : 'ext');
+  resetResults();
+  if (mode === 'mine') search(false);
+})();
+</script>
+
+
+<script>
+  /* the rail's head sits in the top header's band: pass the header's height
+     to the shared styles (--cvs-hdr-h) so the two line up on every page */
+  (function () {
+    var hdr = document.getElementById('cvsTopHeader');
+    if (!hdr) return;
+    function sync() { document.documentElement.style.setProperty('--cvs-hdr-h', hdr.getBoundingClientRect().height + 'px'); }
+    sync();
+    if (window.ResizeObserver) new ResizeObserver(sync).observe(hdr); else window.addEventListener('resize', sync);
+  })();
+</script>
+</body>
+</html>
