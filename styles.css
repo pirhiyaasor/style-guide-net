@@ -1118,3 +1118,70 @@ body.cvs-col-moving iframe { pointer-events: none; }
 @media (prefers-reduced-motion: reduce) {
   #docsTablePanel, .cvs-docspdf { transition: none; }
 }
+
+/* ── Breadcrumbs (design.md 4.17): every inner page, above .dc-title ── */
+.dc-crumbs { margin: 18px 0 0; font: 400 13px/1.5 'Rubik', sans-serif; color: var(--fg-3); }
+.dc-crumbs ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.dc-crumbs li { display: flex; align-items: center; gap: 6px; }
+.dc-crumbs li + li::before { content: "‹"; color: var(--fg-3); }
+.dc-crumbs a { color: var(--fg-2); text-decoration: none; border-radius: 4px; }
+.dc-crumbs a:hover { color: var(--brand-navy); text-decoration: underline; text-underline-offset: 3px; }
+.dc-crumbs a:focus-visible { outline: none; box-shadow: var(--box-shadow-focus); }
+.dc-crumbs [aria-current] { color: var(--fg-1); }
+.dc-crumbs + .dc-pagehead { margin-top: 8px; }
+
+/* ── Signed-in state (site.js): guest vs signed-in header ──
+   site.js writes data-user (lawyer | id) and data-org on <html>, as the home page does on <body>.
+   A guest sees the login button and the rail without the personal area; once signed in,
+   the bell and the account menu. */
+html[data-user] .nh-guest,
+html:not([data-user]) .nh-signedin,
+html:not([data-user]) .cvs-raildash,
+html:not([data-user="lawyer"]) .nh-only-lawyer,
+html:not([data-user="id"]) .nh-only-id,
+html[data-org] .nh-only-id,
+html:not([data-org]) .nh-only-org { display: none !important; }
+.nh-user { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.nh-signedin { display: flex; align-items: center; gap: 6px; }
+
+.nh-login { position: relative; flex-shrink: 0; }
+.nh-login > summary { list-style: none; display: flex; cursor: pointer; }
+.nh-login > summary::-webkit-details-marker { display: none; }
+.nh-loginbtn { height: 38px; padding: 0 20px; border-radius: 6px; background: var(--brand-navy); color: #fff;
+  font: 500 15px 'Rubik', sans-serif; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(10, 59, 143, .16); }
+.nh-login > summary:hover .nh-loginbtn { background: var(--brand-navy-hover); }
+.nh-login > summary:focus-visible { outline: none; }
+.nh-login > summary:focus-visible .nh-loginbtn { box-shadow: var(--box-shadow-focus); }
+.nh-loginmenu { position: absolute; top: 100%; left: 0; width: min(316px, calc(100vw - 32px)); padding-top: 8px; z-index: 40; }
+.nh-loginbox { background: #fff; border-radius: 14px; box-shadow: var(--box-shadow-medium); padding: 8px; }
+.nh-logincap { padding: 8px 12px 10px; font: 500 12px 'Rubik', sans-serif; color: var(--fg-3); }
+.nh-loginopt { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 12px; border: 0; background: none;
+  border-radius: 8px; cursor: pointer; text-align: start; font-family: 'Rubik', sans-serif; }
+.nh-loginopt:hover { background: var(--brand-tint); }
+.nh-loginopt .ico { width: 38px; height: 38px; border-radius: 9px; background: var(--brand-tint); color: var(--brand-navy);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.nh-loginopt:hover .ico { background: #fff; }
+.nh-loginopt .t { display: block; font: 500 15px 'Rubik', sans-serif; color: var(--fg-1); }
+.nh-loginopt .s { display: block; font: 400 12px 'Rubik', sans-serif; color: var(--fg-3); margin-top: 1px; }
+
+.nh-acctmenu { position: absolute; top: calc(100% + 6px); left: 0; background: #fff; border-radius: 8px;
+  box-shadow: var(--box-shadow-medium); padding: 8px; min-width: 210px; z-index: 30; }
+.nh-acctname { padding: 8px 12px 6px; font: 600 16px 'Rubik', sans-serif; color: var(--fg-1); }
+.nh-acct { padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font: 400 15px 'Rubik', sans-serif; color: var(--fg-1); }
+.nh-acctrule { border-top: 1px solid var(--border-1); margin: 3px 12px; opacity: .7; }
+.nh-exit { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font: 400 15px 'Rubik', sans-serif; color: var(--fg-1); white-space: nowrap; }
+.nh-acct .nh-acctcheck { visibility: hidden; flex-shrink: 0; }
+html[data-user="lawyer"] .nh-acct[data-as="lawyer"],
+html[data-org] .nh-acct[data-as="org"],
+html[data-user="id"]:not([data-org]) .nh-acct[data-as="id"] { background: var(--brand-tint); cursor: default; }
+html[data-user="lawyer"] .nh-acct[data-as="lawyer"] .nh-acctcheck,
+html[data-org] .nh-acct[data-as="org"] .nh-acctcheck,
+html[data-user="id"]:not([data-org]) .nh-acct[data-as="id"] .nh-acctcheck { visibility: visible; }
+.nh-orgchip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 6px; background: var(--brand-tint-strong); }
+@media (max-width: 640px) {
+  .nh-orgchip span { display: none; }
+  .nh-orgchip { padding: 3px 5px; }
+  .nh-loginbtn { padding: 0 14px; }
+}

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>איתור תיקים</title>
 <link rel="stylesheet" href="styles.css">
+<script src="site.js"></script>
 <style>
   /* ── פוטר במסכים צרים ──
      הפוטר בנוי לרוחב קבוע: ריפוד 96px מכל צד, ועמודת "מוקד מידע ושירות"
@@ -612,41 +613,9 @@
         <button type="button" id="cvsHeaderClear" class="cvs-headerclear">נקה</button>
     </div>
 
-    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-      <button class="cvs-bellbtn" aria-label="הודעות">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg>
-        <span class="cvs-bellbadge">3</span>
-      </button>
-      <details class="cvs-avatarmenu" style="position:relative">
-        <!-- The hat is worn in the header. The initials alone said WHO but not in
-             WHICH capacity, and that only showed once the menu was open — so the
-             role stands beside them, and the chevron says there is more inside. -->
-        <summary class="cvs-avatartrig" style="list-style:none">
-          <span class="cvs-avatarcircle">יכ</span>
-          <span class="cvs-avatarrole">עו"ד</span>
-          <svg class="cvs-avatarchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-        </summary>
-        <div style="position:absolute;top:calc(100% + 6px);left:0;background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;min-width:210px;z-index:30">
-          <!-- active account — tinted + checked so the current identity is obvious;
-               no divider between the two accounts, the tint carries the separation -->
-          <div class="cvs-menuitem cvs-acctactive" style="padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px">
-            <div>
-              <div style="font:600 15px 'Rubik';color:var(--fg-1)">עו"ד ישראל כהן</div>
-              <div style="font:400 13px 'Rubik';color:var(--fg-3);margin-top:2px">מ.ר 45213</div>
-            </div>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--brand-navy)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </div>
-          <!-- switchable private account, same visual style as the active one -->
-          <div class="cvs-menuitem" style="padding:8px 12px">
-            <div style="font:600 15px 'Rubik';color:var(--fg-1)">ת.ז 012345678</div>
-          </div>
-          <div style="border-top:1px solid var(--border-1);margin:4px -8px"></div>
-          <div class="cvs-menuitem" style="display:flex;align-items:center;gap:8px;padding:9px 12px;font:400 15px 'Rubik';color:var(--fg-1);white-space:nowrap">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>יציאה
-          </div>
-        </div>
-      </details>
-    </div>
+    <!-- guest: login button; signed in: bell and account menu (site.js) -->
+    <div class="nh-user" id="nhUser"></div>
+    <script>NH.renderUser(document.getElementById('nhUser'));</script>
 
   </div>
 </div>
@@ -654,6 +623,12 @@
 <div style="flex:1 0 auto;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
   <div style="max-width:1840px;margin:0 auto;padding:0 32px 110px">
 
+    <nav class="dc-crumbs" aria-label="פירורי לחם">
+      <ol>
+        <li><a href="https://case-view-lawyer-docs-inline.vercel.app/home.html">דף הבית</a></li>
+        <li><span aria-current="page">איתור תיקים</span></li>
+      </ol>
+    </nav>
     <div class="dc-pagehead">
       <div class="dc-title">איתור תיקים</div>
     </div>
