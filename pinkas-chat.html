@@ -6,6 +6,7 @@
 <title>צ׳ט פנקס התובענות</title>
 <link rel="stylesheet" href="styles.css">
 <script src="site.js"></script>
+<script src="pinkas-dash.js"></script>
 <style>
   /* ── פוטר במסכים צרים — כמו בשאר המסכים ── */
   @media (max-width: 1180px) {
@@ -105,16 +106,114 @@
   #cvsTopHeader input::placeholder { color: var(--fg-3); }
 
   .pc-wrap { padding-top: 14px; }
-  .pc-newbtn { margin-inline-start: auto; align-self: center; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 6px; border: 1px solid var(--border-1); background: #fff; color: var(--brand-navy); font: 500 14px 'Rubik'; cursor: pointer; }
+  .pc-headacts { margin-inline-start: auto; align-self: center; display: flex; flex-wrap: wrap; gap: 8px; }
+  .pc-newbtn { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 6px; border: 1px solid var(--border-1); background: #fff; color: var(--brand-navy); font: 500 14px 'Rubik'; cursor: pointer; }
   .pc-newbtn:hover { background: var(--brand-tint); border-color: var(--brand-tint); }
   .pc-newbtn svg { width: 16px; height: 16px; }
+  .pc-main.is-dash { max-width: 1240px; }
+  #pcTitle:focus { outline: none; }
+
+  /* ── data dashboard (pinkas-dash.js) ── */
+  .pd-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(20,40,80,.07); padding: 16px 18px; }
+  .pd-filter { display: flex; flex-direction: column; gap: 5px; font: 500 13px 'Rubik'; color: var(--fg-2); }
+  .pd-selwrap { position: relative; display: block; }
+  .pd-selwrap select { appearance: none; -webkit-appearance: none; height: 38px; min-width: 112px; max-width: 190px; padding: 0 10px 0 28px; border: 1px solid var(--border-field); border-radius: 6px; background: #fff; font: 400 14px 'Rubik'; color: var(--fg-1); cursor: pointer; }
+  .pd-selwrap select:focus-visible { outline: none; box-shadow: var(--box-shadow-focus); }
+  .pd-selwrap svg { position: absolute; left: 8px; top: 50%; width: 14px; height: 14px; transform: translateY(-50%); color: var(--fg-2); pointer-events: none; }
+  .pd-filteracts { margin-inline-start: auto; display: flex; align-items: center; gap: 14px; height: 38px; }
+  .pd-filteracts .pc-btn svg { width: 15px; height: 15px; }
+  .pd-count { margin: 12px 2px 14px; font: 400 14px 'Rubik'; color: var(--fg-2); }
+  .pd-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+  .pd-kpi { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(20,40,80,.07); padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .pd-kpi span { font: 400 14px 'Rubik'; color: var(--fg-2); }
+  .pd-kpi b { font: 600 25px/1.25 'Rubik'; color: var(--pc-title); font-variant-numeric: tabular-nums; }
+  .pd-kpi small { font: 400 12.5px 'Rubik'; color: var(--fg-3); }
+  .pd-insights { margin: 14px 0; padding: 14px 18px; border-radius: 12px; background: var(--brand-tint); color: var(--pc-ink); }
+  .pd-insights h3 { margin: 0 0 6px; font: 600 15px 'Rubik'; color: var(--pc-ink); }
+  .pd-insights ul { margin: 0; padding: 0 18px 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 32px; font: 400 14.5px/1.55 'Rubik'; }
+  .pd-insights b { font-weight: 600; }
+  .pd-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px; }
+  .pd-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(20,40,80,.07); padding: 18px 20px; min-width: 0; }
+  .pd-c4 { grid-column: span 4; } .pd-c5 { grid-column: span 5; } .pd-c7 { grid-column: span 7; } .pd-c8 { grid-column: span 8; } .pd-c12 { grid-column: span 12; }
+  .pd-card h3 { margin: 0; font: 600 17px/1.35 'Rubik'; color: var(--pc-title); }
+  .pd-sub { margin: 2px 0 16px; font: 400 13.5px/1.45 'Rubik'; color: var(--fg-2); }
+  .pd-none { margin: 0; font: 400 14px 'Rubik'; color: var(--fg-2); }
+  .pd-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .pd-plot { position: relative; height: 190px; margin: 14px 0 0; padding-right: 38px; }
+  .pd-gl { position: absolute; right: 0; left: 0; border-top: 1px solid #e6eaf1; }
+  .pd-gl span { position: absolute; right: 0; top: -9px; padding-left: 6px; background: #fff; font: 400 12px 'Rubik'; color: var(--fg-3); }
+  .pd-cols { position: relative; height: 100%; display: flex; align-items: flex-end; gap: 2px; }
+  .pd-col { flex: 1 1 0; height: 100%; display: flex; align-items: flex-end; justify-content: center; min-width: 0; cursor: default; border-radius: 4px; }
+  .pd-col:hover, .pd-col:focus-visible { background: rgba(42,120,214,.07); outline: none; }
+  .pd-colbar { position: relative; width: 100%; max-width: 24px; min-height: 0; background: #2a78d6; border-radius: 4px 4px 0 0; }
+  .pd-col.is-partial .pd-colbar { background: #a9c9ee; }
+  .pd-colbar em { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); padding-bottom: 3px; font: 500 12.5px 'Rubik'; color: var(--pc-ink); white-space: nowrap; }
+  .pd-xlabels { display: flex; gap: 2px; margin-top: 6px; padding-right: 38px; }
+  .pd-xlabels span { flex: 1 1 0; min-width: 0; text-align: center; font: 400 12px 'Rubik'; color: var(--fg-2); }
+  .pd-bars { display: flex; flex-direction: column; gap: 2px; }
+  .pd-bar { display: grid; grid-template-columns: 132px minmax(0, 1fr) 42px; align-items: center; gap: 8px; width: 100%; min-height: 34px; padding: 0 6px; border: 0; border-radius: 6px; background: none; font: 400 14px 'Rubik'; color: var(--pc-ink); text-align: start; }
+  .pd-barbtn { cursor: pointer; }
+  .pd-barbtn:hover { background: var(--cvs-hover); }
+  .pd-barbtn:focus-visible { outline: none; box-shadow: var(--box-shadow-focus); }
+  .pd-barbtn[aria-pressed="true"] { background: var(--brand-tint); font-weight: 500; }
+  .pd-blabel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pd-track { display: block; height: 10px; }
+  .pd-track i { display: block; height: 100%; background: #2a78d6; border-radius: 4px 0 0 4px; }
+  .pd-bval { font-size: 13.5px; color: var(--fg-2); text-align: end; }
+  .pd-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 12px; font: 400 13px 'Rubik'; color: var(--fg-2); }
+  .pd-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .pd-legend i { width: 11px; height: 11px; border-radius: 3px; }
+  .pd-s0 { background: #2a78d6; } .pd-s1 { background: #eb6834; } .pd-s2 { background: #1baf7a; } .pd-s3 { background: #eda100; }
+  .pd-stack { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: center; gap: 8px; min-height: 30px; font: 400 14px 'Rubik'; color: var(--pc-ink); }
+  .pd-stacktrack { display: flex; gap: 2px; height: 14px; }
+  .pd-stacktrack i { min-width: 2px; }
+  .pd-stacktrack i:first-child { border-radius: 0 4px 4px 0; }
+  .pd-stacktrack i:last-child { border-radius: 4px 0 0 4px; }
+  .pd-stacktrack i:focus-visible { outline: 2px solid var(--pc-ink); outline-offset: 1px; }
+  .pd-scroll { overflow-x: auto; }
+  .pd-heat { width: 100%; min-width: 620px; border-collapse: separate; border-spacing: 2px; font: 400 13.5px 'Rubik'; }
+  .pd-heat th { font: 400 13px 'Rubik'; color: var(--fg-2); padding: 3px 6px; }
+  .pd-heat tbody th { text-align: start; color: var(--pc-ink); font-size: 14px; white-space: nowrap; }
+  .pd-heat td { height: 32px; text-align: center; border-radius: 4px; cursor: default; }
+  .pd-heat td:focus-visible { outline: 2px solid var(--pc-ink); outline-offset: 1px; }
+  .pd-scale { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 8px; font: 400 12px 'Rubik'; color: var(--fg-2); }
+  .pd-scale i { width: 110px; height: 8px; border-radius: 4px; background: linear-gradient(to left, #e8eff9, #0a3b8f); }
+  .pd-table { width: 100%; border-collapse: collapse; font: 400 14px 'Rubik'; color: var(--pc-ink); }
+  .pd-table th { text-align: start; padding: 7px 8px; font: 500 13px 'Rubik'; color: var(--fg-2); background: #eff5fd; white-space: nowrap; }
+  .pd-table td { padding: 8px; border-top: 1px solid #eef1f6; }
+  .pd-table td:first-child { min-width: 130px; }
+  .pd-cellbar { display: flex; align-items: center; gap: 8px; min-width: 110px; }
+  .pd-cellbar .pd-track { flex: 1; }
+  .pd-tablewrap { margin-top: 12px; }
+  .pd-tablewrap summary { display: inline-block; cursor: pointer; font: 400 13.5px 'Rubik'; color: var(--brand-navy); text-decoration: underline; text-underline-offset: 3px; }
+  .pd-tablewrap .pd-table { margin-top: 8px; }
+  .pd-empty { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 70px 16px; text-align: center; font: 400 14px 'Rubik'; color: var(--fg-3); }
+  .pd-empty b { font: 500 16px 'Rubik'; color: var(--fg-2); }
+  .pd-note { margin-top: 14px; }
+  .pd-tip { position: fixed; z-index: 60; max-width: 260px; padding: 6px 10px; border-radius: 6px; background: #14233c; color: #fff; font: 400 13px/1.4 'Rubik'; pointer-events: none; box-shadow: var(--box-shadow-medium); }
+  @media (max-width: 1180px) {
+    .pd-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .pd-c4, .pd-c5, .pd-c7, .pd-c8 { grid-column: span 12; }
+  }
+  @media (max-width: 700px) {
+    .pd-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .pd-kpi { padding: 12px 14px; }
+    .pd-kpi b { font-size: 20px; }
+    .pd-insights ul { grid-template-columns: minmax(0, 1fr); }
+    .pd-card { padding: 16px 14px; }
+    .pd-filter { flex: 1 1 calc(50% - 6px); min-width: 0; }
+    .pd-selwrap select { width: 100%; max-width: none; min-width: 0; }
+    .pd-filteracts { flex: 1 1 100%; margin: 0; justify-content: space-between; }
+    .pd-xlabels .pd-thin { visibility: hidden; }
+    .pd-bar { grid-template-columns: 124px minmax(0, 1fr) 38px; }
+  }
 
   /* ── conversations column (same width as the logo column above it) ── */
 
   .pc-main { min-width: 0; max-width: 980px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; }
   .pc-pagehead { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
   .pc-pagehead .dc-title { margin: 0; font: 700 26px/1.25 'Rubik'; color: var(--pc-title); letter-spacing: -.2px; }
-  .pc-pagehead span { font: 400 14px 'Rubik'; color: var(--fg-2); }
+  .pc-pagehead > span { font: 400 14px 'Rubik'; color: var(--fg-2); }
 
   /* ── welcome (screen 1) ── */
   .pc-welcome { padding: 44px 0 34px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
@@ -438,18 +537,26 @@
     <nav class="dc-crumbs" aria-label="פירורי לחם">
       <ol>
         <li><a href="https://case-view-lawyer-docs-inline.vercel.app/home.html">דף הבית</a></li>
-        <li><span aria-current="page">פנקס התובענות הייצוגיות</span></li>
+        <li id="pcCrumbPinkas" hidden><a href="pinkas-chat.html">פנקס התובענות הייצוגיות</a></li>
+        <li><span aria-current="page" id="pcCrumbNow">פנקס התובענות הייצוגיות</span></li>
       </ol>
     </nav>
     <div class="pc-wrap">
 
-      <div class="pc-main">
+      <div class="pc-main" id="pcMain">
         <div class="pc-pagehead">
-          <h1 class="dc-title">פנקס התובענות הייצוגיות</h1>
-          <span>בדיקה אם כבר הוגשה תובענה ייצוגית בנושא</span>
-          <button type="button" class="pc-newbtn" id="pcNew" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86z"/></svg>שיחה חדשה</button>
+          <h1 class="dc-title" id="pcTitle" tabindex="-1">פנקס התובענות הייצוגיות</h1>
+          <span id="pcSubtitle">בדיקה אם כבר הוגשה תובענה ייצוגית בנושא</span>
+          <div class="pc-headacts">
+            <button type="button" class="pc-newbtn" id="pcDashBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><span id="pcDashLbl">דשבורד נתונים</span></button>
+            <button type="button" class="pc-newbtn" id="pcNew" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86z"/></svg>שיחה חדשה</button>
+          </div>
         </div>
 
+        <!-- the data dashboard, inside the registry (pinkas-dash.js) -->
+        <div id="pcDash" hidden></div>
+
+        <div id="pcChatView">
         <!-- screen 1: an empty chat with suggested questions -->
         <section class="pc-welcome" id="pcWelcome" aria-labelledby="pcWelcomeH">
           <div class="pc-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg></div>
@@ -483,6 +590,7 @@
             </form>
           </div>
         </section>
+        </div>
       </div>
     </div>
   </main>
@@ -1128,9 +1236,33 @@
   $('pcDocBg').addEventListener('click', closeDoc);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDoc(); });
 
+  /* ── the dashboard is a view of this page (#dashboard), so an open conversation stays as it was ── */
+  function route(fromUser) {
+    var dash = location.hash === '#dashboard';
+    $('pcChatView').hidden = dash;
+    $('pcDash').hidden = !dash;
+    $('pcMain').classList.toggle('is-dash', dash);
+    $('pcCrumbPinkas').hidden = !dash;
+    $('pcCrumbNow').textContent = dash ? 'דשבורד נתונים' : 'פנקס התובענות הייצוגיות';
+    $('pcTitle').textContent = dash ? 'דשבורד נתונים' : 'פנקס התובענות הייצוגיות';
+    $('pcSubtitle').textContent = dash ? 'נתונים רוחביים על התובענות הייצוגיות בפנקס' : 'בדיקה אם כבר הוגשה תובענה ייצוגית בנושא';
+    $('pcDashLbl').textContent = dash ? 'חזרה לצ׳ט' : 'דשבורד נתונים';
+    $('pcNew').hidden = dash || !S.turns;
+    document.title = dash ? 'דשבורד נתונים' : 'צ׳ט פנקס התובענות';
+    if (dash) PinkasDash.show();
+    if (fromUser) { window.scrollTo(0, 0); $('pcTitle').focus({ preventScroll: true }); }
+  }
+  function leaveDash() { location.hash = ''; }
+  $('pcDashBtn').addEventListener('click', function () {
+    if (location.hash === '#dashboard') leaveDash(); else location.hash = 'dashboard';
+  });
+  $('pcCrumbPinkas').addEventListener('click', function (e) { e.preventDefault(); leaveDash(); });
+  window.addEventListener('hashchange', function () { route(true); });
+
   syncSend();
   /* #chat opens straight on an answered question, so the screen can be linked */
   if (location.hash === '#chat') { ask(SUGGEST[0], { instant: true }); }
+  route(false);
 })();
 
 /* ── mobile drawer (≤860): the rail slides in from the right ── */
