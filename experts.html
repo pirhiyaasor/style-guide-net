@@ -1,0 +1,2244 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מאגר המומחים – הגשת מועמדות</title>
+<link rel="stylesheet" href="styles.css">
+<script src="site.js"></script>
+<style>
+  /* ── פוטר במסכים צרים — כמו בשאר המסכים ── */
+  @media (max-width: 1180px) {
+    #siteFooter > div { padding: 56px 40px !important; gap: 40px !important; }
+    #siteFooter > div > div { flex-wrap: wrap !important; gap: 40px !important; }
+    #siteFooter > div > div > div { flex: 1 1 300px !important; }
+  }
+  @media (max-width: 860px) {
+    #siteFooter > div { padding: 44px 20px !important; }
+    #siteFooter > div > div > div { flex: 1 1 100% !important; }
+    /* phone / WhatsApp / chat stack instead of three side by side */
+    #siteFooter [style*="gap:24px;width:100%"] { flex-direction: column !important; gap: 18px !important; }
+    #siteFooter [style*="align-self:stretch"] { display: none !important; }
+  }
+</style>
+<style>
+  .cvs-headerclear {
+    height: 36px; padding: 0 4px; flex-shrink: 0;
+    background: none; border: 0; color: var(--brand-navy);
+    font: 400 14px 'Rubik'; cursor: pointer; white-space: nowrap;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .cvs-headerclear:hover { color: var(--brand-navy-hover); }
+  /* ═══ מאגר המומחים — הגשת מועמדות להיכלל ברשימת המומחים.
+         Shares styles.css (rail, header, footer) with the other screens.
+         One page, four views: the entry list (בקשות שהוגשו + טיוטות), the
+         seven-step wizard, the confirmation after סיום, and a submitted
+         request with its השלמת מסמכים flow. The step menu on the right is the
+         case menu (design.md 4.11), so "you are here" looks the same. ═══ */
+
+  /* design.md 2.2 / 7.2 — values the shared stylesheet does not carry yet */
+  :root {
+    --tertiary-text-color: #6c6e81;
+    --fg-disabled: #9699a6;
+    --border-field: #878ca0;
+    --ex-err-bg: #f7ded6; --ex-err-fg: #9e2b12;
+    --ex-wait-bg: #fdeeda; --ex-wait-fg: #854f0b;
+    --ex-ok-bg: #e8f6ee; --ex-ok-fg: #00734a;
+  }
+  html, body { background: #f4f8fc; }
+  [hidden] { display: none !important; }
+  .ex-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* ── page head ─────────────────────────────────────────────────────────── */
+  .dc-pagehead { margin: 8px 0 16px; display: flex; align-items: flex-end; gap: 12px 20px; flex-wrap: wrap; }
+  .ex-kicker { font: 400 14px 'Rubik'; color: var(--fg-2); margin: 0 0 4px; }
+  .dc-title { font: 700 26px/1.25 'Rubik'; color: #1a1a1a; letter-spacing: -0.2px; margin: 0; }
+  .dc-title:focus { outline: none; }
+  .ex-headmeta { margin-inline-start: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font: 400 14px 'Rubik'; color: var(--fg-2); }
+  .ex-headmeta b { font-weight: 500; color: var(--fg-1); }
+  .ex-sep { width: 1px; height: 15px; background: var(--border-1); }
+
+  .dc-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(20,40,80,.07); }
+
+  /* ── buttons (design.md 4.1) ───────────────────────────────────────────── */
+  .dc-btn {
+    height: 38px; padding: 0 22px; border-radius: 6px; font: 500 14px 'Rubik'; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;
+    text-decoration: none;
+  }
+  .dc-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .dc-btn-primary { background: var(--brand-navy); color: #fff; border: 1px solid var(--brand-navy); }
+  .dc-btn-primary:hover { background: var(--brand-navy-hover); border-color: var(--brand-navy-hover); }
+  .dc-btn-ghost { background: #fff; color: var(--brand-navy); border: 1px solid var(--border-1); }
+  .dc-btn-ghost:hover { background: var(--brand-tint); border-color: var(--brand-tint); }
+  .cvs-btn { height: 34px; padding: 0 14px; background: var(--brand-tint); color: var(--brand-navy); border: 1px solid var(--brand-tint); border-radius: 6px; font: 500 14px 'Rubik'; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .cvs-btn:hover { background: #b8cdec; border-color: #b8cdec; }
+  .cvs-btn svg { width: 15px; height: 15px; }
+  .dc-linkbtn {
+    background: none; border: 0; padding: 0 2px; height: 32px; cursor: pointer;
+    font: 400 14px 'Rubik'; color: var(--brand-navy); text-decoration: underline; text-underline-offset: 3px;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .dc-linkbtn:hover { color: var(--brand-navy-hover); }
+  .dc-linkbtn svg { width: 15px; height: 15px; }
+  .ex-addlink { text-decoration: none; font-weight: 500; }
+  .ex-addlink:hover { text-decoration: underline; }
+  .cvs-iconbtn { width: 28px; height: 28px; border: 0; border-radius: 6px; padding: 0; background: none; color: var(--fg-2); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+  .cvs-iconbtn svg { width: 16px; height: 16px; }
+  .cvs-iconbtn:hover { background: var(--brand-tint); color: var(--brand-navy); }
+  .dc-btn:focus-visible, .cvs-btn:focus-visible, .dc-linkbtn:focus-visible, .cvs-iconbtn:focus-visible,
+    outline: 2px solid var(--brand-azure); outline-offset: 2px;
+  }
+
+  /* ── tags (design.md 2.3) ──────────────────────────────────────────────── */
+  .ex-tag { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 999px; font: 400 13px 'Rubik'; white-space: nowrap; }
+  .ex-tag svg { width: 13px; height: 13px; }
+  .ex-tag-wait { background: var(--ex-wait-bg); color: var(--ex-wait-fg); }
+  .ex-tag-ok { background: var(--ex-ok-bg); color: var(--ex-ok-fg); }
+  .ex-tag-prog { background: var(--brand-tint); color: var(--brand-navy); }
+  .ex-tag-no { background: #ffe4d9; color: #c2410c; }
+
+  /* ── notices (design.md 8.3) ───────────────────────────────────────────── */
+  .dc-notice { display: flex; gap: 10px; align-items: flex-start; border-radius: 8px; padding: 10px 14px; font: 400 14px/1.5 'Rubik'; }
+  .dc-notice > svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
+  .dc-notice b { font-weight: 600; }
+  .dc-notice p { margin: 0; }
+  .dc-notice ul { margin: 6px 0 0; padding-inline-start: 18px; }
+  .dc-notice a { color: inherit; font-weight: 500; }
+  .dc-notice-err { background: var(--ex-err-bg); color: var(--ex-err-fg); }
+  .dc-notice-wait { background: var(--ex-wait-bg); color: var(--ex-wait-fg); }
+  .dc-notice-info { background: var(--brand-tint); color: #001E40; }
+  .dc-notice-ok { background: var(--ex-ok-bg); color: var(--ex-ok-fg); }
+  .dc-notice:focus { outline: none; }
+  .ex-must { color: #b4310f; font-weight: 600; }
+
+  /* ── entry list ────────────────────────────────────────────────────────── */
+  .ex-round { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 22px; margin-bottom: 20px; }
+  .ex-round > svg { width: 20px; height: 20px; color: var(--brand-navy); flex-shrink: 0; }
+  .ex-round-txt { flex: 1 1 320px; font: 400 14px/1.5 'Rubik'; color: var(--fg-1); }
+  .ex-round-txt b { font-weight: 500; color: var(--brand-navy); }
+  .ex-listcard { margin-bottom: 20px; }
+  .ex-listhead { display: flex; align-items: center; gap: 12px; padding: 16px 22px 12px; flex-wrap: wrap; }
+  .ex-listtitle { font: 500 17px 'Rubik'; color: var(--fg-2); margin: 0; }
+  .ex-listcount { font: 400 14px 'Rubik'; color: var(--fg-3); }
+  .ex-listhint { flex-basis: 100%; font: 400 13px 'Rubik'; color: var(--fg-3); margin: -4px 0 0; }
+  .ex-tablewrap { padding: 0 22px 18px; overflow-x: auto; }
+
+  /* tables (design.md 4.12) */
+  .ex-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .ex-table th { background: #eff5fd; font: 500 14px 'Rubik'; color: var(--fg-2); text-align: start; padding: 8px 10px; }
+  .ex-table th:first-child { border-start-start-radius: 8px; border-end-start-radius: 8px; }
+  .ex-table th:last-child { border-start-end-radius: 8px; border-end-end-radius: 8px; }
+  .ex-table td { font: 400 15px 'Rubik'; color: #001E40; padding: 8px 10px; border-bottom: 1px solid #eef1f6; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; }
+  .ex-table tbody tr:hover td { background: var(--cvs-hover); }
+  .ex-table tbody tr.ex-noh:hover td { background: none; }
+  .ex-table .ex-num { font-variant-numeric: tabular-nums; }
+  .ex-table a.ex-rowlink { color: var(--brand-navy); font-weight: 500; text-decoration: none; }
+  .ex-table a.ex-rowlink:hover { text-decoration: underline; }
+  .ex-table .ex-actcol { width: 96px; text-align: end; }
+  .ex-table .ex-acts { display: inline-flex; gap: 2px; }
+  .ex-empty { text-align: center; color: var(--fg-3); font: 400 14px 'Rubik'; padding: 26px 10px !important; }
+
+  /* ── the wizard: five steps always on show, only the current one opens its
+        sub-steps. Grid at 1440: 12 columns of 92 with a 16 gutter (IGDS); stepper
+        276, gap 48, form card on the rest, fields 724. ── */
+  .st-wrap { max-width: 1280px; margin: 0 auto; }
+  .st-grid { display: grid; grid-template-columns: 276px minmax(0, 1fr); gap: 48px; align-items: start; }
+  .st-nav { padding: 16px 12px; position: sticky; top: 78px; }
+  .st-steps, .st-subs { list-style: none; margin: 0; padding: 0; }
+  .st-step { position: relative; }
+  .st-step:not(:last-child)::before { content: ""; position: absolute; top: 44px; bottom: -4px; inset-inline-start: 23px; width: 2px; background: var(--border-2); }
+  .st-step.is-done:not(:last-child)::before { background: var(--brand-navy); }
+  .st-row { width: 100%; min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 8px; border: 0; border-radius: 8px; background: none; text-align: start; font: 400 15px/1.3 'Rubik'; color: #001E40; cursor: pointer; position: relative; }
+  .st-row:hover:not(:disabled) { background: var(--cvs-hover); }
+  .st-row:disabled { cursor: default; color: var(--fg-3); }
+  .st-ind { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font: 500 14px 'Rubik'; background: #fff; border: 2px solid var(--border-field); color: var(--fg-3); }
+  .st-ind svg { width: 16px; height: 16px; stroke-width: 2.6; }
+  .is-done .st-ind { background: var(--brand-navy); border-color: var(--brand-navy); color: #fff; }
+  .is-err .st-ind { background: var(--ex-err-bg); border-color: var(--negative-color); color: var(--ex-err-fg); }
+  .is-current .st-ind { background: var(--brand-tint); border-color: var(--brand-navy); color: var(--brand-navy); }
+  .is-current > .st-row { font-weight: 600; color: var(--brand-navy); }
+  /* opens and closes smoothly; the closed list leaves the tab order through visibility */
+  .st-fold { display: grid; grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows .15s cubic-bezier(.4,0,.2,1), visibility .15s; }
+  .st-fold > ul { overflow: hidden; min-height: 0; }
+  .is-current .st-fold { grid-template-rows: 1fr; visibility: visible; }
+  .st-subs { padding-inline-start: 44px; }
+  .is-current .st-subs { padding-block: 2px 8px; }
+  .st-sub { width: 100%; min-height: 36px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border: 0; border-inline-start: 3px solid transparent; border-radius: 4px; background: none; text-align: start; font: 400 14px/1.3 'Rubik'; color: #001E40; cursor: pointer; }
+  .st-sub:hover:not(:disabled) { background: var(--cvs-hover); }
+  .st-sub:disabled { color: var(--fg-3); cursor: default; }
+  .st-sub[aria-current] { background: var(--brand-tint); border-inline-start-color: var(--brand-navy); color: var(--brand-navy); font-weight: 500; }
+  .st-sub svg { width: 14px; height: 14px; color: var(--positive-color); flex-shrink: 0; stroke-width: 2.6; }
+  .st-sub.is-err svg { color: var(--negative-color); stroke-width: 2; }
+  .st-row:focus-visible, .st-sub:focus-visible, .st-toggle:focus-visible { outline: 2px solid var(--brand-azure); outline-offset: 2px; }
+  .st-toggle { display: none; }
+
+  .st-form { padding: 40px 40px 0; }
+  .st-title { font: 600 24px/32px 'Rubik'; color: #1a1a1a; margin: 0 0 28px; letter-spacing: -0.2px; }
+  .st-title:focus { outline: none; }
+  .st-fields { max-width: 724px; display: flex; flex-direction: column; gap: 28px; min-height: 240px; padding-bottom: 36px; }
+  .st-row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 16px; align-items: start; }
+  .st-row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 16px; align-items: start; }
+  .st-addr { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 28px 16px; align-items: start; }
+  .st-half { max-width: 354px; }
+  .st-acts { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 16px 0 24px; border-top: 1px solid #eef1f6; }
+  .st-fwd { margin-inline-start: auto; display: flex; gap: 10px; }
+  .st-fwd .dc-btn { min-width: 130px; }
+  .st-lead { font: 400 15px/1.6 'Rubik'; color: var(--fg-1); margin: 0; max-width: 632px; }
+  .st-formbtns { display: flex; gap: 10px; align-items: center; }
+
+  /* a saved item: one line, its actions beside it */
+  .st-items { list-style: none; margin: 0; padding: 0; border-top: 1px solid #eef1f6; }
+  .st-item { display: flex; align-items: center; gap: 12px; padding: 12px 2px; border-bottom: 1px solid #eef1f6; }
+  .st-item > div { flex: 1; min-width: 0; }
+  .st-item b { display: block; font: 500 15px 'Rubik'; color: #001E40; }
+  .st-item span { font: 400 13px 'Rubik'; color: var(--fg-3); }
+  .is-invalid .st-items, .is-invalid .ex-tile { border-color: var(--negative-color); }
+  .st-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; align-items: start; }
+
+  .st-prep { margin: 0; padding-inline-start: 20px; font: 400 15px/1.8 'Rubik'; color: var(--fg-1); }
+  .st-h3 { font: 600 16px 'Rubik'; color: var(--fg-1); margin: 0 0 8px; }
+
+  /* consents open in the page, one at a time */
+  .st-consent { border: 1px solid var(--border-1); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+  .st-consent h3 { font: 600 16px 'Rubik'; margin: 0; }
+  .st-consent p { margin: 0; font: 400 14.5px/1.65 'Rubik'; }
+
+  /* the review: each group with its own change link */
+  .st-rev { border-bottom: 1px solid #eef1f6; padding-bottom: 20px; }
+  .st-revhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+  .st-revhead h3 { font: 600 16px 'Rubik'; color: var(--fg-1); margin: 0; }
+  .st-revhead a { font: 400 14px 'Rubik'; color: var(--brand-navy); text-underline-offset: 3px; }
+  .st-revlist { margin: 0; display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 6px 16px; font: 400 15px/1.45 'Rubik'; }
+  .st-revlist dt { color: var(--fg-2); font-size: 14px; }
+  .st-revlist dd { margin: 0; color: #001E40; }
+
+  /* ── fields (design.md 4.2) ────────────────────────────────────────────── */
+  .dc-field { min-width: 0; display: flex; flex-direction: column; gap: 6px; position: relative; }
+  .dc-label { font: 400 13px 'Rubik'; color: var(--fg-2); }
+  .dc-label small { font-size: 12px; color: var(--fg-3); }
+  .dc-fieldhint { font: 400 12.5px/1.45 'Rubik'; color: var(--fg-3); margin: 0; }
+  .dc-fieldhint.ex-strong { color: var(--fg-1); font-weight: 500; }
+  .dc-input {
+    height: 38px; width: 100%; min-width: 0; padding: 0 2px; background: transparent;
+    border: 0; border-bottom: 1.5px solid var(--border-field); border-radius: 0;
+    font: 400 15px 'Rubik'; color: var(--fg-1);
+  }
+  textarea.dc-input { height: auto; min-height: 76px; padding: 8px 10px; border: 1px solid var(--border-field); border-radius: 6px; resize: vertical; line-height: 1.5; }
+  .dc-input::placeholder { color: var(--fg-3); }
+  .dc-input:hover { border-color: var(--fg-2); }
+  .dc-input:focus { outline: none; border-color: var(--brand-navy); }
+  .dc-input[readonly] { color: var(--fg-2); border-bottom-style: dotted; cursor: default; }
+  .dc-selwrap { position: relative; }
+  .dc-select {
+    height: 38px; width: 100%; padding: 4px 11px 4px 30px; border: 1px solid var(--border-field); border-radius: 6px;
+    background: #fff; font: 400 15px 'Rubik'; color: var(--fg-1); appearance: none; -webkit-appearance: none; cursor: pointer;
+  }
+  .dc-select:hover { border-color: var(--fg-2); }
+  .dc-select:focus { outline: none; border-color: var(--brand-navy); }
+  .dc-select.is-ph { color: var(--fg-3); }
+  .dc-select:disabled { background: #f7f9fc; color: var(--fg-disabled); cursor: not-allowed; border-color: var(--border-1); }
+  .dc-selchev { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--fg-2); display: flex; }
+  .dc-selchev svg { width: 12px; height: 12px; }
+  .dc-ro { display: flex; align-items: center; gap: 8px; height: 38px; font: 400 15px 'Rubik'; color: var(--fg-1); border-bottom: 1.5px dotted var(--border-1); }
+  .dc-ro svg { width: 14px; height: 14px; color: var(--fg-3); }
+
+  /* errors (design.md 8.3) */
+  .ex-err { display: flex; align-items: flex-start; gap: 5px; font: 400 12.5px/1.4 'Rubik'; color: var(--negative-color); margin: 0; }
+  .ex-err svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; }
+  /* doubled class: styles.css sets hover and focus borders with !important */
+  .is-invalid .dc-input.dc-input, .is-invalid .dc-select.dc-select, .is-invalid .ex-datebox { border-color: var(--negative-color) !important; }
+  .is-invalid .ex-checklist, .is-invalid .ex-rowtable, .is-invalid .ex-radios, .is-invalid .ex-consents { box-shadow: 0 0 0 1px var(--negative-color); border-radius: 8px; }
+
+  /* radio rows — long statements, so one per line (the pill look of .dc-radio, stretched) */
+  fieldset.dc-field { border: 0; margin: 0; padding: 0; }
+  fieldset.dc-field > legend { padding: 0; margin-bottom: 6px; }
+  .ex-legend { font: 500 15px 'Rubik'; color: var(--fg-1); }
+  .ex-radios { display: flex; flex-direction: column; gap: 2px; }
+  .ex-radios.ex-inline { flex-direction: row; flex-wrap: wrap; }
+  .ex-radio {
+    display: flex; align-items: flex-start; gap: 9px; padding: 8px 10px; border-radius: 8px; cursor: pointer;
+    font: 400 14px/1.5 'Rubik'; color: var(--fg-1);
+  }
+  .ex-inline .ex-radio { border-radius: 999px; padding: 8px 14px; align-items: center; }
+  .ex-radio:hover { background: #f1f5fa; }
+  .ex-radio input { accent-color: var(--brand-navy); width: 15px; height: 15px; margin: 3px 0 0; flex-shrink: 0; cursor: pointer; }
+  .ex-inline .ex-radio input { margin: 0; }
+  .ex-radio:has(input:checked) { color: var(--brand-navy); font-weight: 500; background: var(--brand-tint); }
+  .ex-radio b { font-weight: 600; }
+
+  /* districts / secondary expertise — a short list laid open, with ⓘ per row */
+  .ex-checklist { border: 1px solid var(--border-1); border-radius: 8px; overflow: hidden; max-width: 560px; }
+  .ex-checklist-head { display: flex; gap: 10px; background: #eff5fd; padding: 8px 12px; font: 500 14px 'Rubik'; color: var(--fg-2); }
+  .ex-checkrow { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-top: 1px solid #eef1f6; cursor: pointer; font: 400 15px 'Rubik'; color: #001E40; position: relative; }
+  .ex-checkrow:hover { background: var(--cvs-hover); }
+  .ex-checkrow input { accent-color: var(--brand-navy); width: 15px; height: 15px; margin: 0; cursor: pointer; flex-shrink: 0; }
+  .ex-checkrow:has(input:checked) { background: var(--brand-tint); color: var(--brand-navy); font-weight: 500; }
+  .ex-checkrow span { flex: 1; }
+  .ex-checklist.is-off .ex-checkrow { color: var(--fg-disabled); cursor: not-allowed; }
+  .ex-checklist.is-off .ex-checkrow:hover { background: none; }
+  .ex-allrow { font-weight: 500; }
+
+  /* ⓘ popover (design.md 4.8, .dc-info) */
+  .dc-info { width: 24px; height: 24px; border-radius: 50%; border: 0; background: none; color: var(--fg-3); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; position: relative; }
+  .dc-info svg { width: 16px; height: 16px; }
+  .dc-info:hover, .dc-info[aria-expanded="true"] { background: #f1f5fa; color: var(--brand-navy); }
+  .dc-pop {
+    position: absolute; z-index: 40; top: calc(100% + 4px); left: 0; width: 300px;
+    background: #fff; border-radius: 10px; box-shadow: var(--box-shadow-medium); padding: 14px 16px;
+    font: 400 13.5px/1.6 'Rubik'; color: var(--fg-1); cursor: default; text-align: start;
+  }
+  .dc-pop b { display: block; font-weight: 500; color: var(--brand-navy); margin-bottom: 4px; }
+  .dc-pop ul { margin: 0; padding-inline-start: 16px; }
+
+  /* ── row editor: languages, education, employment, relations ───────────── */
+  .ex-rowtable { border: 1px solid var(--border-1); border-radius: 8px; }
+  .ex-rowtable .ex-table th { border-radius: 0 !important; }
+  .ex-rowtable .ex-table td { white-space: nowrap; }
+  .ex-rowtable tr.ex-editing td { background: #f8fafd !important; overflow: visible; vertical-align: top; padding-top: 6px; }
+  .ex-rowtable tr.ex-editing .dc-input, .ex-rowtable tr.ex-editing .dc-select { height: 34px; font-size: 14px; }
+  .ex-rowtable tr.ex-editing .ex-datebox { height: 34px; }
+  .ex-rowtable .ex-cellerr { display: block; font: 400 12px 'Rubik'; color: var(--negative-color); margin-top: 3px; white-space: normal; }
+  .ex-rowtable .ex-cellbad .dc-input, .ex-rowtable .ex-cellbad .dc-select, .ex-rowtable .ex-cellbad .ex-datebox { border-color: var(--negative-color); }
+  .ex-rowfoot { display: flex; align-items: center; gap: 12px; padding: 6px 12px; border-top: 1px solid #eef1f6; background: #fff; }
+  .ex-saverow { display: inline-flex; gap: 6px; align-items: center; }
+  .ex-rowhint { font: 400 12.5px 'Rubik'; color: var(--fg-3); }
+
+  /* ── date field: type it, or pick it — month and year are lists, so a
+        date 30 years back is two picks away, not 30 clicks ─────────────── */
+  .ex-date { position: relative; }
+  .ex-datebox { display: flex; align-items: center; height: 38px; border: 1px solid var(--border-field); border-radius: 6px; background: #fff; }
+  .ex-datebox:hover { border-color: var(--fg-2); }
+  .ex-datebox:focus-within { border-color: var(--brand-navy); }
+  .ex-datebox input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; padding: 0 10px; font: 400 15px 'Rubik'; color: var(--fg-1); direction: ltr; text-align: right; }
+  .ex-datebox input::placeholder { color: var(--fg-3); }
+  .ex-datebox input:focus { outline: none; }
+  .ex-datebox button { width: 34px; height: 100%; border: 0; background: none; color: var(--fg-2); cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 0 6px 6px 0; }
+  .ex-datebox button:hover { color: var(--brand-navy); background: var(--brand-tint); }
+  .ex-datebox button svg { width: 16px; height: 16px; }
+  .ex-cal {
+    position: absolute; z-index: 45; top: calc(100% + 6px); right: 0; width: 280px;
+    background: #fff; border-radius: 14px; box-shadow: var(--box-shadow-medium); padding: 12px;
+  }
+  .ex-cal-head { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .ex-cal-head .dc-selwrap { flex: 1; }
+  .ex-cal-head .dc-select { height: 34px; font-size: 14px; }
+  .ex-cal-head .cvs-iconbtn { flex-shrink: 0; }
+  .ex-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+  .ex-cal-grid span { font: 500 12px/28px 'Rubik'; color: var(--fg-3); }
+  .ex-cal-grid button { height: 32px; border: 0; border-radius: 6px; background: none; font: 400 14px 'Rubik'; color: var(--fg-1); cursor: pointer; }
+  .ex-cal-grid button:hover { background: var(--cvs-hover); }
+  .ex-cal-grid button.is-today { box-shadow: inset 0 0 0 1px var(--brand-tint-strong); }
+  .ex-cal-grid button[aria-pressed="true"] { background: var(--brand-navy); color: #fff; font-weight: 500; }
+  .ex-cal-grid button:disabled { color: var(--fg-disabled); cursor: not-allowed; background: none; }
+  .ex-cal-foot { display: flex; justify-content: space-between; margin-top: 8px; padding-top: 6px; border-top: 1px solid #eef1f6; }
+
+  /* ── documents: three columns of upload tiles ──────────────────────────── */
+  .ex-docnote { font: 400 15px/1.5 'Rubik'; }
+  .ex-doccols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+  .ex-doccol h4 { font: 600 15px 'Rubik'; color: var(--fg-1); margin: 0; }
+  .ex-doccol .ex-docsub { font: 400 13px 'Rubik'; color: var(--fg-3); margin: 2px 0 10px; min-height: 18px; }
+  .ex-tiles { display: flex; flex-direction: column; gap: 8px; }
+  .ex-tile {
+    display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 8px 12px;
+    border: 1.5px dashed var(--border-field); border-radius: 8px; background: #fbfcfe; cursor: pointer;
+    font: 400 14px 'Rubik'; color: var(--fg-1); text-align: start; width: 100%; position: relative;
+  }
+  .ex-tile:hover, .ex-tile.is-drag { border-color: var(--brand-navy); background: var(--brand-tint); }
+  .ex-tile > svg { width: 22px; height: 22px; color: var(--fg-2); flex-shrink: 0; }
+  .ex-tile .ex-tilemain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .ex-tile .ex-tilelabel { font-weight: 500; }
+  .ex-tile .ex-tilesub { font: 400 12.5px 'Rubik'; color: var(--fg-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ex-tile.is-full { border-style: solid; border-color: #b7dcc7; background: #fff; cursor: default; }
+  .ex-tile.is-full:hover { background: #fff; border-color: #b7dcc7; }
+  .ex-tile.is-full > svg { color: var(--positive-color); }
+  .ex-tile.is-bad { border-color: var(--negative-color); background: #fff; }
+  .ex-tile.is-bad .ex-tilesub { color: var(--negative-color); }
+  .ex-tileacts { display: flex; gap: 2px; flex-shrink: 0; }
+  .ex-docerr { margin-top: 6px; }
+
+  /* ── declarations: the two consents ────────────────────────────────────── */
+  .ex-consents { display: flex; flex-direction: column; gap: 8px; max-width: 640px; }
+  .ex-consent {
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px; width: 100%;
+    background: #fff; border: 1px solid var(--border-1); border-radius: 8px; cursor: pointer; text-align: start;
+    font: 400 15px 'Rubik'; color: #001E40;
+  }
+  .ex-consent:hover { border-color: var(--brand-navy); background: var(--brand-tint); }
+  .ex-consent > svg { width: 20px; height: 20px; color: var(--brand-navy); flex-shrink: 0; }
+  .ex-consent .ex-consentmain { flex: 1; min-width: 0; }
+  .ex-consent .ex-consenttitle { font-weight: 500; color: var(--brand-navy); text-decoration: underline; text-underline-offset: 3px; }
+  .ex-consent .ex-consentsub { display: block; font: 400 12.5px 'Rubik'; color: var(--fg-3); margin-top: 2px; }
+
+  /* ── the sticky action bar at the foot of every step ───────────────────── */
+    position: sticky; bottom: 0; z-index: 20; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 14px 22px; background: #fff; border-top: 1px solid #eef1f6; border-radius: 0 0 12px 12px;
+    box-shadow: 0 -6px 14px -10px rgba(20,40,80,.18);
+  }
+  .ex-savedat { font: 400 13px 'Rubik'; color: var(--fg-3); }
+
+  /* ── dialogs (native <dialog>: focus trap and Esc come with it) ────────── */
+  dialog.ex-dlg {
+    border: 0; padding: 0; border-radius: 14px; box-shadow: var(--box-shadow-large);
+    width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 48px);
+    font-family: 'Rubik', sans-serif; color: var(--fg-1); background: #fff;
+  }
+  dialog.ex-dlg[open] { display: flex; flex-direction: column; }
+  dialog.ex-dlg.ex-dlg-sm { width: min(480px, calc(100vw - 32px)); }
+  dialog.ex-dlg::backdrop { background: rgba(41,47,76,.7); }
+  .ex-dlghead { display: flex; align-items: flex-start; gap: 12px; padding: 18px 22px 14px; border-bottom: 1px solid #eef1f6; }
+  .ex-dlghead h2 { font: 600 19px/1.35 'Rubik'; margin: 0; color: #1a1a1a; flex: 1; }
+  .ex-dlghead p { font: 400 13.5px 'Rubik'; color: var(--fg-2); margin: 3px 0 0; }
+  .ex-dlgbody { padding: 18px 22px; overflow-y: auto; flex: 1; font: 400 14.5px/1.65 'Rubik'; }
+  .ex-dlgbody p { margin: 0 0 12px; }
+  .ex-dlgfoot { display: flex; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap; padding: 14px 22px; border-top: 1px solid #eef1f6; }
+  .ex-dlgfoot .ex-dlgfootstart { margin-inline-end: auto; }
+  .ex-consentgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px 18px; margin-bottom: 18px; }
+  .ex-agree { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 8px; background: #f6f9fd; cursor: pointer; font: 500 14.5px/1.5 'Rubik'; }
+  .ex-agree input { accent-color: var(--brand-navy); width: 16px; height: 16px; margin: 3px 0 0; flex-shrink: 0; }
+  .ex-agree.is-invalid { box-shadow: 0 0 0 1px var(--negative-color); }
+  .ex-fieldslist { columns: 2; column-gap: 28px; margin: 0; padding-inline-start: 18px; }
+  .ex-fieldslist li { break-inside: avoid; margin-bottom: 6px; }
+  .ex-fieldslist li span { color: var(--fg-3); font-size: 13px; }
+
+  /* ── confirmation ──────────────────────────────────────────────────────── */
+  .ex-done { max-width: 680px; margin: 8px auto 0; padding: 36px 40px 30px; text-align: center; }
+  .ex-doneicon { width: 64px; height: 64px; border-radius: 50%; background: var(--ex-ok-bg); color: var(--positive-color); display: inline-flex; align-items: center; justify-content: center; }
+  .ex-doneicon svg { width: 34px; height: 34px; }
+  .ex-done h1 { font: 700 24px/1.3 'Rubik'; color: #1a1a1a; margin: 16px 0 6px; }
+  .ex-done h1:focus { outline: none; }
+  .ex-done > p { font: 400 15px/1.6 'Rubik'; color: var(--fg-2); margin: 0 auto; max-width: 520px; }
+  .ex-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 24px 0; border: 1px solid #e1e6ef; border-radius: 10px; text-align: start; }
+  .ex-facts div { padding: 12px 16px; border-inline-start: 1px solid #e1e6ef; }
+  .ex-facts div:first-child { border-inline-start: 0; }
+  .ex-facts dt { font: 400 13px 'Rubik'; color: var(--fg-3); }
+  .ex-facts dd { margin: 3px 0 0; font: 500 16px 'Rubik'; color: #001E40; }
+  .ex-donebtns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  /* ── a submitted request ───────────────────────────────────────────────── */
+  .ex-reqstrip { display: flex; align-items: center; gap: 12px 18px; flex-wrap: wrap; padding: 12px 18px; margin-bottom: 16px; }
+  .ex-reqnum { font: 600 14px 'Rubik'; color: var(--brand-navy); background: var(--brand-tint); padding: 6px 13px; border-radius: 999px; }
+  .ex-reqmeta { font: 400 14px 'Rubik'; color: var(--fg-2); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .ex-reqmeta b { font-weight: 500; color: var(--fg-1); }
+  .ex-reqnotice { margin-bottom: 16px; }
+  .ex-reqdocs .ex-table td { white-space: nowrap; }
+  .ex-reqfoot { display: flex; align-items: center; gap: 12px; padding: 14px 22px; border-top: 1px solid #eef1f6; flex-wrap: wrap; }
+  .ex-reqfoot .dc-btn-primary { margin-inline-start: auto; }
+  .ex-newfile { display: inline-flex; align-items: center; gap: 6px; font: 400 14px 'Rubik'; color: var(--ex-ok-fg); }
+  .ex-newfile svg { width: 15px; height: 15px; }
+
+  /* ── toast (design.md 8.4) ─────────────────────────────────────────────── */
+  .ex-toast {
+    position: fixed; top: 74px; left: 32px; z-index: 60; display: flex; align-items: center; gap: 10px;
+    background: #fff; border-radius: 8px; box-shadow: var(--box-shadow-medium); padding: 12px 16px;
+    font: 400 14px 'Rubik'; color: var(--fg-1); max-width: min(420px, calc(100vw - 48px));
+    opacity: 0; transform: translateY(-8px); transition: opacity .25s cubic-bezier(0,0,.35,1), transform .25s cubic-bezier(0,0,.35,1); pointer-events: none;
+  }
+  .ex-toast.is-on { opacity: 1; transform: none; pointer-events: auto; }
+  .ex-toast svg { width: 18px; height: 18px; color: var(--positive-color); flex-shrink: 0; }
+
+  /* ── prototype toolbar: not part of the design ─────────────────────────── */
+  .ex-proto {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; width: fit-content; margin: 32px 0 0 auto;
+    border: 1.5px dashed var(--border-field); border-radius: 10px; padding: 4px 10px;
+    font: 400 13px 'Rubik'; color: var(--fg-2);
+  }
+  .ex-proto b { font-weight: 500; color: var(--fg-3); font-size: 12px; }
+  .ex-proto label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+  .ex-proto input { accent-color: var(--brand-navy); }
+  .ex-proto .dc-linkbtn { height: 26px; font-size: 13px; }
+
+  /* ── responsive (design.md 6) ──────────────────────────────────────────── */
+  @media (max-width: 1280px) {
+    .ex-consentgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 1180px) {
+    .ex-doccols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 1000px) {
+    .ex-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ex-facts div:nth-child(3) { border-inline-start: 0; }
+    .ex-facts div:nth-child(n+3) { border-top: 1px solid #e1e6ef; }
+  }
+  @media (max-width: 1180px) {
+    .st-grid { gap: 24px; grid-template-columns: 260px minmax(0, 1fr); }
+    .st-form { padding: 28px 24px 0; }
+  }
+  /* narrow: one line that says where you are and opens the steps */
+  @media (max-width: 860px) {
+    .st-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .st-nav { position: static; padding: 0; }
+    .st-toggle { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; padding: 8px 16px; background: none; border: 0; text-align: start; font: 500 15px 'Rubik'; color: var(--brand-navy); cursor: pointer; }
+    .st-toggle svg { width: 16px; height: 16px; transition: transform .15s; flex-shrink: 0; }
+    .st-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+    .st-nav .st-steps { padding: 0 12px 12px; }
+    .st-nav.is-closed .st-steps { display: none; }
+    .st-title { font-size: 21px; line-height: 28px; margin-bottom: 20px; }
+    .st-form { padding: 20px 16px 0; }
+  }
+  @media (max-width: 760px) {
+    .ex-doccols { grid-template-columns: minmax(0, 1fr); }
+    .ex-tablewrap { padding: 0 12px 14px; }
+    .ex-listhead, .ex-round { padding-inline: 14px; }
+    .ex-done { padding: 28px 18px 22px; margin-top: 20px; }
+    .ex-fieldslist { columns: 1; }
+    .ex-headmeta { margin-inline-start: 0; }
+    /* stacked rows: each saved row a card, the header names its labels */
+    .ex-list-stack thead { display: none; }
+    .ex-list-stack, .ex-list-stack tbody, .ex-list-stack tr, .ex-list-stack td { display: block; width: 100%; }
+    .ex-list-stack tbody tr { padding: 10px 4px; border-bottom: 1px solid #eef1f6; }
+    .ex-list-stack td { border: 0; padding: 3px 4px; display: grid; grid-template-columns: 120px 1fr; gap: 8px; font-size: 14.5px; white-space: normal !important; }
+    .ex-list-stack td::before { content: attr(data-label); font: 400 13px 'Rubik'; color: var(--fg-3); }
+    .ex-list-stack td.ex-actcol { text-align: start; }
+    .ex-list-stack td.ex-empty { display: block; }
+    .ex-list-stack td.ex-empty::before { display: none; }
+    .ex-rowtable tr.ex-editing td { display: block; }
+  }
+  @media (max-width: 560px) {
+    .st-row2, .st-row3, .st-addr, .st-tiles { grid-template-columns: minmax(0, 1fr); }
+    .st-half { max-width: none; }
+    .st-revlist { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+    .st-revlist dd { margin-bottom: 8px; }
+    .ex-consentgrid { grid-template-columns: minmax(0, 1fr); }
+    .st-fwd { width: 100%; order: -1; margin: 0; }
+    .st-fwd .dc-btn { flex: 1; min-width: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ex-toast, .st-fold, .st-toggle svg { transition: none; }
+  }
+  @media print {
+    .cvs-thinscroll, #cvsTopHeader, #siteFooter, .ex-proto, .ex-donebtns, .ex-toast { display: none !important; }
+    body { padding: 0 !important; background: #fff; }
+  }
+
+  /* ── mobile: the rail becomes a drawer (design.md §6) ── */
+  .hp-burger { display: none; }
+  .md-backdrop { display: none; }
+  @media (max-width: 860px) {
+    body { padding-right: 0 !important; }
+    /* the drawer waits off-screen to the right; without this it counts as page
+       width and the whole page scrolls sideways */
+    html { overflow-x: hidden; }
+    .hp-burger {
+      display: flex; align-items: center; justify-content: center;
+      width: 40px; height: 40px; border: 0; border-radius: 8px; background: none;
+      color: var(--brand-navy); cursor: pointer; flex-shrink: 0; margin-inline-end: 4px;
+    }
+    .hp-burger:hover { background: var(--cvs-hover); }
+    .hp-burger svg { width: 22px; height: 22px; }
+    .cvs-thinscroll {
+      width: 284px !important; max-width: 86vw; transform: translateX(100%);
+      transition: transform .22s ease, visibility 0s .22s; box-shadow: -8px 0 24px rgba(20,40,80,.14); overflow-y: auto !important;
+      visibility: hidden;   /* closed: out of the tab order too */
+    }
+    body.md-drawer-open { overflow: hidden; }
+    body.md-drawer-open .cvs-thinscroll { transform: none; visibility: visible; transition: transform .22s ease; }
+    body.md-drawer-open .md-backdrop { display: block; position: fixed; inset: 0; z-index: 35; background: rgba(6,30,64,.32); }
+    .cvs-railInner { align-items: stretch !important; padding: 0 12px 12px !important; }
+    .md-drawerhead { display: flex !important; }
+    .cvs-thinscroll .cvs-raildash, .cvs-thinscroll .cvs-railnav > summary, .cvs-thinscroll .cvs-railInner > a {
+      flex-direction: row !important; justify-content: flex-start !important; gap: 12px !important;
+      padding: 12px !important; height: auto !important; margin: 0 !important;
+    }
+    .cvs-thinscroll .cvs-railInner span { font-size: 16px !important; text-align: start !important; }
+    .cvs-thinscroll .cvs-railInner span br { display: none; }
+    .cvs-thinscroll .cvs-railnav > div {
+      position: static !important; width: auto !important; box-shadow: none !important;
+      padding: 0 31px 4px 0 !important;
+    }
+    #cvsTopHeader > div { flex-wrap: wrap; height: auto !important; padding: 10px 16px !important; row-gap: 10px; }
+    #cvsTopHeader .md-logocol { width: auto !important; flex: 1 1 auto !important; }
+    #cvsTopHeader .md-findcol { order: 3; flex: 1 1 100% !important; padding-right: 0 !important; flex-wrap: wrap; }
+    #cvsTopHeader .md-findcol select.cvs-select { width: 140px !important; }
+    .md-content { padding: 0 16px 64px !important; }
+  }
+  .md-drawerhead {
+    display: none; align-items: center; justify-content: space-between;
+    height: 56px; margin: 0 -12px 8px; padding: 0 16px; border-bottom: 1px solid #e1e6ef;
+    font: 600 17px 'Rubik'; color: var(--fg-1);
+  }
+  .md-drawerhead button {
+    width: 40px; height: 40px; border: 0; background: none; border-radius: 8px; cursor: pointer;
+    color: var(--fg-2); display: flex; align-items: center; justify-content: center;
+  }
+  .md-drawerhead button:hover { background: var(--cvs-hover); }
+  .cvs-railInner > .md-drawerhead:hover { background: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .cvs-thinscroll { transition: none !important; }
+  }
+</style>
+</head>
+<body style="display:flex;flex-direction:column;min-height:100vh;padding-right:68px">
+<div class="md-backdrop" id="mdBackdrop"></div>
+<div class="cvs-thinscroll" style="position:fixed;top:0;right:0;bottom:0;width:68px;background:#fff;overflow:visible;z-index:40;font-family:'Rubik',sans-serif">
+  <div class="cvs-railInner" dir="rtl" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:20px 3px 4px;min-height:100%">
+    <div class="md-drawerhead"><span>תפריט</span><button type="button" id="mdDrawerClose" aria-label="סגירת התפריט"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+    <!-- the personal area: the lawyer's own cases, decisions and payments. It sits
+         in the header band, above the rule, apart from the general navigation below. -->
+    <div class="cvs-raildash" role="button" tabindex="0" title="האזור שלי — סקירה כללית (אזור אישי ישן)" aria-label="האזור שלי">
+      <img class="cvs-dashillus" src="assets/illus-card.svg" width="26" height="26" alt="">
+      <span class="cvs-dashmain">האזור שלי</span>
+    </div>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">איתור <br>תיקים</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <a href="case-search.html#ext" style="display:block;text-decoration:none;padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">תיקים לפי מס' תיק מקור</a>
+        <a href="case-search.html#date" style="display:block;text-decoration:none;padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">תיקים לתאריך פתיחה</a>
+        <a href="case-search.html#mine" style="display:block;text-decoration:none;padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">התיקים שלי</a>
+      </div>
+    </details>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M9 15h6"></path><path d="M12 18v-6"></path></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">פתיחת <br>תיק</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">פתיחת תיק</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">הגשת תביעה בדיון מהיר בבית הדין לעבודה</div>
+      </div>
+    </details>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">הגשות</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">בקשה חדשה</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">כתב טענות לבקשה קיימת</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">הגשות אחרות</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">איתור הגשות לפי אסמכתא</div>
+      </div>
+    </details>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">יומן <br>דיונים</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">יומן בית משפט</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">דיונים לשופט ליום דיונים</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">הדיונים שלי</div>
+      </div>
+    </details>
+    <a href="https://case-view-lawyer-docs-inline.vercel.app/decisions.html" style="text-decoration:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="m9 15 2 2 4-4"></path></svg>
+      <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">איתור <br>החלטות</span>
+    </a>
+    <details class="cvs-railnav" style="position:relative;width:100%">
+      <summary style="cursor:pointer;list-style:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:8px;width:100%;color:var(--fg-2)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+        <span style="font:400 11px 'Rubik';color:var(--fg-2);text-align:center;line-height:1.25">תשלומים</span>
+      </summary>
+      <div style="position:absolute;top:0;right:calc(100% + 10px);background:#fff;border-radius:8px;box-shadow:var(--box-shadow-medium);padding:8px;width:230px;z-index:30">
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">תשלום שוברים</div>
+        <div style="padding:9px 12px;border-radius:4px;font:400 15px 'Rubik';line-height:1.35;color:var(--fg-1);cursor:pointer">תשלום אגרת בקשה מראש</div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div id="cvsTopHeader" style="background:#fff;position:sticky;top:0;z-index:30">
+  <div style="max-width:1840px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;gap:0;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
+
+    <!-- logo column: same width as the accordion sidebar below, so their right edges align -->
+    <button type="button" class="hp-burger" id="mdBurger" aria-label="פתיחת התפריט" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg></button>
+    <div class="md-logocol" style="width:260px;flex-shrink:0;display:flex;justify-content:flex-start">
+      <a href="https://case-view-lawyer-docs-inline.vercel.app/home.html" title="לדף הבית" style="display:flex">
+        <img id="cvsLogo" src="assets/42f818ae-3d00-4df0-9bfa-da8197a00c3c.png" alt="מדינת ישראל, הרשות השופטת — לדף הבית" style="height:36px">
+      </a>
+    </div>
+
+    <!-- search-bar column: same start edge as the main content below, so it aligns with the case card.
+         Case type now carries three options; picking תיק ישן reveals בית משפט + סוג תיק inline,
+         before the case number, replacing the old standalone "תיק ישן" flyout. -->
+    <div class="md-findcol" style="flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding-right:6px">
+        <div style="position:relative">
+          <select id="cvsCaseType" class="cvs-select" style="height:36px;padding:4px 28px 4px 10px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';color:var(--fg-1);background:#fff;width:150px">
+            <option value="court" selected>תיק בית משפט</option>
+            <option value="traffic">תיק תעבורה</option>
+            <option value="old">תיק ישן</option>
+          </select>
+          <span style="position:absolute;top:50%;left:8px;transform:translateY(-50%);pointer-events:none;color:var(--fg-2);display:flex"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+        </div>
+        <div id="cvsOldCaseFields" style="display:none;align-items:center;gap:8px">
+          <div style="position:relative">
+            <select class="cvs-select" style="height:36px;padding:4px 12px 4px 28px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';color:var(--fg-2);background:#fff;width:176px">
+              <option selected disabled>בית משפט</option>
+              <option>בית משפט השלום חדרה</option>
+            </select>
+            <span style="position:absolute;top:50%;left:8px;transform:translateY(-50%);pointer-events:none;color:var(--fg-2);display:flex"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+          </div>
+          <div style="position:relative">
+            <select class="cvs-select" style="height:36px;padding:4px 12px 4px 28px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';color:var(--fg-2);background:#fff;width:120px">
+              <option selected disabled>סוג תיק</option>
+              <option>אזרחי</option>
+            </select>
+            <span style="position:absolute;top:50%;left:8px;transform:translateY(-50%);pointer-events:none;color:var(--fg-2);display:flex"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+          </div>
+        </div>
+        <input id="cvsCaseNumA" placeholder="00-00" aria-label="חודש ושנה" title="חודש ושנה" maxlength="5" style="height:36px;width:56px;padding:4px 6px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';text-align:center;background:#fff">
+        <span style="color:var(--fg-3)">-</span>
+        <input id="cvsCaseNumB" aria-label="מספר התיק" title="מספר התיק" maxlength="5" placeholder="00000" style="height:36px;width:64px;padding:4px 6px;border:1px solid var(--border-1);border-radius:6px;font:400 14px 'Rubik';text-align:center;background:#fff">
+        <button id="cvsHeaderSearch" onclick="location.href='https://case-view-lawyer-docs-inline.vercel.app/index.html'" class="cvs-btn" style="height:36px;padding:0 16px;background:var(--brand-tint);color:var(--brand-navy);border:1px solid var(--brand-tint);border-radius:6px;font:500 14px 'Rubik';cursor:pointer;white-space:nowrap">חיפוש</button>
+        <button type="button" id="cvsHeaderClear" class="cvs-headerclear">נקה</button>
+    </div>
+
+    <!-- guest: login button; signed in: bell and account menu (site.js) -->
+    <div class="nh-user" id="nhUser"></div>
+    <script>NH.renderUser(document.getElementById('nhUser'));</script>
+
+  </div>
+</div>
+
+<div style="flex:1 0 auto;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
+  <main class="md-content" style="max-width:1840px;margin:0 auto;padding:0 32px 110px">
+
+
+    <!-- ═══ 1. entry: what was submitted, what waits as a draft ═══ -->
+    <section id="exViewList" data-view="list" aria-labelledby="exListTitle">
+      <nav class="dc-crumbs" aria-label="פירורי לחם"><ol><li><a href="https://case-view-lawyer-docs-inline.vercel.app/home.html">דף הבית</a></li><li><span aria-current="page">הבקשות שלי</span></li></ol></nav>
+      <div class="dc-pagehead">
+        <div>
+          <h1 class="dc-title" id="exListTitle" tabindex="-1">הבקשות שלי</h1>
+        </div>
+        <div class="ex-headmeta">
+          <button type="button" class="dc-btn dc-btn-primary" id="exNew"><i data-ic="plus"></i>הגשת מועמדות חדשה</button>
+        </div>
+      </div>
+
+      <!-- the round that is open now, and the fields it takes (live site: a link
+           at the foot of the entry tile on the home page) -->
+      <div class="dc-card ex-round">
+        <i data-ic="calendar"></i>
+        <p class="ex-round-txt">
+          הפעימה הנוכחית פתוחה להגשת מועמדות <b>עד <span id="exRoundEnd"></span></b>. ניתן להגיש מועמדות רק בתחומים שנפתחו בפעימה זו.
+        </p>
+        <button type="button" class="dc-linkbtn" id="exFieldsLink">רשימת התחומים בפעימה הנוכחית</button>
+      </div>
+
+      <div class="dc-card ex-listcard">
+        <div class="ex-listhead">
+          <h2 class="ex-listtitle">בקשות שהוגשו</h2>
+          <span class="ex-listcount" id="exReqCount"></span>
+        </div>
+        <div class="ex-tablewrap">
+          <table class="ex-table ex-list-stack" aria-label="בקשות שהוגשו">
+            <colgroup><col style="width:16%"><col style="width:20%"><col><col style="width:26%"></colgroup>
+            <thead><tr><th scope="col">מספר בקשה</th><th scope="col">תאריך הגשה</th><th scope="col">תחום מומחיות ראשי</th><th scope="col">סטטוס</th></tr></thead>
+            <tbody id="exReqRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="dc-card ex-listcard">
+        <div class="ex-listhead">
+          <h2 class="ex-listtitle">טיוטות לבקשה</h2>
+          <span class="ex-listcount" id="exDraftCount"></span>
+          <p class="ex-listhint">טיוטות שלא הוגשו נמחקות אוטומטית עם סגירת הפעימה.</p>
+        </div>
+        <div class="ex-tablewrap">
+          <table class="ex-table ex-list-stack" aria-label="טיוטות לבקשה">
+            <colgroup><col style="width:16%"><col style="width:20%"><col><col style="width:26%"></colgroup>
+            <thead><tr><th scope="col">מספר טיוטה</th><th scope="col">תאריך שמירה אחרון</th><th scope="col">תחום מומחיות ראשי</th><th scope="col" class="ex-actcol">פעולות</th></tr></thead>
+            <tbody id="exDraftRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 2. the wizard ═══ -->
+    <!-- ═══ 2b. the wizard ═══ -->
+    <section id="exViewWizard" data-view="wizard" hidden>
+      <div class="st-wrap">
+      <nav class="dc-crumbs" aria-label="פירורי לחם"><ol><li><a href="https://case-view-lawyer-docs-inline.vercel.app/home.html">דף הבית</a></li><li><span aria-current="page">מאגר המומחים של בתי המשפט – הגשת מועמדות להיכלל ברשימת המומחים</span></li></ol></nav>
+      <div class="dc-pagehead"><h1 class="dc-title">מאגר המומחים של בתי המשפט – הגשת מועמדות להיכלל ברשימת המומחים</h1></div>
+      <div class="st-grid">
+        <nav class="dc-card st-nav is-closed" id="exNav" aria-label="שלבי הבקשה">
+          <button type="button" class="st-toggle" id="exNavToggle" aria-expanded="false" aria-controls="exStepNav"><span id="exNavToggleText"></span><i data-ic="chevdown"></i></button>
+          <ol class="st-steps" id="exStepNav"></ol>
+        </nav>
+        <form class="dc-card st-form" id="exForm" novalidate>
+          <h2 class="st-title" id="exStepTitle" tabindex="-1"></h2>
+          <div class="st-fields" id="exStepBody"></div>
+          <div class="st-acts">
+            <button type="button" class="dc-linkbtn" id="exSave">שמירה ויציאה</button>
+            <span class="ex-savedat" id="exSavedAt" aria-live="polite"></span>
+            <div class="st-fwd">
+              <button type="button" class="dc-btn dc-btn-ghost" id="exPrev">לשלב הקודם</button>
+              <button type="submit" class="dc-btn dc-btn-primary" id="exNext">לשלב הבא</button>
+            </div>
+          </div>
+        </form>
+      </div>
+      </div>
+    </section>
+
+    <!-- ═══ 3. after סיום ═══ -->
+    <section id="exViewDone" data-view="done" hidden>
+      <nav class="dc-crumbs" aria-label="פירורי לחם"><ol><li><a href="https://case-view-lawyer-docs-inline.vercel.app/home.html">דף הבית</a></li><li><a href="#list">הבקשות שלי</a></li><li><span aria-current="page">הבקשה הוגשה בהצלחה</span></li></ol></nav>
+      <div class="dc-card ex-done" style="margin-top:8px">
+        <span class="ex-doneicon"><i data-ic="checkcircle"></i></span>
+        <h1 tabindex="-1" id="exDoneTitle">הבקשה הוגשה בהצלחה</h1>
+        <p>הודעה אוטומטית על קליטת הבקשה נשלחה אליך. ניתן לעקוב אחר סטטוס הבקשה ולקבל הודעות מיחידת המומחים באזור האישי.</p>
+        <dl class="ex-facts" id="exDoneFacts"></dl>
+        <div class="ex-donebtns">
+          <button type="button" class="dc-btn dc-btn-primary" data-go="list">הבקשות שלי</button>
+          <button type="button" class="dc-btn dc-btn-ghost" onclick="window.print()"><i data-ic="printer"></i>הדפסת האישור</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 4. a submitted request (and השלמת מסמכים) ═══ -->
+    <section id="exViewReq" data-view="request" hidden>
+      <nav class="dc-crumbs" aria-label="פירורי לחם"><ol><li><a href="https://case-view-lawyer-docs-inline.vercel.app/home.html">דף הבית</a></li><li><a href="#list">הבקשות שלי</a></li><li><span aria-current="page" id="exReqCrumb"></span></li></ol></nav>
+      <div class="dc-pagehead">
+        <div>
+          <p class="ex-kicker">מאגר המומחים של בתי המשפט</p>
+          <h1 class="dc-title" id="exReqTitle" tabindex="-1"></h1>
+        </div>
+        <div class="ex-headmeta">
+          <button type="button" class="dc-linkbtn" data-go="list"><i data-ic="chevright"></i>חזרה לבקשות שלי</button>
+        </div>
+      </div>
+      <div class="dc-card ex-reqstrip" id="exReqStrip"></div>
+      <div id="exReqNotice" class="ex-reqnotice"></div>
+      <div class="dc-card ex-reqdocs">
+        <div class="ex-listhead">
+          <h2 class="ex-listtitle">מסמכים בבקשה</h2>
+          <span class="ex-listcount">קבצים בפורמט PDF בלבד</span>
+        </div>
+        <div class="ex-tablewrap">
+          <table class="ex-table ex-list-stack" aria-label="מסמכים בבקשה">
+            <colgroup><col style="width:22%"><col><col style="width:18%"><col style="width:26%"></colgroup>
+            <thead><tr><th scope="col">קטגוריה</th><th scope="col">מסמך</th><th scope="col">מצב</th><th scope="col">מסמך חדש</th></tr></thead>
+            <tbody id="exReqDocs"></tbody>
+          </table>
+        </div>
+        <div class="ex-reqfoot" id="exReqFoot"></div>
+      </div>
+    </section>
+
+    <!-- ═══ 0. not signed in: the live site asks to identify first ═══ -->
+    <section id="exViewGate" data-view="gate" hidden>
+      <nav class="dc-crumbs" aria-label="פירורי לחם"><ol><li><a href="https://case-view-lawyer-docs-inline.vercel.app/home.html">דף הבית</a></li><li><span aria-current="page">הגשת מועמדות להיכלל ברשימת המומחים</span></li></ol></nav>
+      <div class="dc-pagehead">
+        <div>
+          <p class="ex-kicker">מאגר המומחים של בתי המשפט</p>
+          <h1 class="dc-title" tabindex="-1">הגשת מועמדות להיכלל ברשימת המומחים</h1>
+        </div>
+      </div>
+      <div class="dc-card ex-done" style="margin-top:8px">
+        <span class="ex-doneicon" style="background:var(--brand-tint);color:var(--brand-navy)"><i data-ic="lock"></i></span>
+        <h1 style="font-size:21px">לצורך ביצוע פעולה זו יש לבצע הזדהות</h1>
+        <p>יש לבחור את אופן ההזדהות במערכת. ככל שאין ברשותך "כרטיס חכם", יש לבחור ב"הזדהות ממשלתית".</p>
+        <div class="ex-donebtns" style="margin:20px 0 22px">
+          <button type="button" class="dc-btn dc-btn-primary" id="exGateLogin">התחברות</button>
+        </div>
+        <p style="font-size:14px">לעזרה בתהליך ההרשמה במערכת ההזדהות הממשלתית ניתן להסתייע בתמיכה מרחוק: <span style="white-space:nowrap">תמיכה בתהליך ההרשמה <a href="tel:1299" dir="ltr">1299</a></span> · <span style="white-space:nowrap">דואר אלקטרוני <a href="mailto:moked@mail.gov.il">moked@mail.gov.il</a></span> · <span style="white-space:nowrap">טלפון נוסף <a href="tel:086863100" dir="ltr">08-6863100</a></span></p>
+      </div>
+    </section>
+
+    <input type="file" id="exFile" accept="application/pdf,.pdf" hidden>
+
+    <!-- ═══ dialogs ═══ -->
+    <dialog class="ex-dlg" id="exDlg" aria-labelledby="exDlgTitle">
+      <div class="ex-dlghead">
+        <div style="flex:1">
+          <h2 id="exDlgTitle"></h2>
+          <p id="exDlgSub"></p>
+        </div>
+        <button type="button" class="cvs-iconbtn" data-dlg-close aria-label="סגירה"><i data-ic="x"></i></button>
+      </div>
+      <div class="ex-dlgbody" id="exDlgBody"></div>
+      <div class="ex-dlgfoot" id="exDlgFoot"></div>
+    </dialog>
+
+    <div class="ex-toast" id="exToast" role="status" aria-live="polite"><i data-ic="check"></i><span></span></div>
+
+
+
+    <!-- prototype controls — not part of the design -->
+    <div class="ex-proto" aria-label="כלי אב־טיפוס" id="exProto">
+      <b>אב־טיפוס</b>
+      <button type="button" class="dc-linkbtn" id="exDemoFill">מילוי נתונים לדוגמה</button>
+    </div>
+  </main>
+</div>
+<div id="siteFooter" style="flex-shrink:0;background:#001e40">
+  <div style="max-width:1840px;margin:0 auto;padding:70px 96px;display:flex;flex-direction:column;gap:60px;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
+    <div style="display:flex;justify-content:space-between;gap:40px">
+
+      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
+        <div style="position:relative;width:40px;height:40px">
+          <div style="position:absolute;top:17.5%;right:6.18%;bottom:15.23%;left:7.5%">
+            <img src="assets/footer-frame.svg" style="position:absolute;inset:0;width:100%;height:100%">
+          </div>
+        </div>
+        <div style="font:600 20px 'Rubik';color:#f4f8fe">מידע שימושי</div>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#f4f8fe;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הגשת תביעה קטנה</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הגשת תביעה בדיון מהיר בבית הדין לעבודה</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> בקשה לשינוי מועד דיון</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> בקשה לפטור מאגרה בשל חוסר יכולת כלכלית</a>
+      </div>
+
+      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
+        <div style="position:relative;width:40px;height:40px">
+          <div style="position:absolute;top:15%;right:7.43%;bottom:15.17%;left:7.5%;overflow:hidden">
+            <div style="position:absolute;top:19.3%;right:60.24%;bottom:16.11%;left:0">
+              <div style="position:absolute;top:-2.77%;right:0;bottom:0;left:0">
+                <img src="assets/footer-group.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:6.48%;right:0;bottom:28.93%;left:60.27%">
+              <div style="position:absolute;top:-2.77%;right:0;bottom:0;left:0">
+                <img src="assets/footer-group1.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:6.48%;right:19.89%;bottom:80.7%;left:19.86%">
+              <div style="position:absolute;top:-13.97%;right:-2.44%;bottom:-13.97%;left:-2.44%">
+                <img src="assets/footer-vector.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:13.57%;right:50.01%;bottom:10.06%;left:49.99%">
+              <div style="position:absolute;top:-2.34%;right:-0.5px;bottom:-2.34%;left:-0.5px">
+                <img src="assets/footer-vector1.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:91.01%;right:39.79%;bottom:8.99%;left:39.76%">
+              <div style="position:absolute;top:-0.5px;right:-7.18%;bottom:-0.5px;left:-7.18%">
+                <img src="assets/footer-vector2.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:98.21%;right:34.09%;bottom:1.79%;left:34.09%">
+              <div style="position:absolute;top:-0.5px;right:-4.62%;bottom:-0.5px;left:-4.62%">
+                <img src="assets/footer-vector3.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:0;right:47.11%;bottom:92.91%;left:47.07%">
+              <img src="assets/footer-vector4.svg" style="position:absolute;inset:0;width:100%;height:100%">
+            </div>
+          </div>
+        </div>
+        <div style="font:600 20px 'Rubik';color:#f4f8fe">אודות</div>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#f4f8fe;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> משוב</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> תנאי שימוש</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> שימוש בקבצי cookies</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הצהרת נגישות</a>
+      </div>
+
+      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
+        <div style="position:relative;width:40px;height:40px">
+          <div style="position:absolute;top:12.5%;right:12.13%;bottom:12.13%;left:12.5%;overflow:hidden">
+            <div style="position:absolute;top:2.72%;right:2.75%;bottom:2.75%;left:2.72%">
+              <div style="position:absolute;top:-1.75%;right:-1.75%;bottom:-1.75%;left:-1.75%">
+                <img src="assets/footer-group2.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:0;right:41.26%;bottom:0;left:41.23%">
+              <img src="assets/footer-group3.svg" style="position:absolute;inset:0;width:100%;height:100%">
+            </div>
+            <div style="position:absolute;top:41.23%;right:0;bottom:41.26%;left:0">
+              <img src="assets/footer-group4.svg" style="position:absolute;inset:0;width:100%;height:100%">
+            </div>
+          </div>
+        </div>
+        <div style="font:600 20px 'Rubik';color:#f4f8fe">מוקד מידע ושירות ארצי</div>
+        <div style="font:400 16px 'Rubik';color:#fff;width:100%">
+          <div>שעות מענה אנושי:</div>
+          <div style="margin-top:4px">ימים א-ה: 8:00 עד 17:00</div>
+          <div>ימי ו, ערבי חג וחול המועד: 8:00 עד 12:30</div>
+        </div>
+        <div style="display:flex;gap:24px;width:100%">
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <div style="font:400 18px 'Rubik';color:#fff">בטלפון</div>
+            <div style="display:flex;align-items:center;gap:16px">
+              <span dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">077-2703333</span>
+              <span style="width:2px;height:18px;background:rgba(255,255,255,.2)"></span>
+              <span dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">*3852</span>
+            </div>
+            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> ניתן לזמן תור לשיחה</a>
+          </div>
+          <div style="width:2px;background:rgba(255,255,255,.2);align-self:stretch"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <div style="font:400 18px 'Rubik';color:#fff">בווטסאפ</div>
+            <div dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">050-6255727</div>
+            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> להתחיל שיחה</a>
+          </div>
+          <div style="width:2px;background:rgba(255,255,255,.2);align-self:stretch"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <div style="font:400 18px 'Rubik';color:#fff">בצ'אט</div>
+            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> להתחיל שיחה</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  /* תיק ישן reveals בית משפט + סוג תיק inline, before the case number — and its
+     number is keyed differently: an old case carries a YEAR only, where a current
+     one carries month and year. Same two boxes, so the first one narrows and
+     relabels itself instead of a second layout appearing. */
+  (function () {
+    var type = document.getElementById('cvsCaseType');
+    var extra = document.getElementById('cvsOldCaseFields');
+    var numA = document.getElementById('cvsCaseNumA');
+    var numB = document.getElementById('cvsCaseNumB');
+    if (!type || !extra) return;
+    var first = true;
+    var sync = function () {
+      var old = type.value === 'old';
+      extra.style.display = old ? 'flex' : 'none';
+      if (numA) {
+        numA.style.width = old ? '44px' : '56px';
+        numA.maxLength = old ? 2 : 5;
+        /* the placeholder is the shape of the value, not a word for it: two
+           digits for an old case, two and two for a current one. Same as the
+           איתור החלטות form. */
+        numA.placeholder = old ? '00' : '00-00';
+        numA.title = old ? 'שנה' : 'חודש ושנה';
+        numA.setAttribute('aria-label', numA.title);
+        /* a number keyed for one format is meaningless in the other — clear it,
+           but not on the first run, which would wipe the open case's number */
+        if (!first) { numA.value = ''; if (numB) numB.value = ''; }
+      }
+      first = false;
+    };
+    type.addEventListener('change', sync);
+    sync();
+
+    /* A fly-out in the rail (or the avatar menu) closed only when its own
+       summary was clicked again — so clicking anywhere else left it hanging
+       open over the page. Any click outside an open one now shuts it. */
+    document.addEventListener('click', function (e) {
+      document.querySelectorAll('.cvs-railnav[open], .cvs-avatarmenu[open]').forEach(function (d) {
+        if (!d.contains(e.target)) d.open = false;
+      });
+    });
+
+    var clear = document.getElementById('cvsHeaderClear');
+    if (clear) clear.addEventListener('click', function () {
+      type.selectedIndex = 0;
+      sync();
+      if (numA) numA.value = '';
+      if (numB) numB.value = '';
+      extra.querySelectorAll('select').forEach(function (s) { s.selectedIndex = 0; });
+      if (numB) numB.focus();   /* the serial is typed first */
+    });
+  })();
+</script>
+<script>
+/* ═══ מאגר המומחים — the four views, the wizard, its checks.
+       The live form let people move on with fields empty and opened each step
+       mid-page; here every field is required, "לשלב הבא" checks the step and
+       lists what is missing, and every step opens at the top. ═══ */
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var clone = function (o) { return JSON.parse(JSON.stringify(o)); };
+
+  /* ── icons (Lucide) ─────────────────────────────────────────────────────── */
+  var IC = {
+    user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+    award: '<path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"/><circle cx="12" cy="8" r="6"/>',
+    card: '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
+    star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    layers: '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+    filetext: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+    filecheck: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m9 15 2 2 4-4"/>',
+    check: '<polyline points="20 6 9 17 4 12"/>',
+    checkcircle: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+    alert: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+    info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+    save: '<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>',
+    plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+    pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>',
+    trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+    x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+    upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>',
+    eye: '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+    chevdown: '<path d="m6 9 6 6 6-6"/>',
+    chevleft: '<path d="m15 18-6-6 6-6"/>',
+    chevright: '<path d="m9 18 6-6-6-6"/>',
+    lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+    logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
+    printer: '<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/>'
+  };
+  var ic = function (n) {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (IC[n] || '') + '</svg>';
+  };
+  var hydrate = function (root) {
+    (root || document).querySelectorAll('i[data-ic]').forEach(function (el) { el.outerHTML = ic(el.getAttribute('data-ic')); });
+  };
+
+  /* ── content ─────────────────────────────────────────────────────────────── */
+  var TITLES = ['מר', 'גב\'', 'ד"ר', 'פרופ\'', 'עו"ד'];
+  var GENDERS = ['זכר', 'נקבה'];
+  var LANGS = ['עברית', 'ערבית', 'אנגלית', 'רוסית', 'צרפתית', 'ספרדית', 'אמהרית', 'גרמנית', 'איטלקית', 'רומנית', 'פורטוגזית', 'יידיש'];
+  var LEVELS = ['בסיסית', 'טובה', 'טובה מאוד', 'שפת אם'];
+  var DISTRICTS = [
+    { v: 'ירושלים', courts: ['בית המשפט המחוזי בירושלים', 'בית משפט השלום בירושלים', 'בית משפט השלום בבית שמש'] },
+    { v: 'מרכז', courts: ['בית המשפט המחוזי מרכז-לוד', 'בתי משפט השלום בפתח תקווה, ראשון לציון, רחובות, רמלה, כפר סבא ונתניה'] },
+    { v: 'תל אביב', courts: ['בית המשפט המחוזי בתל אביב-יפו', 'בית משפט השלום בתל אביב-יפו', 'בית משפט השלום בהרצליה'] },
+    { v: 'חיפה', courts: ['בית המשפט המחוזי בחיפה', 'בתי משפט השלום בחיפה, בחדרה ובקריות'] },
+    { v: 'צפון', courts: ['בית המשפט המחוזי בנצרת', 'בתי משפט השלום בנצרת, בטבריה, בעכו, בצפת, בקצרין ובמסעדה'] },
+    { v: 'דרום', courts: ['בית המשפט המחוזי בבאר שבע', 'בתי משפט השלום בבאר שבע, באשדוד, באשקלון, בקריית גת, באילת ובדימונה'] }
+  ];
+  var BANKS = ['בנק לאומי (10)', 'בנק הפועלים (12)', 'בנק דיסקונט (11)', 'בנק מזרחי טפחות (20)', 'הבנק הבינלאומי (31)', 'בנק מרכנתיל (17)', 'בנק ירושלים (54)', 'בנק מסד (46)', 'בנק יהב (04)', 'בנק הדואר (09)', 'בנק אוצר החייל (14)', 'בנק וואן זירו (18)'];
+  var FIELDS = [
+    { v: 'אדריכלות', subs: ['אדריכלות ובינוי ערים', 'אדריכלות פנים', 'אדריכלות נוף'] },
+    { v: 'הנדסה', subs: ['הנדסה אזרחית', 'הנדסת חשמל', 'הנדסת מכונות', 'הנדסת בטיחות'] },
+    { v: 'מדידה', subs: ['מודד מוסמך'] },
+    { v: 'שמאות', subs: ['שמאות מקרקעין', 'שמאות רכב', 'שמאות ביטוח'] },
+    { v: 'ראיית חשבון', subs: ['ביקורת ודוחות כספיים', 'מיסוי', 'הערכות שווי'] },
+    { v: 'רפואה', subs: ['אורתופדיה', 'נוירולוגיה', 'פסיכיאטריה', 'רפואה תעסוקתית'] }
+  ];
+  var DEGREES = ['תואר ראשון', 'תואר שני', 'תואר שלישי', 'תעודת הנדסאי', 'תעודת טכנאי', 'תעודה מקצועית', 'רישיון מקצועי', 'התמחות / מומחיות'];
+  var COUNTRIES = ['ישראל', 'ארצות הברית', 'בריטניה', 'גרמניה', 'צרפת', 'איטליה', 'רוסיה', 'אוקראינה', 'רומניה', 'קנדה', 'אחר'];
+  var REL_ROLES = ['שופט/ת', 'רשם/ת', 'עובד/ת מערכת בתי המשפט'];
+  var REL_KINDS = ['בן/בת זוג', 'הורה', 'ילד/ה', 'אח/אחות', 'קרוב/ת משפחה אחר/ת', 'שותף/ה מקצועי/ת', 'מעסיק/ה או עובד/ת', 'אחר'];
+  var STATUS = {
+    received: { t: 'התקבלה', c: 'ex-tag-prog' }, review: { t: 'בבדיקה', c: 'ex-tag-prog' },
+    docs: { t: 'השלמת מסמכים', c: 'ex-tag-wait' }, approved: { t: 'אושרה', c: 'ex-tag-ok' }, rejected: { t: 'נדחתה', c: 'ex-tag-no' }
+  };
+  var ME = { first: 'ישראל', last: 'כהן', idno: '012345678' };
+
+  /* the opening step and five of content, each one topic to a screen */
+  var STEPS = [
+    { label: 'לפני שמתחילים', subs: [{ key: 'start', label: 'לפני שמתחילים' }] },
+    { label: 'פרטים אישיים', subs: [{ key: 'id', label: 'זהות' }, { key: 'contact', label: 'קשר וכתובת' }, { key: 'langs', label: 'שפות' }, { key: 'bank', label: 'חשבון בנק' }] },
+    { label: 'ניסיון והשכלה', subs: [{ key: 'edu', label: 'השכלה' }, { key: 'work', label: 'ניסיון ואיגוד' }, { key: 'districts', label: 'מחוזות' }] },
+    { label: 'מסמכים', subs: [{ key: 'docs', label: 'זהות, בנק והשכלה' }, { key: 'opinions', label: 'חוות דעת' }] },
+    { label: 'הצהרות', subs: [{ key: 'rel', label: 'קשרים' }, { key: 'decl', label: 'הצהרות' }, { key: 'consents', label: 'הסכמות' }] },
+    { label: 'בדיקה ושליחה', subs: [{ key: 'review', label: 'בדיקה ושליחה' }] }
+  ];
+  /* every screen in order; a position in the wizard is an index into this */
+  var SC = [];
+  STEPS.forEach(function (s, i) { s.subs.forEach(function (u, j) { SC.push({ key: u.key, label: u.label, step: i, sub: j }); }); });
+  var LAST = SC.length - 1;
+
+  /* ── dates ──────────────────────────────────────────────────────────────── */
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  var fmtD = function (d) { return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear(); };
+  var fmtT = function (d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+  var TODAY = new Date(); TODAY.setHours(0, 0, 0, 0);
+  var daysAgo = function (n, h, m) { var d = new Date(TODAY); d.setDate(d.getDate() - n); d.setHours(h || 9, m || 0); return d; };
+  var parseD = function (s) {
+    var m = /^\s*(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})\s*$/.exec(s || '');
+    if (!m) return null;
+    var d = new Date(+m[3], +m[2] - 1, +m[1]);
+    return (d.getDate() === +m[1] && d.getMonth() === +m[2] - 1) ? d : null;
+  };
+  var ROUND_END = new Date(TODAY); ROUND_END.setDate(ROUND_END.getDate() + 45);
+  var MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+
+  /* ── state ──────────────────────────────────────────────────────────────── */
+  var emptyData = function () {
+    return {
+      personal: { title: '', last: '', first: '', gender: '', idno: ME.idno, birth: '', mobile: '', email: '', city: '', street: '', house: '', zip: '', langs: [] },
+      work: { jobs: [], years: '', districts: [] },
+      bank: { owner: '', bank: '', branch: '', account: '' },
+      exp: { main: '', sub: '', edu: [], union: '', unionName: '' },
+      rel: { has: '', rows: [] },
+      docs: {},
+      decl: { conflict: '', convict: '', discipline: '', conflictWhy: '', convictWhy: '', disciplineWhy: '', crim: null, unions: null }
+    };
+  };
+  var seedDraft = emptyData();
+  seedDraft.personal.title = 'עו"ד'; seedDraft.personal.last = 'כהן'; seedDraft.personal.first = 'ישראל'; seedDraft.personal.gender = 'זכר';
+  seedDraft.exp.main = 'מדידה'; seedDraft.exp.sub = 'מודד מוסמך';
+  seedDraft.personal.birth = '14/03/1972'; seedDraft.personal.mobile = '050-1234567'; seedDraft.personal.email = 'israel.cohen@example.com';
+  seedDraft.personal.city = 'ירושלים'; seedDraft.personal.street = 'יפו'; seedDraft.personal.house = '97'; seedDraft.personal.zip = '9434008';
+  seedDraft.personal.langs = [{ lang: 'עברית', speak: 'שפת אם', read: 'שפת אם', write: 'שפת אם' }];
+
+  var okDoc = function (cat, name, file) { return { cat: cat, name: name, file: file, ok: true }; };
+  var S = {
+    requests: [
+      { id: '1906', at: daysAgo(52, 9, 12), main: 'מדידה', sub: 'מודד מוסמך', status: 'docs', docs: [
+        okDoc('כללי', 'צילום תעודת זהות', 'teudat-zehut.pdf'),
+        okDoc('כללי', 'אישור ניהול חשבון בנק / המחאה', 'ishur-bank.pdf'),
+        okDoc('תעודות השכלה', 'תעודת השכלה 1', 'rishayon-modedim.pdf'),
+        okDoc('חוות דעת', 'חוות דעת 1', 'chavat-daat-1.pdf'),
+        { cat: 'חוות דעת', name: 'חוות דעת 2', file: 'chavat-daat-2.pdf', ok: false, why: 'חוות הדעת אינה חתומה' },
+        okDoc('חוות דעת', 'חוות דעת 3', 'chavat-daat-3.pdf'),
+        { cat: 'חוות דעת', name: 'חוות דעת 4', file: 'chavat-daat-4.pdf', ok: false, why: 'חוות הדעת אינה על שם מגיש הבקשה' },
+        okDoc('חוות דעת', 'חוות דעת 5', 'chavat-daat-5.pdf')
+      ] },
+      { id: '1544', at: daysAgo(410, 13, 40), main: 'שמאות', sub: 'שמאות מקרקעין', status: 'approved', docs: [
+        okDoc('כללי', 'צילום תעודת זהות', 'tz.pdf'), okDoc('כללי', 'אישור ניהול חשבון בנק / המחאה', 'bank.pdf'),
+        okDoc('תעודות השכלה', 'תעודת השכלה 1', 'shamaut.pdf'),
+        okDoc('חוות דעת', 'חוות דעת 1', 'cd1.pdf'), okDoc('חוות דעת', 'חוות דעת 2', 'cd2.pdf'), okDoc('חוות דעת', 'חוות דעת 3', 'cd3.pdf'),
+        okDoc('חוות דעת', 'חוות דעת 4', 'cd4.pdf'), okDoc('חוות דעת', 'חוות דעת 5', 'cd5.pdf')
+      ] }
+    ],
+    drafts: [{ id: '23251', at: daysAgo(3, 18, 5), step: 4, max: 4, d: seedDraft }],
+    nextReq: 1907, nextDraft: 23252,
+    cur: null
+  };
+
+  /* ── model paths ────────────────────────────────────────────────────────── */
+  var getv = function (k) { return k.split('.').reduce(function (o, p) { return o == null ? undefined : o[p]; }, S.cur.d); };
+  var setv = function (k, v) {
+    var ps = k.split('.'), o = S.cur.d;
+    for (var i = 0; i < ps.length - 1; i++) o = o[ps[i]];
+    o[ps[ps.length - 1]] = v;
+  };
+  var fid = function (k) { return 'f_' + k.replace(/[.|]/g, '_'); };
+
+  /* ── field builders ─────────────────────────────────────────────────────── */
+  var errSlot = function (k) { return '<p class="ex-err" id="err_' + fid(k) + '" hidden></p>'; };
+  var cls = function (o) { return o && o.span ? ' ex-span' + o.span : ''; };
+
+  var fText = function (k, label, o) {
+    o = o || {};
+    var v = getv(k);
+    var tag = o.multiline ? 'textarea' : 'input';
+    var attrs = ' class="dc-input" id="' + fid(k) + '" data-k="' + k + '"' + (o.ph ? ' placeholder="' + esc(o.ph) + '"' : '') +
+      (o.inputmode ? ' inputmode="' + o.inputmode + '"' : '') + (o.maxlength ? ' maxlength="' + o.maxlength + '"' : '') +
+      (o.type ? ' type="' + o.type + '"' : '') + (o.dir ? ' dir="' + o.dir + '"' : '') + (o.auto ? ' autocomplete="' + o.auto + '"' : '') +
+      ' aria-describedby="err_' + fid(k) + (o.hint ? ' hint_' + fid(k) : '') + '"';
+    var input = o.multiline ? '<textarea' + attrs + '>' + esc(v) + '</textarea>' : '<input' + attrs + ' value="' + esc(v) + '">';
+    return '<div class="dc-field' + cls(o) + '" data-f="' + k + '"><label class="dc-label" for="' + fid(k) + '">' + label + '</label>' +
+      input + (o.hint ? '<p class="dc-fieldhint' + (o.hintStrong ? ' ex-strong' : '') + '" id="hint_' + fid(k) + '">' + o.hint + '</p>' : '') + errSlot(k) + '</div>';
+  };
+  var selectEl = function (id, dataAttr, v, opts, o) {
+    o = o || {};
+    return '<div class="dc-selwrap"><select class="dc-select' + (v ? '' : ' is-ph') + '" id="' + id + '" ' + dataAttr + (o.disabled ? ' disabled' : '') +
+      (o.rerender ? ' data-rerender' : '') + (o.describedby ? ' aria-describedby="' + o.describedby + '"' : '') + (o.aria ? ' aria-label="' + esc(o.aria) + '"' : '') + '>' +
+      '<option value="">' + (o.ph || 'בחר') + '</option>' +
+      opts.map(function (x) { return '<option' + (x === v ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') +
+      '</select><span class="dc-selchev">' + ic('chevdown') + '</span></div>';
+  };
+  var fSelect = function (k, label, opts, o) {
+    o = o || {};
+    return '<div class="dc-field' + cls(o) + '" data-f="' + k + '"><label class="dc-label" for="' + fid(k) + '">' + label + '</label>' +
+      selectEl(fid(k), 'data-k="' + k + '"', getv(k), opts, { rerender: o.rerender, describedby: 'err_' + fid(k), ph: o.ph, disabled: o.disabled }) +
+      (o.hint ? '<p class="dc-fieldhint">' + o.hint + '</p>' : '') + errSlot(k) + '</div>';
+  };
+  var dateEl = function (id, dataAttr, v, o) {
+    o = o || {};
+    return '<div class="ex-date" data-years="' + (o.years || 40) + '"><div class="ex-datebox">' +
+      '<input id="' + id + '" ' + dataAttr + ' value="' + esc(v) + '" placeholder="dd/mm/yyyy" inputmode="numeric" autocomplete="off"' +
+      (o.aria ? ' aria-label="' + esc(o.aria) + '"' : '') + (o.describedby ? ' aria-describedby="' + o.describedby + '"' : '') + '>' +
+      '<button type="button" data-cal aria-label="בחירת תאריך מלוח שנה" aria-haspopup="dialog">' + ic('calendar') + '</button></div></div>';
+  };
+  var fDate = function (k, label, o) {
+    o = o || {};
+    return '<div class="dc-field' + cls(o) + '" data-f="' + k + '"><label class="dc-label" for="' + fid(k) + '">' + label + '</label>' +
+      dateEl(fid(k), 'data-k="' + k + '"', getv(k), { years: o.years, describedby: 'err_' + fid(k) }) + errSlot(k) + '</div>';
+  };
+  var fRadios = function (k, legend, opts, o) {
+    o = o || {};
+    var v = getv(k);
+    return '<fieldset class="dc-field' + cls(o) + '" data-f="' + k + '" aria-describedby="err_' + fid(k) + '"><legend class="' + (o.big ? 'ex-legend' : 'dc-label') + '">' + legend + '</legend>' +
+      '<div class="ex-radios' + (o.inline ? ' ex-inline' : '') + '" id="' + fid(k) + '" tabindex="-1">' +
+      opts.map(function (x, i) {
+        return '<label class="ex-radio"><input type="radio" id="' + fid(k) + '_' + i + '" name="' + fid(k) + '" value="' + esc(x.v) + '" data-k="' + k + '"' + (x.v === v ? ' checked' : '') + (o.rerender ? ' data-rerender' : '') + '><span>' + x.html + '</span></label>';
+      }).join('') + '</div>' + errSlot(k) + '</fieldset>';
+  };
+  var fRO = function (label, v, hint) {
+    return '<div class="dc-field"><span class="dc-label">' + label + '</span><div class="dc-ro">' + ic('lock') + '<span>' + esc(v) + '</span></div>' + (hint ? '<p class="dc-fieldhint">' + hint + '</p>' : '') + '</div>';
+  };
+  var row2 = function (inner) { return '<div class="st-row2">' + inner + '</div>'; };
+  var row3 = function (inner) { return '<div class="st-row3">' + inner + '</div>'; };
+
+  /* ── repeating items: languages, jobs, education, relations ───────────────
+        Fields first, then the saved list. A row is saved with its own button (the
+        live form saved a language only when the + was pressed, and people missed
+        it); adding another is the link under the list. */
+  var ROWS = {
+    'personal.langs': { noun: 'השפה', add: 'הוספת שפה', saveLabel: 'שמירה',
+      title: function (r) { return r.lang; }, sub: function (r) { return 'דיבור: ' + r.speak + ' · קריאה: ' + r.read + ' · כתיבה: ' + r.write; },
+      layout: [['lang'], ['speak', 'read', 'write']], cols: [
+      { k: 'lang', label: 'שפה', type: 'select', opts: LANGS, ph: 'בחר שפה', half: true },
+      { k: 'speak', label: 'דיבור', type: 'select', opts: LEVELS, ph: 'בחר רמה' },
+      { k: 'read', label: 'קריאה', type: 'select', opts: LEVELS, ph: 'בחר רמה' },
+      { k: 'write', label: 'כתיבה', type: 'select', opts: LEVELS, ph: 'בחר רמה' }] },
+    'work.jobs': { noun: 'מקום העבודה', add: 'הוספת מקום עבודה', saveLabel: 'שמירת מקום העבודה',
+      title: function (r) { return r.role + ', ' + r.org; }, sub: function (r) { return r.from + ' עד ' + (r.now ? 'היום' : r.to); },
+      layout: [['org', 'role'], ['from', 'to']], cols: [
+      { k: 'org', label: 'מקום עבודה', type: 'text' },
+      { k: 'role', label: 'תפקיד', type: 'text' },
+      { k: 'from', label: 'מתאריך', type: 'date', years: 60 },
+      { k: 'to', label: 'עד תאריך', type: 'date', years: 60, nowable: true }] },
+    'exp.edu': { noun: 'ההשכלה', add: 'הוספת השכלה', saveLabel: 'שמירת ההשכלה',
+      title: function (r) { return r.degree; }, sub: function (r) { return r.inst + ' · ' + r.start + ' עד ' + r.end; },
+      layout: [['inst'], ['country', 'type'], ['degree'], ['start', 'end']], cols: [
+      { k: 'inst', label: 'שם מוסד השכלה', type: 'text' },
+      { k: 'country', label: 'המדינה בה למדת', type: 'select', opts: COUNTRIES },
+      { k: 'type', label: 'סוג התואר / התעודה', type: 'select', opts: DEGREES },
+      { k: 'degree', label: 'תואר אקדמי / תעודה', type: 'text', hint: 'יש להיצמד לנוסח ההשכלה כפי שמופיע בתעודת ההשכלה' },
+      { k: 'start', label: 'תאריך התחלה', type: 'date', years: 60 },
+      { k: 'end', label: 'תאריך סיום', type: 'date', years: 60 }] },
+    'rel.rows': { noun: 'הקשר', add: 'הוספת קשר', saveLabel: 'שמירת הקשר',
+      title: function (r) { return r.name + ', ' + r.role; }, sub: function (r) { return r.court + ' · ' + r.kind; },
+      layout: [['name', 'role'], ['court', 'kind']], cols: [
+      { k: 'name', label: 'שם מלא', type: 'text' },
+      { k: 'role', label: 'תפקיד', type: 'select', opts: REL_ROLES },
+      { k: 'court', label: 'בית משפט / יחידה', type: 'text' },
+      { k: 'kind', label: 'סוג הקשר', type: 'select', opts: REL_KINDS }] }
+  };
+  var editOf = function (key) { S.cur.edit = S.cur.edit || {}; return S.cur.edit[key]; };
+  var openEdit = function (key, idx) {
+    var cfg = ROWS[key], list = getv(key);
+    var row = idx >= 0 ? clone(list[idx]) : {};
+    cfg.cols.forEach(function (c) { if (row[c.k] == null) row[c.k] = ''; });
+    S.cur.edit[key] = { idx: idx, row: row, errs: {} };
+  };
+  var editHasData = function (e) { return e && Object.keys(e.row).some(function (c) { return e.row[c] && c !== 'now'; }); };
+  var editCell = function (key, c, e) {
+    var id = fid(key + '|' + c.k), da = 'data-rk="' + key + '|' + c.k + '"', v = e.row[c.k], bad = e.errs[c.k], desc = bad ? 'cerr_' + id : '', h;
+    if (c.type === 'select') h = selectEl(id, da, v, c.opts, { ph: c.ph, describedby: desc });
+    else if (c.type === 'date') {
+      h = (c.nowable && e.row.now) ? '<div class="dc-ro" id="' + id + '">' + ic('calendar') + '<span>עד היום</span></div>' : dateEl(id, da, v, { years: c.years, describedby: desc });
+      if (c.nowable) h += '<label class="ex-radio" style="padding:4px 2px;font-size:13px"><input type="checkbox" id="' + id + '_now" data-rk="' + key + '|now" data-rerender' + (e.row.now ? ' checked' : '') + '> משרה נוכחית</label>';
+    } else h = '<input class="dc-input" id="' + id + '" ' + da + ' value="' + esc(v) + '"' + (desc ? ' aria-describedby="' + desc + '"' : '') + '>';
+    return '<div class="dc-field' + (bad ? ' is-invalid' : '') + (c.half ? ' st-half' : '') + '"><label class="dc-label" for="' + id + '">' + c.label + '</label>' + h +
+      (c.hint ? '<p class="dc-fieldhint ex-strong">' + c.hint + '</p>' : '') + (bad ? '<p class="ex-err" id="cerr_' + id + '">' + ic('alert') + '<span>' + esc(bad) + '</span></p>' : '') + '</div>';
+  };
+  /* the saved list, then the fields of the open item or the link to add one */
+  var rowsBlock = function (key) {
+    var cfg = ROWS[key], list = getv(key), e = editOf(key), byK = {};
+    cfg.cols.forEach(function (c) { byK[c.k] = c; });
+    var saved = list.map(function (r, i) {
+      if (e && e.idx === i) return '';
+      return '<li class="st-item"><div><b>' + esc(cfg.title(r)) + '</b><span>' + esc(cfg.sub(r)) + '</span></div>' +
+        '<button type="button" class="dc-linkbtn" data-row-edit="' + key + '" data-i="' + i + '">עריכה</button><button type="button" class="dc-linkbtn" data-row-del="' + key + '" data-i="' + i + '">מחיקה</button></li>';
+    }).join('');
+    var editor = e ? cfg.layout.map(function (ks) {
+      var cells = ks.map(function (k) { return editCell(key, byK[k], e); }).join('');
+      return ks.length === 1 ? cells : (ks.length === 2 ? row2(cells) : row3(cells));
+    }).join('') + '<div class="st-formbtns"><button type="button" class="cvs-btn" data-row-save="' + key + '">' + ic('save') + cfg.saveLabel + '</button>' +
+      ((list.length || e.idx >= 0) ? '<button type="button" class="dc-linkbtn" data-row-cancel="' + key + '">ביטול</button>' : '') + '</div>'
+      : '<div><button type="button" class="dc-linkbtn ex-addlink" data-row-add="' + key + '">' + ic('plus') + cfg.add + '</button></div>';
+    return (saved ? '<ul class="st-items">' + saved + '</ul>' : '') + editor +
+      '<div class="dc-field" data-f="' + key + '" id="' + fid(key) + '" tabindex="-1">' + errSlot(key) + '</div>';
+  };
+  var validateRow = function (key, row) {
+    var errs = {};
+    ROWS[key].cols.forEach(function (c) {
+      if (c.nowable && row.now) return;
+      var v = (row[c.k] || '').trim();
+      if (!v) { errs[c.k] = (c.type === 'text' ? 'יש למלא ' : 'יש לבחור ') + c.label; return; }
+      if (c.type === 'date') {
+        var d = parseD(v);
+        if (!d) errs[c.k] = 'תאריך לא תקין. יש להקליד בפורמט dd/mm/yyyy';
+        else if (d > TODAY) errs[c.k] = 'לא ניתן לבחור תאריך עתידי';
+      }
+    });
+    var a = parseD(row.from || row.start), b = row.now ? TODAY : parseD(row.to || row.end);
+    if (a && b && a > b) errs[row.to !== undefined ? 'to' : 'end'] = 'תאריך הסיום מוקדם מתאריך ההתחלה';
+    if (key === 'personal.langs' && row.lang && !errs.lang) {
+      var dup = getv(key).some(function (r, i) { return r.lang === row.lang && i !== S.cur.edit[key].idx; });
+      if (dup) errs.lang = 'השפה כבר נשמרה';
+    }
+    return errs;
+  };
+
+  /* ── screens ────────────────────────────────────────────────────────────── */
+  var ensureEditors = function (key) {
+    S.cur.edit = S.cur.edit || {};
+    var k = { langs: 'personal.langs', work: 'work.jobs', edu: 'exp.edu', rel: 'rel.rows' }[key];
+    if (!k || (k === 'rel.rows' && S.cur.d.rel.has !== 'yes')) return;
+    if (!getv(k).length && !S.cur.edit[k]) openEdit(k, -1);
+  };
+
+  var RENDER = {
+    start: function () {
+      var c = S.cur, main = getv('exp.main'), sub = getv('exp.sub'), f = FIELDS.filter(function (x) { return x.v === main; })[0];
+      return (c.max > 1 ? '<div class="dc-notice dc-notice-wait">' + ic('alert') + '<p>שינוי התחום משפיע על חוות הדעת שכבר צורפו. יש לוודא שהן מתאימות לתחום החדש.</p></div>' : '') +
+        '<div class="st-half">' + fSelect('exp.main', 'תחום מומחיות', FIELDS.map(function (x) { return x.v; }), { rerender: true, hint: 'בקשה אחת לתחום אחד. מוצגים התחומים שנפתחו בפעימה הנוכחית' }) + '</div>' +
+        (f ? '<div class="dc-field" data-f="exp.sub"><span class="dc-label" id="lbl_sub">מומחיות משנית (בחירה אחת)</span><div class="ex-checklist" id="' + fid('exp.sub') + '" tabindex="-1" role="radiogroup" aria-labelledby="lbl_sub">' +
+          f.subs.map(function (s, i) { return '<div class="ex-checkrow"><label style="flex:1;display:flex;align-items:center;gap:10px;cursor:pointer"><input type="radio" id="f_sub_' + i + '" name="f_sub" data-k="exp.sub" value="' + esc(s) + '"' + (s === sub ? ' checked' : '') + '><span>' + esc(s) + '</span></label></div>'; }).join('') +
+          '</div>' + errSlot('exp.sub') + '</div>' : '') +
+        '<div><h3 class="st-h3">מה צריך להכין מראש</h3><ul class="st-prep"><li>חמש חוות דעת חתומות על שמך</li><li>תעודות השכלה בתחום</li><li>צילום תעודת זהות</li><li>אישור ניהול חשבון בנק או המחאה</li></ul>' +
+        '<p class="dc-fieldhint" style="font-size:14px;margin-top:8px"><span class="ex-must">כל הקבצים בפורמט PDF בלבד.</span> מומלץ להוריד אותם לשולחן העבודה לפני שמתחילים.</p></div>' +
+        '<p class="st-lead">אפשר לשמור ולחזור מאוחר יותר. טיוטות שלא הוגשו עד ' + fmtD(ROUND_END) + ' יימחקו עם סגירת הפעימה.</p>';
+    },
+    id: function () {
+      return row2(fSelect('personal.title', 'תואר', TITLES) + fSelect('personal.gender', 'מגדר', GENDERS)) +
+        row2(fText('personal.first', 'שם פרטי', { auto: 'given-name' }) + fText('personal.last', 'שם משפחה', { auto: 'family-name' })) +
+        row2(fRO('מספר זהות', getv('personal.idno'), 'נלקח מפרטי ההזדהות') + fDate('personal.birth', 'תאריך לידה', { years: 90 }));
+    },
+    contact: function () {
+      return row2(fText('personal.mobile', 'טלפון נייד', { inputmode: 'tel', dir: 'ltr', ph: '05X-XXXXXXX', maxlength: 11, auto: 'tel' }) +
+          fText('personal.email', 'דואר אלקטרוני', { type: 'email', dir: 'ltr', auto: 'email' })) +
+        '<div class="st-half">' + fText('personal.city', 'יישוב', { auto: 'address-level2' }) + '</div>' +
+        '<div class="st-addr">' + fText('personal.street', 'רחוב') + fText('personal.house', 'מספר בית', { inputmode: 'numeric', maxlength: 6 }) + fText('personal.zip', 'מיקוד', { inputmode: 'numeric', maxlength: 7, dir: 'ltr' }) + '</div>';
+    },
+    langs: function () { return '<p class="st-lead">אפשר להוסיף כמה שפות.</p>' + rowsBlock('personal.langs'); },
+    bank: function () {
+      return '<p class="st-lead">החשבון שאליו יועבר שכר הטרחה. אישור על ניהול החשבון יצורף בשלב "מסמכים".</p>' +
+        fText('bank.owner', 'שם בעל/ת החשבון') + fSelect('bank.bank', 'בנק', BANKS) +
+        row2(fText('bank.branch', 'מספר סניף', { inputmode: 'numeric', maxlength: 3, dir: 'ltr' }) + fText('bank.account', 'מספר חשבון', { inputmode: 'numeric', maxlength: 9, dir: 'ltr' }));
+    },
+    edu: function () { return rowsBlock('exp.edu'); },
+    work: function () {
+      return rowsBlock('work.jobs') +
+        '<div class="st-half">' + fText('work.years', 'שנות ניסיון בתחום ' + esc(getv('exp.main')), { inputmode: 'numeric', maxlength: 2 }) + '</div>' +
+        fRadios('exp.union', 'האם קיימת חברות באיגוד מקצועי?', [{ v: 'no', html: 'לא' }, { v: 'yes', html: 'כן' }], { inline: true, rerender: true }) +
+        (getv('exp.union') === 'yes' ? fText('exp.unionName', 'שם האיגוד') : '');
+    },
+    districts: function () {
+      var dl = getv('work.districts');
+      return '<p class="st-lead">שמך יופיע ברשימת המומחים במחוזות שבחרת, לצורך בחירתך כמומחה מטעם בית המשפט. אפשר לבחור כמה.</p>' +
+        '<div class="dc-field" data-f="work.districts"><div class="ex-checklist" id="' + fid('work.districts') + '" tabindex="-1" role="group" aria-label="מחוז פעילות">' +
+        DISTRICTS.map(function (x, i) {
+          return '<div class="ex-checkrow"><label style="flex:1;display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" data-kl="work.districts" value="' + x.v + '"' + (dl.indexOf(x.v) > -1 ? ' checked' : '') + '><span>' + x.v + '</span></label>' +
+            '<span style="position:relative"><button type="button" class="dc-info" data-pop="d' + i + '" aria-expanded="false" aria-label="בתי המשפט במחוז ' + x.v + '">' + ic('info') + '</button>' +
+            '<div class="dc-pop" id="pop_d' + i + '" hidden><b>בתי המשפט במחוז ' + x.v + '</b><ul>' + x.courts.map(function (c) { return '<li>' + c + '</li>'; }).join('') + '</ul></div></span></div>';
+        }).join('') + '</div>' + errSlot('work.districts') + '</div>';
+    },
+    docs: function () {
+      var d = S.cur.d;
+      return '<p class="st-lead"><span class="ex-must">ניתן להעלות קבצים בפורמט PDF בלבד.</span></p><div class="st-tiles">' +
+        tile('id', 'צילום תעודת זהות') + tile('bank', 'אישור ניהול חשבון בנק / המחאה') +
+        d.exp.edu.map(function (r, i) { return tile('edu' + i, 'תעודת השכלה ' + (i + 1), r.degree); }).join('') + '</div>';
+    },
+    opinions: function () {
+      return '<p class="st-lead">יש לצרף <span class="ex-must">חמש</span> חוות דעת חתומות על שם מגיש הבקשה בלבד, בתחום ' + esc(getv('exp.main')) + '. <span class="ex-must">PDF בלבד.</span></p><div class="st-tiles">' +
+        [1, 2, 3, 4, 5].map(function (n) { return tile('op' + n, 'חוות דעת ' + n); }).join('') + '</div>';
+    },
+    rel: function () {
+      return fRadios('rel.has', 'האם קיימת קרבה משפחתית או קשר מקצועי לשופט/ת, לרשם/ת או לעובד/ת במערכת בתי המשפט?', [{ v: 'no', html: 'לא' }, { v: 'yes', html: 'כן' }], { inline: true, rerender: true, big: true }) +
+        (getv('rel.has') === 'yes' ? rowsBlock('rel.rows') : '');
+    },
+    decl: function () {
+      var why = function (k) { return getv(k) === 'no' ? fText(k + 'Why', 'פירוט', { multiline: true }) : ''; };
+      return fRadios('decl.conflict', 'הצהרה על היעדר ניגוד עניינים', [
+          { v: 'ok', html: 'אני מצהיר/ה כי הנני <b>עומד/ת</b> בהוראות החוק ואין לי ניגוד עניינים' },
+          { v: 'no', html: 'אני מצהיר/ה כי אני <b>לא</b> עומד/ת בהוראות החוק בעניין ניגוד עניינים' }], { big: true, rerender: true }) + why('decl.conflict') +
+        fRadios('decl.convict', 'הצהרה על אי הרשעה', [
+          { v: 'ok', html: 'אני מצהיר/ה כי <b>לא</b> הורשעתי בפלילים ואין נגדי כתב אישום תלוי ועומד' },
+          { v: 'no', html: 'אני מצהיר/ה כי <b>הורשעתי</b> בפלילים ו/או יש נגדי כתב אישום תלוי ועומד' }], { big: true, rerender: true }) + why('decl.convict') +
+        fRadios('decl.discipline', 'הצהרה על עבירות משמעת', [
+          { v: 'ok', html: 'אני מצהיר/ה כי <b>לא</b> הורשעתי בעבירות משמעת לפי כל דין ואין נגדי קובלנה בעבירות משמעת תלויה ועומדת' },
+          { v: 'no', html: 'אני מצהיר/ה כי <b>הורשעתי</b> בעבירות משמעת לפי כל דין ו/או יש נגדי קובלנה בעבירות משמעת תלויה ועומדת' }], { big: true, rerender: true }) + why('decl.discipline');
+    },
+    consents: function () {
+      return '<p class="st-lead ex-must" style="font-weight:600">יש לפתוח כל אחד משני הטפסים שלמטה, למלא ולאשר אותו.</p>' +
+        '<div class="ex-consents">' + consentBlock('crim') + consentBlock('unions') + '</div>';
+    },
+    review: function () {
+      var d = S.cur.d, p = d.personal;
+      var names = function (o) { return Object.keys(o); };
+      var at = function (key) { for (var i = 0; i < SC.length; i++) if (SC[i].key === key) return i + 1; };
+      var group = function (title, href, rows) {
+        return '<section class="st-rev"><div class="st-revhead"><h3>' + title + '</h3><a href="' + href + '" data-ret aria-label="שינוי ' + esc(title) + '">שינוי</a></div><dl class="st-revlist">' +
+          rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('') + '</dl></section>';
+      };
+      var ROWSTXT = function (k) { var c = ROWS[k]; return getv(k).map(function (r) { return c.title(r) + ' (' + c.sub(r) + ')'; }).join('; '); };
+      var yes = function (v) { return v === 'ok' ? 'מצהיר/ה שאין מניעה' : 'קיימת מניעה, ראו פירוט'; };
+      return '<p class="st-lead">לאחר השליחה לא ניתן לערוך את הבקשה. השלמת מסמכים, אם תידרש, תתבצע מתוך הבקשה שהוגשה.</p>' +
+        group('תחום מומחיות', '#wizard/' + at('start'), [['תחום', d.exp.main], ['מומחיות משנית', d.exp.sub]]) +
+        group('זהות', '#wizard/' + at('id'), [['שם', p.title + ' ' + p.first + ' ' + p.last], ['מספר זהות', p.idno], ['מגדר', p.gender], ['תאריך לידה', p.birth]]) +
+        group('קשר וכתובת', '#wizard/' + at('contact'), [['טלפון נייד', p.mobile], ['דואר אלקטרוני', p.email], ['כתובת', p.street + ' ' + p.house + ', ' + p.city + ' ' + p.zip]]) +
+        group('שפות', '#wizard/' + at('langs'), [['שפות', p.langs.map(function (l) { return l.lang; }).join(', ')]]) +
+        group('חשבון בנק', '#wizard/' + at('bank'), [['בעל/ת החשבון', d.bank.owner], ['חשבון', d.bank.bank + ', סניף ' + d.bank.branch + ', חשבון ' + d.bank.account]]) +
+        group('השכלה', '#wizard/' + at('edu'), [['השכלה', ROWSTXT('exp.edu')]]) +
+        group('ניסיון ואיגוד', '#wizard/' + at('work'), [['מקומות עבודה', ROWSTXT('work.jobs')], ['שנות ניסיון', d.work.years], ['איגוד מקצועי', d.exp.union === 'yes' ? d.exp.unionName : 'לא']]) +
+        group('מחוזות', '#wizard/' + at('districts'), [['מחוזות', d.work.districts.join(', ')]]) +
+        group('מסמכים', '#wizard/' + at('docs'), [['קבצים שצורפו', names(d.docs).length + ' קבצי PDF, מהם 5 חוות דעת']]) +
+        group('הצהרות וקשרים', '#wizard/' + at('rel'), [['קשרים', d.rel.has === 'yes' ? ROWSTXT('rel.rows') : 'לא קיימים'], ['ניגוד עניינים', yes(d.decl.conflict)], ['הרשעה', yes(d.decl.convict)], ['עבירות משמעת', yes(d.decl.discipline)], ['הסכמות', 'שתי ההסכמות אושרו']]) +
+        '<div class="dc-field" data-f="confirm"><label class="ex-agree" id="' + fid('confirm') + '"><input type="checkbox" id="exConfirm" data-confirm' + (d.confirm ? ' checked' : '') + '><span>אני מצהיר/ה שהפרטים שמסרתי נכונים ומלאים</span></label>' + errSlot('confirm') + '</div>';
+    }
+  };
+
+  /* a document slot: dashed when empty, solid with the file's name when filled */
+  var fmtSize = function (b) { return b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB'; };
+  var tile = function (id, label, sub) {
+    var f = S.cur.d.docs[id], k = 'docs.' + id, bad = S.cur.bad && S.cur.bad[id];
+    var inner;
+    if (f) {
+      inner = '<div class="ex-tile is-full" id="' + fid(k) + '" tabindex="-1">' + ic('filecheck') +
+        '<span class="ex-tilemain"><span class="ex-tilelabel">' + esc(label) + '</span><span class="ex-tilesub" dir="auto">' + esc(f.name) + ' · ' + fmtSize(f.size) + '</span></span>' +
+        '<span class="ex-tileacts"><button type="button" class="cvs-iconbtn" data-doc-view="' + id + '" aria-label="צפייה ב' + esc(label) + '" title="צפייה">' + ic('eye') + '</button>' +
+        '<button type="button" class="cvs-iconbtn" data-doc="' + id + '" aria-label="החלפת הקובץ של ' + esc(label) + '" title="החלפת הקובץ">' + ic('upload') + '</button>' +
+        '<button type="button" class="cvs-iconbtn" data-doc-del="' + id + '" aria-label="הסרת ' + esc(label) + '" title="הסרה">' + ic('trash') + '</button></span></div>';
+    } else {
+      inner = '<button type="button" class="ex-tile' + (bad ? ' is-bad' : '') + '" id="' + fid(k) + '" data-doc="' + id + '" aria-describedby="err_' + fid(k) + '">' + ic('upload') +
+        '<span class="ex-tilemain"><span class="ex-tilelabel">' + esc(label) + '</span><span class="ex-tilesub">' + (bad ? esc(bad) : esc(sub || 'לחצו לבחירת קובץ PDF או גררו אותו לכאן')) + '</span></span></button>';
+    }
+    return '<div class="dc-field" data-f="' + k + '" data-doclabel="' + esc(label) + '">' + inner + errSlot(k) + '</div>';
+  };
+
+  /* ── validation ─────────────────────────────────────────────────────────── */
+  var LABELS = {
+    'personal.title': 'תואר', 'personal.last': 'שם משפחה', 'personal.first': 'שם פרטי', 'personal.gender': 'מגדר', 'personal.birth': 'תאריך לידה',
+    'personal.mobile': 'טלפון נייד', 'personal.email': 'דואר אלקטרוני', 'personal.city': 'יישוב', 'personal.street': 'רחוב', 'personal.house': 'מספר בית', 'personal.zip': 'מיקוד',
+    'work.years': 'שנות ניסיון בתחום', 'bank.owner': 'שם בעל/ת החשבון', 'bank.bank': 'בנק', 'bank.branch': 'מספר סניף', 'bank.account': 'מספר חשבון',
+    'exp.main': 'תחום מומחיות', 'exp.sub': 'מומחיות משנית', 'exp.union': 'חברות באיגוד מקצועי', 'exp.unionName': 'שם האיגוד', 'rel.has': 'קשרי משפחה / מקצועיים',
+    'decl.conflict': 'הצהרה על היעדר ניגוד עניינים', 'decl.convict': 'הצהרה על אי הרשעה', 'decl.discipline': 'הצהרה על עבירות משמעת',
+    'decl.conflictWhy': 'פירוט ניגוד העניינים', 'decl.convictWhy': 'פירוט ההרשעה', 'decl.disciplineWhy': 'פירוט עבירות המשמעת'
+  };
+  var SELECTS = ['personal.title', 'personal.gender', 'bank.bank', 'exp.main', 'exp.sub', 'exp.union', 'rel.has', 'decl.conflict', 'decl.convict', 'decl.discipline'];
+  var validateKey = function (key) {
+    var d = S.cur.d, E = [];
+    var add = function (k, msg) { E.push({ k: k, msg: msg }); };
+    var req = function (k) {
+      var v = getv(k);
+      if (!v || !String(v).trim()) { add(k, (SELECTS.indexOf(k) > -1 ? 'יש לבחור ' : 'יש למלא ') + LABELS[k]); return false; }
+      return true;
+    };
+    var rows = function (k, what) {
+      if (editHasData(S.cur.edit && S.cur.edit[k])) add(k, 'יש לשמור את ' + ROWS[k].noun + ' שבעריכה או לבטל אותה');
+      else if (!getv(k).length) add(k, what);
+    };
+    switch (key) {
+      case 'start': req('exp.main'); if (d.exp.main) req('exp.sub'); break;
+      case 'id':
+        ['personal.title', 'personal.gender', 'personal.first', 'personal.last'].forEach(req);
+        if (req('personal.birth')) {
+          var b = parseD(d.personal.birth);
+          if (!b) add('personal.birth', 'תאריך לא תקין. יש להקליד בפורמט dd/mm/yyyy');
+          else if ((TODAY - b) / 31557600000 < 18) add('personal.birth', 'יש להזין תאריך לידה תקין (גיל 18 ומעלה)');
+        }
+        break;
+      case 'contact':
+        if (req('personal.mobile') && !/^05\d-?\d{7}$/.test(d.personal.mobile.trim())) add('personal.mobile', 'מספר טלפון נייד לא תקין. יש להקליד 10 ספרות, למשל 050-1234567');
+        if (req('personal.email') && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.personal.email.trim())) add('personal.email', 'כתובת דואר אלקטרוני לא תקינה, למשל name@example.com');
+        ['personal.city', 'personal.street', 'personal.house'].forEach(req);
+        if (req('personal.zip') && !/^\d{7}$/.test(d.personal.zip.trim())) add('personal.zip', 'מיקוד לא תקין. יש להקליד 7 ספרות');
+        break;
+      case 'langs': rows('personal.langs', 'יש להוסיף לפחות שפה אחת ולשמור אותה'); break;
+      case 'bank':
+        req('bank.owner'); req('bank.bank');
+        if (req('bank.branch') && !/^\d{3}$/.test(d.bank.branch.trim())) add('bank.branch', 'מספר סניף לא תקין. יש להקליד 3 ספרות');
+        if (req('bank.account') && !/^\d{4,9}$/.test(d.bank.account.trim())) add('bank.account', 'מספר חשבון לא תקין. יש להקליד 4 עד 9 ספרות');
+        break;
+      case 'edu': rows('exp.edu', 'יש להוסיף לפחות השכלה אחת בתחום ולשמור אותה'); break;
+      case 'work':
+        rows('work.jobs', 'יש להוסיף לפחות מקום עבודה אחד ולשמור אותו');
+        if (req('work.years') && !/^\d{1,2}$/.test(d.work.years.trim())) add('work.years', 'יש להקליד מספר שנים (ספרות בלבד)');
+        if (req('exp.union') && d.exp.union === 'yes') req('exp.unionName');
+        break;
+      case 'districts': if (!d.work.districts.length) add('work.districts', 'יש לבחור לפחות מחוז פעילות אחד'); break;
+      case 'docs':
+        if (!d.docs.id) add('docs.id', 'יש לצרף צילום תעודת זהות');
+        if (!d.docs.bank) add('docs.bank', 'יש לצרף אישור ניהול חשבון בנק / המחאה');
+        d.exp.edu.forEach(function (r, i) { if (!d.docs['edu' + i]) add('docs.edu' + i, 'יש לצרף תעודת השכלה ' + (i + 1)); });
+        break;
+      case 'opinions': [1, 2, 3, 4, 5].forEach(function (n) { if (!d.docs['op' + n]) add('docs.op' + n, 'יש לצרף חוות דעת ' + n); }); break;
+      case 'rel': if (req('rel.has') && d.rel.has === 'yes') rows('rel.rows', 'יש לפרט לפחות קשר אחד ולשמור אותו'); break;
+      case 'decl':
+        ['conflict', 'convict', 'discipline'].forEach(function (x) { if (req('decl.' + x) && d.decl[x] === 'no') req('decl.' + x + 'Why'); });
+        break;
+      case 'consents':
+        if (!d.decl.crim) add('decl.crim', 'יש לפתוח את טופס ההסכמה למסירת מידע מהמרשם הפלילי ולאשר אותו');
+        if (!d.decl.unions) add('decl.unions', 'יש לפתוח את טופס ההסכמה למסירת מידע מהאיגודים המקצועיים ולאשר אותו');
+        break;
+      case 'review': if (!d.confirm) add('confirm', 'יש לאשר שהפרטים נכונים ומלאים'); break;
+    }
+    return E;
+  };
+  var validate = function (i) { return validateKey(SC[i].key); };
+  var stepOk = function (i) { return validate(i).length === 0; };
+  var firstBad = function (upto) { for (var j = 0; j < upto; j++) if (!stepOk(j)) return j; return -1; };
+  var canGo = function (i) { return firstBad(i) < 0; };
+
+  /* a field turns red when it is left, and every field on the screen when
+     "לשלב הבא" is pressed; the message sits beside the field */
+  var showErrors = function (E) {
+    var body = $('exStepBody'), c = S.cur, all = c.checked && c.checked[c.step];
+    body.querySelectorAll('[data-f].is-invalid').forEach(function (el) { el.classList.remove('is-invalid'); });
+    body.querySelectorAll('.ex-err[id^="err_"]').forEach(function (p) { p.hidden = true; p.innerHTML = ''; });
+    body.querySelectorAll('[aria-invalid]').forEach(function (el) { el.removeAttribute('aria-invalid'); });
+    E.filter(function (e) { return all || (c.touched && c.touched[e.k]); }).forEach(function (e) {
+      var w = body.querySelector('[data-f="' + e.k + '"]'), p = $('err_' + fid(e.k));
+      if (w) w.classList.add('is-invalid');
+      if (p) { p.innerHTML = ic('alert') + '<span>' + esc(e.msg) + '</span>'; p.hidden = false; }
+      var f = $(fid(e.k)); if (f) f.setAttribute('aria-invalid', 'true');
+    });
+  };
+  var focusFirstBad = function () {
+    var w = $('exStepBody').querySelector('.is-invalid');
+    if (!w) return;
+    var el = w.querySelector('input:not([type=hidden]),select,textarea,button') || w;
+    w.scrollIntoView({ block: 'center' });
+    el.focus({ preventScroll: true });
+  };
+  var recheck = function () {
+    if (!S.cur) return;
+    showErrors(validate(S.cur.step));
+    renderNav();
+  };
+  /* the fields of an open row or consent are checked one by one, in place */
+  var setCellErr = function (w, msg) {
+    w.classList.toggle('is-invalid', !!msg);
+    var p = w.querySelector(':scope > .ex-err');
+    if (!msg) { if (p) p.remove(); return; }
+    if (!p) { p = document.createElement('p'); p.className = 'ex-err'; w.appendChild(p); }
+    p.innerHTML = ic('alert') + '<span>' + esc(msg) + '</span>';
+  };
+
+  /* ── wizard render: five rows, and the sub-steps of the current one ─────── */
+  var renderNav = function () {
+    var c = S.cur, curStep = SC[c.step].step, html = '';
+    STEPS.forEach(function (s, i) {
+      var idxs = []; SC.forEach(function (x, n) { if (x.step === i) idxs.push(n); });
+      var first = idxs[0], cur = i === curStep;
+      var allOk = idxs.every(function (n) { return n <= c.max && stepOk(n); });
+      var someBad = !cur && idxs.some(function (n) { return n <= c.max && c.checked && c.checked[n] && !stepOk(n); });
+      var done = !cur && allOk && SC[first].key !== 'review';
+      var ind = done ? ic('check') : someBad ? ic('alert') : String(i + 1);
+      var state = done ? ' (הושלם)' : someBad ? ' (חסרים פרטים)' : '';
+      var subs = s.subs.length < 2 ? '' : '<div class="st-fold"><ul class="st-subs">' + idxs.map(function (n) {
+        var isCur = n === c.step, ok = n !== c.step && n <= c.max && stepOk(n), bad = n !== c.step && n <= c.max && !ok && c.checked && c.checked[n];
+        return '<li><button type="button" class="st-sub' + (bad ? ' is-err' : '') + '" data-go="' + (n + 1) + '"' + (isCur ? ' aria-current="step"' : '') + (isCur || canGo(n) ? '' : ' disabled') + '><span>' + esc(SC[n].label) + '</span>' +
+          (ok ? ic('check').replace('aria-hidden="true"', 'role="img" aria-label="הושלם"') : bad ? ic('alert').replace('aria-hidden="true"', 'role="img" aria-label="חסרים פרטים"') : '') + '</button></li>';
+      }).join('') + '</ul></div>';
+      html += '<li class="st-step' + (cur ? ' is-current' : '') + (done ? ' is-done' : '') + (someBad ? ' is-err' : '') + '">' +
+        '<button type="button" class="st-row" data-go="' + (first + 1) + '"' + (cur || canGo(first) ? '' : ' disabled') + (cur && s.subs.length < 2 ? ' aria-current="step"' : '') + '><span class="st-ind">' + ind + '</span><span>' + esc(s.label) + '<span class="ex-sr">' + state + '</span></span></button>' + subs + '</li>';
+    });
+    $('exStepNav').innerHTML = html;
+  };
+  var renderMeta = function () {
+    var c = S.cur;
+    $('exSavedAt').textContent = c.draftId ? 'טיוטה ' + c.draftId + (c.savedAt ? ' · נשמרה ' + c.savedAt : '') : '';
+  };
+  var renderStep = function (opts) {
+    opts = opts || {};
+    var c = S.cur;
+    var s = SC[c.step], st = STEPS[s.step], review = s.key === 'review';
+    var active = document.activeElement, keep = active && active.id;
+    ensureEditors(s.key);
+    $('exStepTitle').textContent = s.label;
+    $('exNavToggleText').textContent = 'שלב ' + (s.step + 1) + ' מתוך ' + STEPS.length + ': ' + st.label;
+    $('exStepBody').innerHTML = RENDER[s.key]();
+    $('exPrev').hidden = !!c.ret || c.step === 0;
+    $('exNext').textContent = review ? 'שליחת הבקשה' : (c.ret ? 'שמירה וחזרה לבדיקה' : 'לשלב הבא');
+    renderNav(); renderMeta();
+    showErrors(validate(c.step));
+    if (opts.top) {
+      /* every screen opens at its top — the live form opened mid-page and people missed whole sections */
+      window.scrollTo(0, 0);
+      $('exStepTitle').focus({ preventScroll: true });
+    } else if (keep && $(keep)) { $(keep).focus({ preventScroll: true }); }
+  };
+  var markDirty = function () { S.cur.dirty = true; };
+
+  /* ── views ──────────────────────────────────────────────────────────────── */
+  var showView = function (v) {
+    document.querySelectorAll('[data-view]').forEach(function (el) { el.hidden = el.getAttribute('data-view') !== v; });
+    $('exDemoFill').hidden = v === 'done' || v === 'request' || v === 'gate';
+    document.title = { gate: 'מאגר המומחים – הגשת מועמדות', list: 'הבקשות שלי', wizard: 'הגשת מועמדות להיכלל ברשימת המומחים', done: 'הבקשה הוגשה בהצלחה', request: 'בקשה להיכלל ברשימת המומחים' }[v];
+  };
+  var statusTag = function (st) { var s = STATUS[st]; return '<span class="ex-tag ' + s.c + '">' + s.t + '</span>'; };
+  var renderList = function () {
+    $('exRoundEnd').textContent = fmtD(ROUND_END);
+    $('exReqCount').textContent = S.requests.length ? '(' + S.requests.length + ')' : '';
+    $('exReqRows').innerHTML = S.requests.map(function (r) {
+      return '<tr><td data-label="מספר בקשה" class="ex-num"><a class="ex-rowlink" href="#request/' + r.id + '">' + r.id + '</a></td>' +
+        '<td data-label="תאריך הגשה" class="ex-num">' + fmtD(r.at) + '</td><td data-label="תחום מומחיות ראשי">' + esc(r.main) + '</td>' +
+        '<td data-label="סטטוס">' + (r.status === 'docs' ? '<a class="ex-rowlink" href="#request/' + r.id + '" style="display:inline-flex;gap:6px;align-items:center">' + statusTag('docs') + '<span style="text-decoration:underline">להשלמת המסמכים</span></a>' : statusTag(r.status)) + '</td></tr>';
+    }).join('') || '<tr class="ex-noh"><td class="ex-empty" colspan="4">טרם הוגשו בקשות</td></tr>';
+    $('exDraftCount').textContent = S.drafts.length ? '(' + S.drafts.length + ')' : '';
+    $('exDraftRows').innerHTML = S.drafts.map(function (r) {
+      return '<tr><td data-label="מספר טיוטה" class="ex-num"><a class="ex-rowlink" href="#draft/' + r.id + '">' + r.id + '</a></td>' +
+        '<td data-label="תאריך שמירה אחרון" class="ex-num">' + fmtD(r.at) + ' ' + fmtT(r.at) + '</td><td data-label="תחום מומחיות ראשי">' + (esc(r.d.exp.main) || '<span style="color:var(--fg-3)">טרם נבחר</span>') + '</td>' +
+        '<td data-label="פעולות" class="ex-actcol"><span class="ex-acts"><a class="cvs-iconbtn" href="#draft/' + r.id + '" aria-label="המשך מילוי טיוטה ' + r.id + '" title="המשך מילוי">' + ic('pencil') + '</a>' +
+        '<button type="button" class="cvs-iconbtn" data-draft-del="' + r.id + '" aria-label="מחיקת טיוטה ' + r.id + '" title="מחיקה">' + ic('trash') + '</button></span></td></tr>';
+    }).join('') || '<tr class="ex-noh"><td class="ex-empty" colspan="4">אין טיוטות שמורות</td></tr>';
+  };
+  var renderDone = function (r) {
+    $('exDoneFacts').innerHTML = [['מספר בקשה', r.id], ['תאריך הגשה', fmtD(r.at)], ['שעת הגשה', fmtT(r.at)], ['תחום מומחיות', r.main]].map(function (x) {
+      return '<div><dt>' + x[0] + '</dt><dd>' + esc(x[1]) + '</dd></div>';
+    }).join('');
+  };
+  var renderReq = function (r) {
+    $('exReqTitle').textContent = $('exReqCrumb').textContent = 'בקשה ' + r.id;
+    $('exReqStrip').innerHTML = '<span class="ex-reqnum">בקשה ' + r.id + '</span><span class="ex-reqmeta"><span>הוגשה <b>' + fmtD(r.at) + '</b></span><span class="ex-sep"></span><span>תחום <b>' + esc(r.main) + '</b> · ' + esc(r.sub) + '</span><span class="ex-sep"></span><span>' + esc(ME.first + ' ' + ME.last) + '</span></span><span style="margin-inline-start:auto">' + statusTag(r.status) + '</span>';
+    var flagged = r.docs.filter(function (x) { return !x.ok; });
+    var N = $('exReqNotice');
+    if (r.status === 'docs') N.innerHTML = '<div class="dc-notice dc-notice-wait">' + ic('alert') + '<div><p><b>נדרשת השלמת מסמכים.</b> ' + flagged.length + ' מסמכים בבקשה אינם תקינים ונדרש להחליף אותם במסמכים אחרים.</p>' +
+      '<p>לצד כל מסמך שסומן יש ללחוץ על "צירוף מסמך" ולבחור את הקובץ החדש, ואז ללחוץ על "שליחה ליחידת המומחים". בסיום הפעולה תישלח הודעה אוטומטית ליחידת המומחים.</p></div></div>';
+    else if (r.sentAt) N.innerHTML = '<div class="dc-notice dc-notice-ok">' + ic('checkcircle') + '<p><b>המסמכים נשלחו ליחידת המומחים ב־' + r.sentAt + '.</b> הודעה אוטומטית נשלחה ליחידה, והבקשה חזרה לבדיקה.</p></div>';
+    else if (r.status === 'approved') N.innerHTML = '<div class="dc-notice dc-notice-ok">' + ic('checkcircle') + '<p><b>הבקשה אושרה.</b> שמך נכלל ברשימת המומחים בתחום ' + esc(r.main) + '.</p></div>';
+    else N.innerHTML = '<div class="dc-notice dc-notice-info">' + ic('info') + '<p>הבקשה התקבלה ונמצאת בבדיקה ביחידת המומחים. הודעות על הבקשה יישלחו לאזור האישי.</p></div>';
+    $('exReqDocs').innerHTML = r.docs.map(function (x, i) {
+      var st = x.ok ? '<span class="ex-tag ex-tag-ok">' + ic('check') + 'תקין</span>' : (x.newFile && r.status !== 'docs' ? '<span class="ex-tag ex-tag-prog">הוחלף, בבדיקה</span>' : '<span class="ex-tag ex-tag-wait">נדרשת החלפה</span>');
+      var act = '';
+      if (!x.ok && r.status === 'docs') act = x.newFile ? '<span class="ex-newfile">' + ic('filecheck') + '<span dir="auto">' + esc(x.newFile.name) + '</span></span> <button type="button" class="dc-linkbtn" data-req-attach="' + i + '">החלפה</button>' :
+        '<button type="button" class="cvs-btn" data-req-attach="' + i + '">' + ic('upload') + 'צירוף מסמך</button>';
+      else if (x.newFile) act = '<span class="ex-newfile">' + ic('filecheck') + '<span dir="auto">' + esc(x.newFile.name) + '</span></span>';
+      return '<tr' + (x.ok ? '' : ' style="background:#fffaf2"') + '><td data-label="קטגוריה">' + esc(x.cat) + '</td>' +
+        '<td data-label="מסמך"><span style="display:inline-flex;align-items:center;gap:6px">' + esc(x.name) + ' <button type="button" class="cvs-iconbtn" data-req-view="' + i + '" aria-label="צפייה ב' + esc(x.name) + '" title="צפייה במסמך המקורי">' + ic('eye') + '</button></span>' +
+        (x.why ? '<span style="display:block;font-size:13px;color:var(--ex-wait-fg);white-space:normal">' + esc(x.why) + '</span>' : '') + '</td>' +
+        '<td data-label="מצב">' + st + '</td><td data-label="מסמך חדש">' + (act || '<span style="color:var(--fg-3)">–</span>') + '</td></tr>';
+    }).join('');
+    $('exReqFoot').innerHTML = r.status === 'docs' ? '<p class="ex-err" id="exReqErr" hidden></p><button type="button" class="dc-btn dc-btn-primary" id="exReqSend">שליחה ליחידת המומחים</button>' : '';
+    $('exReqFoot').hidden = r.status !== 'docs';
+  };
+
+  var route = function () {
+    var h = location.hash.replace(/^#/, ''), p = h.split('/');
+    closeCal();
+    /* the whole service sits behind identification (site.js keeps who is signed in) */
+    if (window.NH && NH.user() === 'guest') { showView('gate'); window.scrollTo(0, 0); return; }
+    /* the wizard is what opens after signing in; the list comes after the confirmation */
+    if ((p[0] === 'wizard' || !h) && !S.cur) { startNew(); return; }
+    if (p[0] === 'wizard') {
+      showView('wizard');
+      var n = Math.min(Math.max((+p[1] || 1) - 1, 0), LAST);
+      if (n !== S.cur.step && !canGo(n)) { n = S.cur.step; history.replaceState(null, '', '#wizard/' + (n + 1)); }
+      S.cur.step = n; S.cur.max = Math.max(S.cur.max, n);
+      if (SC[n].key === 'review') S.cur.ret = false;
+      S.cur.consentOpen = null;
+      renderStep({ top: true });
+      if (S.cur.jumpBad) { S.cur.jumpBad = false; focusFirstBad(); }
+      return;
+    }
+    if (p[0] === 'draft') {
+      var dr = S.drafts.filter(function (x) { return x.id === p[1]; })[0];
+      if (dr) { S.cur = { draftId: dr.id, d: clone(dr.d), step: dr.step, max: dr.max, savedAt: fmtD(dr.at) + ' ' + fmtT(dr.at), dirty: false, edit: {}, checked: {} }; location.replace('#wizard/' + (dr.step + 1)); return; }
+    }
+    if (p[0] === 'done') {
+      var r = S.requests.filter(function (x) { return x.id === p[1]; })[0];
+      if (r) { showView('done'); renderDone(r); window.scrollTo(0, 0); $('exDoneTitle').focus({ preventScroll: true }); return; }
+    }
+    if (p[0] === 'request') {
+      var q = S.requests.filter(function (x) { return x.id === p[1]; })[0];
+      if (q) { showView('request'); renderReq(q); window.scrollTo(0, 0); $('exReqTitle').focus({ preventScroll: true }); S.req = q; return; }
+    }
+    showView('list'); renderList();
+    if (h && h !== 'list') history.replaceState(null, '', '#list');
+    window.scrollTo(0, 0);
+  };
+  window.addEventListener('hashchange', route);
+  document.addEventListener('nh:user', function () { route(); });
+  /* design.md 3.5: an action that needs identification opens the login menu, at the top */
+  $('exGateLogin').addEventListener('click', function (e) {
+    e.stopPropagation();
+    var m = document.querySelector('.nh-login');
+    if (m) { window.scrollTo(0, 0); m.open = true; var s = m.querySelector('summary'); if (s) s.focus(); }
+  });
+
+  /* ── toast ──────────────────────────────────────────────────────────────── */
+  var toastT;
+  var toast = function (msg) {
+    var t = $('exToast');
+    t.querySelector('span').textContent = msg;
+    t.classList.add('is-on'); document.body.classList.add('ex-toast-up');
+    clearTimeout(toastT);
+    var hide = function () { t.classList.remove('is-on'); document.body.classList.remove('ex-toast-up'); };
+    toastT = setTimeout(hide, 4000);
+    t.onmouseenter = function () { clearTimeout(toastT); };
+    t.onmouseleave = function () { toastT = setTimeout(hide, 2000); };
+  };
+
+  /* ── dialog ─────────────────────────────────────────────────────────────── */
+  var dlg = $('exDlg'), dlgOpener = null, dlgOnClose = null;
+  var openDlg = function (o) {
+    dlgOpener = document.activeElement;
+    dlg.classList.toggle('ex-dlg-sm', !!o.sm);
+    $('exDlgTitle').innerHTML = o.title;
+    $('exDlgSub').innerHTML = o.sub || ''; $('exDlgSub').hidden = !o.sub;
+    $('exDlgBody').innerHTML = o.body;
+    $('exDlgFoot').innerHTML = o.foot;
+    dlgOnClose = o.onClose || null;
+    dlg.showModal();
+    $('exDlgBody').scrollTop = 0;
+    var f = dlg.querySelector('[data-autofocus]') || dlg.querySelector('.ex-dlgfoot .dc-btn-primary');
+    if (f) f.focus();
+  };
+  var closeDlg = function () { if (dlg.open) dlg.close(); };
+  dlg.addEventListener('close', function () {
+    closeCal();
+    if (dlgOnClose) dlgOnClose();
+    if (dlgOpener && document.contains(dlgOpener)) dlgOpener.focus();
+  });
+  dlg.addEventListener('cancel', function (e) { if (calEl) { e.preventDefault(); closeCal(); } });
+  dlg.addEventListener('click', function (e) {
+    if (e.target.closest('[data-dlg-close]')) closeDlg();
+    else if (e.target === dlg) closeDlg();   /* a click on the backdrop */
+  });
+
+  /* the two consents open in the page, with their own approve button — the live
+     pop-up did not fit the screen and had only an × to close it */
+  var consentTitle = { crim: 'הסכמה למסירת מידע מהמרשם הפלילי', unions: 'הסכמה למסירת מידע מהאיגודים המקצועיים' };
+  var consentDraft = function (key) {
+    var c = S.cur, p = c.d.personal, saved = c.d.decl[key] && c.d.decl[key].f, b = parseD(p.birth);
+    c.cd = c.cd || {};
+    if (!c.cd[key]) c.cd[key] = saved ? clone(saved) : { first: p.first, last: p.last, prev: '', father: '', byear: b ? String(b.getFullYear()) : '', country: 'ישראל', aliya: '' };
+    return c.cd[key];
+  };
+  var consentBlock = function (key) {
+    var c = S.cur, done = c.d.decl[key], k = 'decl.' + key;
+    if (c.consentOpen !== key) {
+      return '<div class="dc-field" data-f="' + k + '"><button type="button" class="ex-consent" id="' + fid(k) + '" data-consent="' + key + '" aria-describedby="err_' + fid(k) + '">' + ic('filetext') +
+        '<span class="ex-consentmain"><span class="ex-consenttitle">' + consentTitle[key] + '</span><span class="ex-consentsub">' + (done ? 'אושר ב־' + done.at : 'יש לפתוח את הטופס, למלא ולאשר') + '</span></span>' +
+        (done ? '<span class="ex-tag ex-tag-ok">' + ic('check') + 'אושר</span>' : '<span class="ex-tag ex-tag-wait">טרם אושר</span>') + '</button>' + errSlot(k) + '</div>';
+    }
+    var d = consentDraft(key), p = c.d.personal, errs = c.cerr || {};
+    var t = function (n, label, o) {
+      o = o || {};
+      return '<div class="dc-field' + (errs[n] ? ' is-invalid' : '') + '"><label class="dc-label" for="cf_' + n + '">' + label + (o.opt ? ' <small>(אם יש)</small>' : '') + '</label>' +
+        '<input class="dc-input" id="cf_' + n + '" data-c="' + key + '|' + n + '" value="' + esc(d[n]) + '"' + (o.num ? ' inputmode="numeric" maxlength="4" dir="ltr"' : '') + '>' +
+        (errs[n] ? '<p class="ex-err">' + ic('alert') + '<span>' + esc(errs[n]) + '</span></p>' : '') + '</div>';
+    };
+    var name = esc((d.first + ' ' + d.last).trim() || '_____');
+    var body;
+    if (key === 'crim') {
+      body = '<p class="dc-fieldhint">ע"פ חוק המידע הפלילי ותקנת השבים, תשע"ט - 2019</p><div class="ex-consentgrid">' + t('first', 'שם פרטי') + t('last', 'שם משפחה') + t('prev', 'שם משפחה קודם', { opt: true }) + t('father', 'שם האב') +
+        fRO('מספר זהות', p.idno) + t('byear', 'שנת לידה', { num: true }) +
+        '<div class="dc-field' + (errs.country ? ' is-invalid' : '') + '"><label class="dc-label" for="cf_country">ארץ לידה</label>' + selectEl('cf_country', 'data-c="' + key + '|country"', d.country, COUNTRIES) + '</div>' +
+        t('aliya', 'שנת עלייה', { opt: true, num: true }) + '</div>' +
+        '<p>אני החתום/ה מטה <b class="cfName">' + name + '</b>, מס\' זהות <b>' + esc(p.idno) + '</b>, נותן/ת בזאת את הסכמתי לכך שמשטרת ישראל תמסור מידע עליי מהמרשם הפלילי, וכן מידע על תיקים תלויים ועומדים, בהתאם להוראות חוק המידע הפלילי ותקנת השבים, התשע"ט-2019, להנהלת בתי המשפט – יחידת המומחים, לצורך בחינת מועמדותי להיכלל ברשימת המומחים.</p>';
+    } else {
+      body = '<div class="ex-consentgrid">' + t('first', 'שם פרטי') + t('last', 'שם משפחה') + fRO('מספר זהות', p.idno) + '</div>' +
+        '<p>אני החתום/ה מטה <b class="cfName">' + name + '</b>, מס\' זהות <b>' + esc(p.idno) + '</b>, מסכים/ה בזאת כי האיגודים והגופים המקצועיים שאני חבר/ה בהם' + (c.d.exp.unionName ? ', ובהם ' + esc(c.d.exp.unionName) : '') +
+        ', וכן גופי הרישוי בתחום מומחיותי, ימסרו להנהלת בתי המשפט – יחידת המומחים מידע על הליכי משמעת, תלונות והחלטות בעניינִי, לצורך בחינת מועמדותי להיכלל ברשימת המומחים.</p>';
+    }
+    return '<div class="st-consent" data-f="' + k + '" id="' + fid(k) + '" tabindex="-1"><h3>' + consentTitle[key] + '</h3>' + body +
+      '<label class="ex-agree' + (errs.agree ? ' is-invalid' : '') + '"><input type="checkbox" id="cfAgree" data-cagree="' + key + '"' + (d.agree ? ' checked' : '') + '><span>קראתי את הנוסח ואני מאשר/ת את ההסכמה</span></label>' +
+      (errs.agree ? '<p class="ex-err">' + ic('alert') + '<span>' + esc(errs.agree) + '</span></p>' : '') +
+      '<div class="st-formbtns"><button type="button" class="dc-btn dc-btn-primary" data-consent-ok="' + key + '">' + ic('check') + 'אישור</button><button type="button" class="dc-linkbtn" data-consent-close>ביטול</button></div></div>';
+  };
+  var consentErrs = function (key) {
+    var d = consentDraft(key), errs = {};
+    var need = key === 'crim' ? [['first', 'יש למלא שם פרטי'], ['last', 'יש למלא שם משפחה'], ['father', 'יש למלא את שם האב'], ['byear', 'יש למלא שנת לידה'], ['country', 'יש לבחור ארץ לידה']] : [['first', 'יש למלא שם פרטי'], ['last', 'יש למלא שם משפחה']];
+    need.forEach(function (x) { if (!(d[x[0]] || '').trim()) errs[x[0]] = x[1]; });
+    if (key === 'crim') {
+      if (d.byear && !/^(19|20)\d{2}$/.test(d.byear)) errs.byear = 'שנת לידה לא תקינה, למשל 1972';
+      if (d.aliya && !/^(19|20)\d{2}$/.test(d.aliya)) errs.aliya = 'שנת עלייה לא תקינה';
+    }
+    return errs;
+  };
+  var approveConsent = function (key) {
+    var c = S.cur, d = consentDraft(key), errs = consentErrs(key);
+    if (!d.agree) errs.agree = 'יש לסמן שקראת את הנוסח ושהינך מאשר/ת אותו';
+    c.cerr = errs;
+    if (Object.keys(errs).length) {
+      renderStep();
+      var bad = Object.keys(errs)[0], el = bad === 'agree' ? $('cfAgree') : $('cf_' + bad);
+      if (el) el.focus();
+      return;
+    }
+    var now = new Date();
+    c.d.decl[key] = { at: fmtD(now) + ' ' + fmtT(now), f: clone(d) };
+    c.consentOpen = null; c.cerr = null; markDirty();
+    renderStep(); recheck(); toast('ההסכמה אושרה');
+    var b = $(fid('decl.' + key)); if (b) b.focus();
+  };
+
+  /* ── calendar ───────────────────────────────────────────────────────────── */
+  var calEl = null, calWrap = null, calView = null;
+  var closeCal = function () { if (calEl) { calEl.remove(); calEl = null; calWrap = null; } };
+  var drawCal = function () {
+    var y = calView.y, m = calView.m, years = +calWrap.getAttribute('data-years') || 40;
+    var maxY = TODAY.getFullYear(), minY = maxY - years;
+    var input = calWrap.querySelector('input'), sel = parseD(input.value);
+    var first = new Date(y, m, 1), startDow = first.getDay(), nDays = new Date(y, m + 1, 0).getDate();
+    var cells = '';
+    ['א\'', 'ב\'', 'ג\'', 'ד\'', 'ה\'', 'ו\'', 'ש\''].forEach(function (d) { cells += '<span aria-hidden="true">' + d + '</span>'; });
+    for (var i = 0; i < startDow; i++) cells += '<span></span>';
+    for (var dd = 1; dd <= nDays; dd++) {
+      var dt = new Date(y, m, dd), dis = dt > TODAY || y < minY;
+      var on = sel && sel.getTime() === dt.getTime(), today = dt.getTime() === TODAY.getTime();
+      cells += '<button type="button" data-day="' + dd + '"' + (on ? ' aria-pressed="true"' : '') + (today ? ' class="is-today"' : '') + (dis ? ' disabled' : '') + ' aria-label="' + dd + ' ב' + MONTHS[m] + ' ' + y + '">' + dd + '</button>';
+    }
+    var yOpts = ''; for (var yy = maxY; yy >= minY; yy--) yOpts += '<option' + (yy === y ? ' selected' : '') + '>' + yy + '</option>';
+    calEl.innerHTML = '<div class="ex-cal-head">' +
+      '<button type="button" class="cvs-iconbtn" data-cal-step="-1" aria-label="החודש הקודם">' + ic('chevright') + '</button>' +
+      '<div class="dc-selwrap"><select class="dc-select" data-cal-m aria-label="חודש">' + MONTHS.map(function (n, i) { return '<option value="' + i + '"' + (i === m ? ' selected' : '') + '>' + n + '</option>'; }).join('') + '</select><span class="dc-selchev">' + ic('chevdown') + '</span></div>' +
+      '<div class="dc-selwrap"><select class="dc-select" data-cal-y aria-label="שנה">' + yOpts + '</select><span class="dc-selchev">' + ic('chevdown') + '</span></div>' +
+      '<button type="button" class="cvs-iconbtn" data-cal-step="1" aria-label="החודש הבא">' + ic('chevleft') + '</button></div>' +
+      '<div class="ex-cal-grid">' + cells + '</div>' +
+      '<div class="ex-cal-foot"><button type="button" class="dc-linkbtn" data-cal-today>היום</button><button type="button" class="dc-linkbtn" data-cal-clear>ניקוי</button></div>';
+  };
+  var openCal = function (wrap) {
+    closeCal();
+    calWrap = wrap;
+    var input = wrap.querySelector('input'), d = parseD(input.value) || TODAY;
+    calView = { y: d.getFullYear(), m: d.getMonth() };
+    calEl = document.createElement('div');
+    calEl.className = 'ex-cal'; calEl.setAttribute('role', 'dialog'); calEl.setAttribute('aria-label', 'בחירת תאריך');
+    wrap.appendChild(calEl);
+    drawCal();
+    var f = calEl.querySelector('[aria-pressed="true"]') || calEl.querySelector('[data-cal-y]');
+    f.focus();
+  };
+  var setDate = function (str) {
+    var input = calWrap.querySelector('input');
+    input.value = str;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    var w = calWrap; closeCal(); var i2 = w.querySelector('input'); if (i2) i2.focus();
+  };
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (calEl && calEl.contains(t)) {
+      e.preventDefault();
+      var day = t.closest('[data-day]'), st = t.closest('[data-cal-step]');
+      if (day && !day.disabled) setDate(pad(+day.getAttribute('data-day')) + '/' + pad(calView.m + 1) + '/' + calView.y);
+      else if (st) {
+        var nm = calView.m + +st.getAttribute('data-cal-step'), ny = calView.y;
+        if (nm < 0) { nm = 11; ny--; } if (nm > 11) { nm = 0; ny++; }
+        var years = +calWrap.getAttribute('data-years') || 40;
+        if (ny > TODAY.getFullYear() || ny < TODAY.getFullYear() - years) return;
+        calView.m = nm; calView.y = ny; drawCal();
+        calEl.querySelector('[data-cal-step="' + st.getAttribute('data-cal-step') + '"]').focus();
+      } else if (t.closest('[data-cal-today]')) setDate(fmtD(TODAY));
+      else if (t.closest('[data-cal-clear]')) setDate('');
+      return;
+    }
+    var calBtn = t.closest('[data-cal]');
+    if (calBtn) { var w = calBtn.closest('.ex-date'); if (calWrap === w) closeCal(); else openCal(w); return; }
+    if (calEl) closeCal();
+  });
+  document.addEventListener('change', function (e) {
+    if (!calEl || !calEl.contains(e.target)) return;
+    if (e.target.hasAttribute('data-cal-m')) calView.m = +e.target.value;
+    if (e.target.hasAttribute('data-cal-y')) calView.y = +e.target.value;
+    var which = e.target.hasAttribute('data-cal-m') ? '[data-cal-m]' : '[data-cal-y]';
+    drawCal(); calEl.querySelector(which).focus();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && calEl) { var w = calWrap; closeCal(); w.querySelector('button[data-cal]').focus(); e.stopPropagation(); }
+  }, true);
+  /* a typed date is tidied on leaving the field: 3/7/1980 → 03/07/1980 */
+  document.addEventListener('focusout', function (e) {
+    var i = e.target;
+    if (!i.closest || !i.closest('.ex-datebox') || i.tagName !== 'INPUT') return;
+    var d = parseD(i.value);
+    if (d && fmtD(d) !== i.value) { i.value = fmtD(d); i.dispatchEvent(new Event('input', { bubbles: true })); }
+  });
+
+  /* ── wizard events ──────────────────────────────────────────────────────── */
+  var body = $('exStepBody');
+  var onField = function (e) {
+    var el = e.target;
+    if (!S.cur) return;
+    if (el.hasAttribute('data-c')) {
+      var cp = el.getAttribute('data-c').split('|'); consentDraft(cp[0])[cp[1]] = el.value; markDirty();
+      var cw = el.closest('.dc-field'); if (cw.classList.contains('is-invalid') && !consentErrs(cp[0])[cp[1]]) setCellErr(cw, null);
+      var nm = el.closest('.st-consent').querySelector('.cfName');
+      if (nm) nm.textContent = (consentDraft(cp[0]).first + ' ' + consentDraft(cp[0]).last).trim() || '_____';
+    } else if (el.hasAttribute('data-cagree')) {
+      consentDraft(el.getAttribute('data-cagree')).agree = el.checked; markDirty();
+    } else if (el.hasAttribute('data-confirm')) {
+      S.cur.d.confirm = el.checked; markDirty(); recheck();
+    } else if (el.hasAttribute('data-k')) {
+      var k = el.getAttribute('data-k');
+      if (el.type === 'radio' && !el.checked) return;
+      setv(k, el.value);
+      if (el.classList.contains('dc-select')) el.classList.toggle('is-ph', !el.value);
+      if (k === 'exp.main' && e.type === 'change') setv('exp.sub', '');
+      markDirty();
+      if (e.type === 'change' && el.hasAttribute('data-rerender')) { renderStep(); return; }
+      recheck();
+    } else if (el.hasAttribute('data-kl')) {
+      var kl = el.getAttribute('data-kl'), list = getv(kl).slice();
+      var at = list.indexOf(el.value);
+      if (el.checked && at < 0) list.push(el.value); else if (!el.checked && at > -1) list.splice(at, 1);
+      setv(kl, list); markDirty(); recheck();
+    } else if (el.hasAttribute('data-rk')) {
+      var p = el.getAttribute('data-rk').split('|'), ed = S.cur.edit[p[0]];
+      if (!ed) return;
+      ed.row[p[1]] = el.type === 'checkbox' ? el.checked : el.value;
+      var rw = el.closest('.dc-field'); if (rw && rw.classList.contains('is-invalid') && !validateRow(p[0], ed.row)[p[1]]) { delete ed.errs[p[1]]; setCellErr(rw, null); }
+      if (el.classList.contains('dc-select')) el.classList.toggle('is-ph', !el.value);
+      markDirty();
+      if (e.type === 'change' && el.hasAttribute('data-rerender')) renderStep();
+    }
+  };
+  body.addEventListener('input', onField);
+  body.addEventListener('change', onField);
+
+  body.addEventListener('click', function (e) {
+    var t = e.target, b;
+    if ((b = t.closest('[data-row-add]'))) { openEdit(b.getAttribute('data-row-add'), -1); renderStep(); focusEditor(b.getAttribute('data-row-add')); return; }
+    if ((b = t.closest('[data-row-edit]'))) { var k = b.getAttribute('data-row-edit'); openEdit(k, +b.getAttribute('data-i')); renderStep(); focusEditor(k); return; }
+    if ((b = t.closest('[data-row-del]'))) {
+      var kd = b.getAttribute('data-row-del'), i = +b.getAttribute('data-i'), l = getv(kd).slice();
+      l.splice(i, 1); setv(kd, l);
+      var ed = S.cur.edit[kd]; if (ed && ed.idx === i) S.cur.edit[kd] = null; else if (ed && ed.idx > i) ed.idx--;
+      if (kd === 'exp.edu') { reindexEduDocs(i); }
+      markDirty(); renderStep(); recheck(); toast('השורה נמחקה'); return;
+    }
+    if ((b = t.closest('[data-row-cancel]'))) {
+      var kc = b.getAttribute('data-row-cancel'); S.cur.edit[kc] = null;
+      renderStep(); recheck();
+      var add = body.querySelector('[data-row-add="' + kc + '"]'); if (add) add.focus();
+      return;
+    }
+    if ((b = t.closest('[data-row-save]'))) {
+      var ks = b.getAttribute('data-row-save'), e2 = S.cur.edit[ks];
+      e2.errs = validateRow(ks, e2.row);
+      if (Object.keys(e2.errs).length) {
+        renderStep();
+        var firstBad = ROWS[ks].cols.filter(function (c) { return e2.errs[c.k]; })[0];
+        var fe = $(fid(ks + '|' + firstBad.k)); if (fe) fe.focus();
+        return;
+      }
+      var lst = getv(ks).slice(), row = clone(e2.row);
+      if (row.now) row.to = '';
+      if (e2.idx >= 0) lst[e2.idx] = row; else lst.push(row);
+      setv(ks, lst); S.cur.edit[ks] = null; markDirty();
+      renderStep(); recheck();
+      toast('הפרטים נשמרו');
+      var ad = body.querySelector('[data-row-add="' + ks + '"]'); if (ad) ad.focus();
+      return;
+    }
+    if ((b = t.closest('[data-pop]'))) {
+      var pop = $('pop_' + b.getAttribute('data-pop')), open = pop.hidden;
+      body.querySelectorAll('.dc-pop').forEach(function (x) { x.hidden = true; });
+      body.querySelectorAll('[data-pop]').forEach(function (x) { x.setAttribute('aria-expanded', 'false'); });
+      pop.hidden = !open; b.setAttribute('aria-expanded', open);
+      return;
+    }
+    if ((b = t.closest('[data-doc]'))) { pickFile(function (f) { attachDoc(b.getAttribute('data-doc'), f); }); return; }
+    if ((b = t.closest('[data-doc-del]'))) { var dk = b.getAttribute('data-doc-del'); delete S.cur.d.docs[dk]; markDirty(); renderStep(); recheck(); toast('הקובץ הוסר'); return; }
+    if ((b = t.closest('[data-doc-view]'))) { viewFile(S.cur.d.docs[b.getAttribute('data-doc-view')]); return; }
+    if ((b = t.closest('[data-consent]'))) { S.cur.consentOpen = b.getAttribute('data-consent'); S.cur.cerr = null; renderStep(); var cf = $('cf_first'); if (cf) cf.focus(); return; }
+    if ((b = t.closest('[data-consent-ok]'))) { approveConsent(b.getAttribute('data-consent-ok')); return; }
+    if ((b = t.closest('[data-consent-close]'))) { var was = S.cur.consentOpen; S.cur.consentOpen = null; S.cur.cerr = null; renderStep(); var cb = $(fid('decl.' + was)); if (cb) cb.focus(); return; }
+    if (t.closest('[data-ret]')) { S.cur.ret = true; return; }
+  });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('[data-pop]') && !e.target.closest('.dc-pop')) {
+      document.querySelectorAll('.dc-pop').forEach(function (x) { x.hidden = true; });
+      document.querySelectorAll('[data-pop]').forEach(function (x) { x.setAttribute('aria-expanded', 'false'); });
+    }
+  });
+  var focusEditor = function (k) {
+    var c = ROWS[k].cols[0], el = $(fid(k + '|' + c.k));
+    if (el) el.focus();
+  };
+  var reindexEduDocs = function (removed) {
+    var docs = S.cur.d.docs, out = {};
+    Object.keys(docs).forEach(function (k) {
+      var m = /^edu(\d+)$/.exec(k);
+      if (!m) { out[k] = docs[k]; return; }
+      var n = +m[1];
+      if (n < removed) out[k] = docs[k]; else if (n > removed) out['edu' + (n - 1)] = docs[k];
+    });
+    S.cur.d.docs = out;
+  };
+
+  /* files: PDF only, checked on the way in */
+  var MAX = 10 * 1048576;
+  var fileCb = null;
+  var pickFile = function (cb) { fileCb = cb; $('exFile').value = ''; $('exFile').click(); };
+  $('exFile').addEventListener('change', function () { var f = this.files[0]; if (f && fileCb) fileCb(f); fileCb = null; });
+  var isPdf = function (f) { return f.type === 'application/pdf' || /\.pdf$/i.test(f.name); };
+  var blobs = {};
+  var attachDoc = function (id, f) {
+    S.cur.bad = S.cur.bad || {};
+    if (!isPdf(f)) { S.cur.bad[id] = 'הקובץ ' + f.name + ' אינו בפורמט PDF. ניתן להעלות קבצי PDF בלבד'; delete S.cur.d.docs[id]; renderStep(); return; }
+    if (f.size > MAX) { S.cur.bad[id] = 'הקובץ גדול מ־10MB. יש לצמצם את הקובץ ולנסות שוב'; renderStep(); return; }
+    delete S.cur.bad[id];
+    var key = 'b' + Date.now() + Math.random();
+    blobs[key] = URL.createObjectURL(f);
+    S.cur.d.docs[id] = { name: f.name, size: f.size, blob: key };
+    markDirty(); renderStep(); recheck();
+    toast('הקובץ צורף');
+  };
+  var viewFile = function (f) {
+    if (f && f.blob && blobs[f.blob]) window.open(blobs[f.blob], '_blank', 'noopener');
+    else toast('צפייה בקובץ לדוגמה אינה זמינה באב־הטיפוס');
+  };
+  /* drag a PDF onto an empty slot */
+  body.addEventListener('dragover', function (e) { var t = e.target.closest('button.ex-tile'); if (t) { e.preventDefault(); t.classList.add('is-drag'); } });
+  body.addEventListener('dragleave', function (e) { var t = e.target.closest('button.ex-tile'); if (t) t.classList.remove('is-drag'); });
+  body.addEventListener('drop', function (e) {
+    var t = e.target.closest('button.ex-tile'); if (!t) return;
+    e.preventDefault(); t.classList.remove('is-drag');
+    var f = e.dataTransfer.files[0]; if (f) attachDoc(t.getAttribute('data-doc'), f);
+  });
+
+  /* leaving a field checks it. Documents and consents wait for "לשלב הבא":
+     passing over them is not a mistake. */
+  body.addEventListener('focusout', function (e) {
+    var t = e.target, c = S.cur, rel = e.relatedTarget;
+    if (!c || document.activeElement === t) return;   /* the window lost focus, not the field */
+    var cell = t.closest('.dc-field');
+    if (t.hasAttribute('data-rk')) {
+      var rp = t.getAttribute('data-rk').split('|'), ed = c.edit[rp[0]];
+      if (!ed || rp[1] === 'now' || (rel && cell.contains(rel))) return;
+      ed.errs = validateRow(rp[0], ed.row);
+      setCellErr(cell, ed.errs[rp[1]]);
+      return;
+    }
+    if (t.hasAttribute('data-c')) {
+      var cp = t.getAttribute('data-c').split('|');
+      c.cerr = consentErrs(cp[0]);
+      setCellErr(cell, c.cerr[cp[1]]);
+      return;
+    }
+    var w = t.closest('[data-f]'), k = w && w.getAttribute('data-f');
+    if (!k || /^docs\.|^decl\.(crim|unions)$|^confirm$/.test(k) || (rel && w.contains(rel))) return;
+    c.touched = c.touched || {}; c.touched[k] = true;
+    recheck();
+  });
+  /* the message a blur adds moves the buttons below it; keep the focus put on
+     press, so the click still lands on the button it started on */
+  document.addEventListener('mousedown', function (e) {
+    if (e.target.closest('.st-acts button, .st-row, .st-sub, [data-row-save], [data-row-add], [data-row-cancel], [data-row-edit], [data-row-del], [data-consent-ok], [data-consent-close]')) e.preventDefault();
+  });
+
+  $('exStepNav').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-go]'); if (!b || b.disabled) return;
+    S.cur.ret = false;
+    $('exNav').classList.add('is-closed'); $('exNavToggle').setAttribute('aria-expanded', 'false');
+    var to = '#wizard/' + b.getAttribute('data-go');
+    if (location.hash === to) renderStep({ top: true }); else location.hash = to;
+  });
+  $('exNavToggle').addEventListener('click', function () {
+    var closed = $('exNav').classList.toggle('is-closed');
+    this.setAttribute('aria-expanded', String(!closed));
+  });
+  var goBad = function (j) {
+    S.cur.checked[j] = true; S.cur.jumpBad = true;
+    location.hash = '#wizard/' + (j + 1);
+  };
+
+  $('exForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var c = S.cur;
+    c.checked = c.checked || {}; c.checked[c.step] = true;
+    var E = validate(c.step);
+    if (E.length) { showErrors(E); renderNav(); focusFirstBad(); return; }
+    /* a resumed draft or a changed answer can leave a gap earlier on */
+    var gap = firstBad(c.step);
+    if (gap >= 0) { goBad(gap); return; }
+    if (c.step === LAST) { submit(); return; }
+    saveDraft(true);
+    if (c.ret) { var g2 = firstBad(LAST); if (g2 >= 0) { goBad(g2); return; } }
+    location.hash = '#wizard/' + ((c.ret ? LAST : c.step + 1) + 1);
+  });
+  var submit = function () {
+    var c = S.cur, now = new Date();
+    var r = { id: String(S.nextReq++), at: now, main: c.d.exp.main, sub: c.d.exp.sub, status: 'received', docs: [] };
+    var d = c.d.docs, add = function (cat, name, k) { if (d[k]) r.docs.push({ cat: cat, name: name, file: d[k].name, ok: true }); };
+    add('כללי', 'צילום תעודת זהות', 'id'); add('כללי', 'אישור ניהול חשבון בנק / המחאה', 'bank');
+    c.d.exp.edu.forEach(function (x, i) { add('תעודות השכלה', 'תעודת השכלה ' + (i + 1), 'edu' + i); });
+    [1, 2, 3, 4, 5].forEach(function (n) { add('חוות דעת', 'חוות דעת ' + n, 'op' + n); });
+    S.requests.unshift(r);
+    if (c.draftId) S.drafts = S.drafts.filter(function (x) { return x.id !== c.draftId; });
+    S.cur = null;
+    location.hash = '#done/' + r.id;
+  };
+
+  $('exPrev').addEventListener('click', function () { if (S.cur.step > 0) location.hash = '#wizard/' + S.cur.step; });
+
+  /* "לשלב הבא" keeps the draft too, so "שמירה ויציאה" is true at any moment */
+  var saveDraft = function (quiet) {
+    var c = S.cur, now = new Date();
+    if (!c.draftId) c.draftId = String(S.nextDraft++);
+    var rec = { id: c.draftId, at: now, step: c.step, max: c.max, d: clone(c.d) };
+    var at = -1; S.drafts.forEach(function (x, i) { if (x.id === c.draftId) at = i; });
+    if (at > -1) S.drafts[at] = rec; else S.drafts.unshift(rec);
+    c.dirty = false; c.savedAt = fmtD(now) + ' ' + fmtT(now);
+    if (!quiet) toast('הטיוטה נשמרה (טיוטה ' + c.draftId + ')');
+  };
+  $('exSave').addEventListener('click', function () { saveDraft(); S.cur = null; location.hash = '#list'; });
+  window.addEventListener('beforeunload', function (e) { if (S.cur && S.cur.dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+  /* ── list events ────────────────────────────────────────────────────────── */
+  var startNew = function () {
+    S.cur = { draftId: null, d: emptyData(), step: 0, max: 0, dirty: false, edit: {}, checked: {} };
+    S.cur.d.personal.first = ME.first; S.cur.d.personal.last = ME.last;
+    if (location.hash === '#wizard/1') route(); else location.hash = '#wizard/1';
+  };
+  $('exNew').addEventListener('click', startNew);
+  $('exFieldsLink').addEventListener('click', function () {
+    openDlg({
+      title: 'רשימת התחומים בפעימה הנוכחית', sub: 'ניתן להגיש מועמדות עד ' + fmtD(ROUND_END),
+      body: '<ul class="ex-fieldslist">' + FIELDS.map(function (f) { return '<li><b>' + f.v + '</b><br><span>' + f.subs.join(' · ') + '</span></li>'; }).join('') + '</ul>' +
+        '',
+      foot: '<button type="button" class="dc-btn dc-btn-primary" data-dlg-close>סגירה</button>'
+    });
+  });
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-go]'); if (b) { location.hash = '#' + b.getAttribute('data-go'); return; }
+    b = e.target.closest('[data-draft-del]');
+    if (b) {
+      var id = b.getAttribute('data-draft-del');
+      openDlg({
+        sm: true, title: 'מחיקת טיוטה ' + id,
+        body: '<p style="margin:0">הטיוטה וכל הפרטים שמולאו בה יימחקו, ולא ניתן יהיה לשחזר אותם.</p>',
+        foot: '<button type="button" class="dc-btn dc-btn-ghost" data-dlg-close>ביטול</button><button type="button" class="dc-btn dc-btn-primary" id="exDelYes">' + ic('trash') + 'מחיקת הטיוטה</button>'
+      });
+      $('exDelYes').onclick = function () {
+        S.drafts = S.drafts.filter(function (x) { return x.id !== id; });
+        dlgOpener = null; closeDlg(); renderList(); toast('טיוטה ' + id + ' נמחקה');
+        $('exListTitle').focus();
+      };
+    }
+  });
+
+  /* ── a submitted request: replace the flagged documents ─────────────────── */
+  $('exViewReq').addEventListener('click', function (e) {
+    var r = S.req, b;
+    if (!r) return;
+    if ((b = e.target.closest('[data-req-attach]'))) {
+      var i = +b.getAttribute('data-req-attach');
+      pickFile(function (f) {
+        if (!isPdf(f)) { toast('ניתן לצרף קבצי PDF בלבד'); return; }
+        r.docs[i].newFile = { name: f.name, size: f.size };
+        renderReq(r); toast('המסמך צורף');
+        var nb = document.querySelector('[data-req-attach="' + i + '"]'); if (nb) nb.focus();
+      });
+      return;
+    }
+    if (e.target.closest('[data-req-view]')) { toast('צפייה במסמך המקורי אינה זמינה באב־הטיפוס'); return; }
+    if (e.target.closest('#exReqSend')) {
+      var miss = r.docs.filter(function (x) { return !x.ok && !x.newFile; });
+      var p = $('exReqErr');
+      if (miss.length) { p.innerHTML = ic('alert') + '<span>יש לצרף מסמך חדש במקום: ' + miss.map(function (x) { return x.name; }).join(', ') + '</span>'; p.hidden = false; return; }
+      var now = new Date();
+      r.status = 'review'; r.sentAt = fmtD(now) + ' ' + fmtT(now);
+      renderReq(r); window.scrollTo(0, 0);
+      toast('המסמכים נשלחו ליחידת המומחים');
+    }
+  });
+
+  /* ── prototype controls ─────────────────────────────────────────────────── */
+  var fakeFile = function (n) { return { name: n, size: 180000 + Math.round(Math.random() * 900000) }; };
+  $('exDemoFill').addEventListener('click', function () {
+    if (!S.cur) { startNew(); }
+    var d = S.cur.d;
+    d.personal = { title: 'עו"ד', last: 'כהן', first: 'ישראל', gender: 'זכר', idno: ME.idno, birth: '14/03/1972', mobile: '050-1234567', email: 'israel.cohen@example.com', city: 'ירושלים', street: 'יפו', house: '97', zip: '9434008',
+      langs: [{ lang: 'עברית', speak: 'שפת אם', read: 'שפת אם', write: 'שפת אם' }, { lang: 'אנגלית', speak: 'טובה מאוד', read: 'טובה מאוד', write: 'טובה' }] };
+    d.work = { jobs: [{ org: 'כהן אדריכלים בע"מ', role: 'אדריכל ראשי ובעלים', from: '01/09/2004', to: '', now: true }, { org: 'עיריית ירושלים, אגף תכנון', role: 'אדריכל', from: '01/10/1998', to: '31/08/2004' }], years: '26', districts: ['ירושלים', 'מרכז'] };
+    d.bank = { owner: 'ישראל כהן', bank: 'בנק לאומי (10)', branch: '902', account: '12345678' };
+    d.exp = { main: 'אדריכלות', sub: 'אדריכלות ובינוי ערים', edu: [{ inst: 'הטכניון – מכון טכנולוגי לישראל', country: 'ישראל', type: 'תואר ראשון', degree: 'בוגר באדריכלות (B.Arch)', start: '01/10/1992', end: '30/06/1997' }], union: 'yes', unionName: 'איגוד האדריכלים ומתכנני ערים בישראל' };
+    d.rel = { has: 'no', rows: [] };
+    d.docs = { id: fakeFile('teudat-zehut.pdf'), bank: fakeFile('ishur-nihul-cheshbon.pdf'), edu0: fakeFile('teudat-boger-technion.pdf'),
+      op1: fakeFile('chavat-daat-1.pdf'), op2: fakeFile('chavat-daat-2.pdf'), op3: fakeFile('chavat-daat-3.pdf'), op4: fakeFile('chavat-daat-4.pdf'), op5: fakeFile('chavat-daat-5.pdf') };
+    var now = fmtD(new Date()) + ' ' + fmtT(new Date());
+    d.decl = { conflict: 'ok', convict: 'ok', discipline: 'ok', conflictWhy: '', convictWhy: '', disciplineWhy: '',
+      crim: { at: now, f: { first: 'ישראל', last: 'כהן', prev: '', father: 'משה', byear: '1972', country: 'ישראל', aliya: '' } }, unions: { at: now, f: { first: 'ישראל', last: 'כהן' } } };
+    S.cur.edit = {}; S.cur.max = LAST; S.cur.bad = {};
+    markDirty(); renderStep(); toast('הנתונים לדוגמה מולאו בכל השלבים');
+  });
+
+  hydrate(document);
+  route();
+})();
+
+/* ── mobile drawer (≤860): the rail slides in from the right ── */
+(function () {
+  var open = function (on) {
+    document.body.classList.toggle('md-drawer-open', on);
+    var b = document.getElementById('mdBurger'); if (b) b.setAttribute('aria-expanded', on);
+  };
+  var b = document.getElementById('mdBurger');
+  if (b) b.addEventListener('click', function () { open(true); });
+  var x = document.getElementById('mdDrawerClose');
+  if (x) x.addEventListener('click', function () { open(false); });
+  document.getElementById('mdBackdrop').addEventListener('click', function () { open(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') open(false); });
+})();
+</script>
+</body>
+</html>
