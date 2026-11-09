@@ -16,8 +16,6 @@
     scale: ic('<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>'),
     alert: ic('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>'),
     copy: ic('<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>'),
-    up: ic('<path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/>'),
-    down: ic('<path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/>'),
     msg: ic('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>')
   };
   var reduce = function () { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; };
@@ -28,9 +26,24 @@
   var dateKey = function (d) { var p = d.split('.'); return p[2] + p[1] + p[0]; };
 
   var S = {
-    view: 'welcome', query: '', results: [], sel: [], filter: { branch: '', court: '', status: '', sort: 'rel' },
+    view: 'welcome', query: '', results: [], sel: [], filter: { branch: '', court: '', status: '' },
+    sort: { key: '', dir: 'asc' }, page: 1, cols: null,
     layout: null, chat: [], on: [], turns: 0, busy: false, failNext: location.hash === '#error', doc: null
   };
+  var PAGE = 20;
+
+  /* the table's columns: each knows how to sort and how to draw its cell */
+  var COLS = {
+    num: { label: 'מספר תיק', sort: function (c) { return c.num; }, cell: function (c) { return '<span class="pc-numtxt pc-num">' + c.num + '</span>'; } },
+    name: { label: 'שם התיק', sort: function (c) { return title(c); }, cell: function (c) { return esc(title(c)); }, cls: 'pc-tname' },
+    court: { label: 'בית משפט', sort: function (c) { return shortCourt(c); }, cell: function (c) { return esc(shortCourt(c)); } },
+    branch: { label: 'ענף', sort: function (c) { return c.branch; }, cell: function (c) { return esc(c.branch); } },
+    filed: { label: 'הוגשה', sort: function (c) { return dateKey(c.filed); }, cell: function (c) { return '<span class="pc-num">' + c.filed + '</span>'; } },
+    status: { label: 'סטטוס', sort: function (c) { return c.open ? 0 : 1; }, cell: status },
+    cause: { label: 'עילה', sort: function (c) { return c.cause; }, cell: function (c) { var t = c.cause + '. ' + c.sum; return '<span class="pc-clamp" title="' + esc(t) + '"><b>' + esc(c.cause) + '.</b> ' + esc(c.sum) + '</span>'; }, cls: 'pc-tcause' }
+  };
+  var ORDER = ['num', 'name', 'court', 'branch', 'filed', 'status', 'cause'];
+  S.cols = ORDER.slice();
 
   /* ── search: always the 20 cases of the registry, most relevant first ── */
   function rank(q) {
@@ -45,15 +58,18 @@
     var list = S.results.map(byId).filter(function (c) {
       return (!f.branch || c.branch === f.branch) && (!f.court || shortCourt(c) === f.court) && (!f.status || (f.status === 'open') === c.open);
     });
-    if (f.sort !== 'rel') list.sort(function (a, b) { var r = dateKey(a.filed).localeCompare(dateKey(b.filed)); return f.sort === 'old' ? r : -r; });
+    if (S.sort.key) {
+      var get = COLS[S.sort.key].sort, dir = S.sort.dir === 'desc' ? -1 : 1;
+      list.sort(function (a, b) { var x = get(a), y = get(b); return (x < y ? -1 : x > y ? 1 : 0) * dir; });
+    }
     return list;
   }
+  function filterCount() { var f = S.filter; return (f.branch ? 1 : 0) + (f.court ? 1 : 0) + (f.status ? 1 : 0); }
 
   function search(q) {
-    S.query = q; S.results = rank(q); S.sel = [];
-    S.filter = { branch: '', court: '', status: '', sort: 'rel' };
-    ['pcFBranch', 'pcFCourt', 'pcFStatus'].forEach(function (id) { $(id).value = ''; });
-    $('pcFSort').value = 'rel';
+    S.query = q; S.results = rank(q); S.sel = []; S.page = 1;
+    S.filter = { branch: '', court: '', status: '' }; S.sort = { key: '', dir: 'asc' }; S.cols = ORDER.slice();
+    ['pcFBranch', 'pcFCourt', 'pcFStatus', 'pcFSort'].forEach(function (id) { $(id).value = ''; });
     S.chat = []; S.on = []; S.turns = 0; $('pcThread').innerHTML = ''; closeDoc();
   }
   function runSearch(q) {
@@ -88,24 +104,32 @@
   function pick(c, label) {
     return '<label class="pc-pick" title="בחירת התיק לשיחה"><input type="checkbox" data-pick="' + c.id + '"' + (picked(c) ? ' checked' : '') + ' aria-label="בחירת ' + esc(label || ('ת"צ ' + c.num)) + '"></label>';
   }
+  var sortIc = {
+    none: ic('<path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/>'),
+    asc: ic('<path d="m7 9 5-5 5 5"/><path d="M12 4v16"/>'),
+    desc: ic('<path d="m7 15 5 5 5-5"/><path d="M12 20V4"/>')
+  };
+  var grip = ic('<circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/>');
+  function headCell(k) {
+    var on = S.sort.key === k, dir = on ? S.sort.dir : 'none';
+    var aria = on ? (dir === 'asc' ? 'ascending' : 'descending') : 'none';
+    return '<th scope="col" draggable="true" data-col="' + k + '" aria-sort="' + aria + '"><div class="pc-th">' +
+      '<span class="pc-grip" aria-hidden="true" title="גרירה לשינוי סדר העמודות">' + grip + '</span>' +
+      '<button type="button" class="pc-sortbtn' + (on ? ' is-on' : '') + '" data-sort="' + k + '" title="מיון לפי ' + COLS[k].label + '. Alt וחץ מזיזים את העמודה">' +
+      COLS[k].label + sortIc[dir] + '</button></div></th>';
+  }
   function renderTable(list) {
     var all = list.length && list.every(picked);
     return '<div class="pc-tablewrap"><table class="pc-rtable"><caption class="pd-sr">תוצאות החיפוש</caption><thead><tr>' +
-      '<th class="pc-ckcol"><label class="pc-pick"><input type="checkbox" id="pcPickAll"' + (all ? ' checked' : '') + ' aria-label="בחירת כל התוצאות"></label></th>' +
-      '<th scope="col">מספר תיק</th><th scope="col">שם התיק</th><th scope="col">בית משפט</th><th scope="col">ענף</th>' +
-      '<th scope="col"><button type="button" class="pc-sorth" data-sort-date>הוגשה' + (S.filter.sort === 'rel' ? '' : S.filter.sort === 'new' ? ' ↓' : ' ↑') + '</button></th>' +
-      '<th scope="col">סטטוס</th><th scope="col">עילה</th><th scope="col"><span class="pd-sr">פרטים</span></th></tr></thead><tbody>' +
+      '<th class="pc-ckcol"><label class="pc-pick"><input type="checkbox" id="pcPickAll"' + (all ? ' checked' : '') + ' aria-label="בחירת כל התוצאות בעמוד"></label></th>' +
+      S.cols.map(headCell).join('') + '<th scope="col"><span class="pd-sr">פרטים</span></th></tr></thead><tbody>' +
       list.map(function (c) {
         var did = 'pcd-' + c.id;
         return '<tr class="pc-rrow' + (picked(c) ? ' is-picked' : '') + '" data-case="' + c.id + '">' +
           '<td class="pc-ckcol">' + pick(c) + '</td>' +
-          '<td><span class="pc-numtxt pc-num">' + c.num + '</span></td>' +
-          '<td class="pc-tname">' + esc(title(c)) + '</td>' +
-          '<td>' + esc(shortCourt(c)) + '</td><td>' + esc(c.branch) + '</td>' +
-          '<td class="pc-num">' + c.filed + '</td><td>' + status(c) + '</td>' +
-          '<td class="pc-tcause">' + esc(c.cause) + '</td>' +
+          S.cols.map(function (k) { return '<td' + (COLS[k].cls ? ' class="' + COLS[k].cls + '"' : '') + '>' + COLS[k].cell(c) + '</td>'; }).join('') +
           '<td><button type="button" class="pc-chev" data-expand aria-expanded="false" aria-controls="' + did + '" aria-label="פרטים ומסמכים, ת&quot;צ ' + c.num + '">' + svg.chev + '</button></td></tr>' +
-          '<tr class="pc-rdetail" id="' + did + '" hidden><td></td><td colspan="8"><div class="pc-detail">' +
+          '<tr class="pc-rdetail" id="' + did + '" hidden><td></td><td colspan="' + (S.cols.length + 1) + '"><div class="pc-detail">' +
             '<div><h4>תקציר</h4><p>' + esc(c.sum) + '</p></div>' +
             '<div><h4>מסמכים מצורפים</h4>' + docList(c) + '</div></div></td></tr>';
       }).join('') + '</tbody></table></div>';
@@ -126,14 +150,32 @@
         '</div></article>';
     }).join('') + '</div>';
   }
+  function pager(total) {
+    var pages = Math.ceil(total / PAGE);
+    if (pages < 2) return '';
+    var b = function (p, label, cur) { return '<button type="button" class="pc-pg' + (cur ? ' is-on' : '') + '" data-page="' + p + '"' + (cur ? ' aria-current="page"' : '') + '>' + label + '</button>'; };
+    var out = '<nav class="pc-pager" aria-label="עמודי תוצאות">' + (S.page > 1 ? b(S.page - 1, 'הקודם') : '');
+    for (var p = 1; p <= pages; p++) out += b(p, '<span class="pc-num">' + p + '</span>', p === S.page);
+    return out + (S.page < pages ? b(S.page + 1, 'הבא') : '') + '</nav>';
+  }
   function layout() { return S.layout || (window.matchMedia('(max-width: 700px)').matches ? 'cards' : 'table'); }
   function renderResults() {
     var list = shown();
-    $('pcResCount').innerHTML = 'נמצאו <b>' + S.results.length + '</b> תובענות רלוונטיות לשאלה: <q>' + esc(S.query) + '</q>' +
-      (list.length < S.results.length ? ' · מוצגות ' + list.length + ' לפי הסינון' : '');
+    var pages = Math.max(1, Math.ceil(list.length / PAGE));
+    if (S.page > pages) S.page = pages;
+    var page = list.slice((S.page - 1) * PAGE, S.page * PAGE);
+    $('pcResCount').innerHTML = 'מציג <b>' + page.length + '</b>' + (list.length > PAGE ? ' מתוך ' + list.length : '') +
+      ' תובענות רלוונטיות לשאלה: <q>' + esc(S.query) + '</q>. ניתן לבחור תיקים ולשוחח אודותם עם הצ׳ט.';
+    var n = filterCount();
+    $('pcFilterBadge').textContent = n || '';
+    $('pcFilterBadge').hidden = !n;
+    $('pcFilterBtn').classList.toggle('cvs-toggle-on', !!n || !$('pcFilterPanel').hidden);
+    $('pcFSort').value = S.sort.key ? S.sort.key + ':' + S.sort.dir : '';
+    /* shown only once the table differs from how it opened */
+    $('pcResetView').hidden = !(n || S.sort.key || S.cols.join() !== ORDER.join());
     document.querySelectorAll('[data-layout]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.layout === layout())); });
-    $('pcResBody').innerHTML = list.length
-      ? (layout() === 'table' ? renderTable(list) : renderCards(list))
+    $('pcResBody').innerHTML = page.length
+      ? (layout() === 'table' ? renderTable(page) : renderCards(page)) + pager(list.length)
       : '<div class="pd-empty"><b>אין תוצאות שמתאימות לסינון</b><span>אפשר לנקות את הסינון כדי לראות את כל התוצאות.</span></div>';
     syncPickbar();
   }
@@ -144,7 +186,7 @@
     $('pcStartChat').innerHTML = svg.msg + 'שוחח עם התיקים (' + n + ')';
     document.querySelectorAll('#pcResBody [data-case]').forEach(function (el) { el.classList.toggle('is-picked', S.sel.indexOf(el.dataset.case) > -1); });
     var all = $('pcPickAll');
-    if (all) { var l = shown(); all.checked = l.length > 0 && l.every(picked); }
+    if (all) { var ids = [].map.call(document.querySelectorAll('#pcResBody [data-pick]'), function (x) { return x.dataset.pick; }); all.checked = ids.length > 0 && ids.every(function (id) { return S.sel.indexOf(id) > -1; }); }
   }
   function setPick(id, on) {
     S.sel = S.sel.filter(function (x) { return x !== id; });
@@ -246,6 +288,13 @@
       return '<li>' + name(c) + ': ' + (c.defense ? esc(c.defense) + ' ' + X.cite(c, 1, 1) : 'המשיבה טרם הגישה תשובה, או שהתשובה לא נסרקה.') + '</li>';
     }).join('') + '</ul>' };
   }
+  /* demo text: a longer, generic analysis so the answer fills the column the way a real one would */
+  var ANALYSIS = [
+    'בבחינת השאלה אם תובענה חדשה אפשרית, בית המשפט אינו מסתפק בהשוואה בין שמות המשיבות או בין כותרות העילות. הוא בודק אם השאלות המהותיות של עובדה ומשפט המשותפות לחברי הקבוצה זהות לאלה שכבר עומדות להכרעה, אם הגדרת הקבוצה חופפת, ואם התקופה שבה נטען שהתרחשה ההפרה זהה או נפרדת. ככל שהחפיפה רחבה יותר, גובר החשש מפני ריבוי הליכים, מהכרעות סותרות ומהטרדת המשיבה פעמיים בשל אותו עניין, ובית המשפט נוטה לעכב את ההליך החדש או לאחדו עם ההליך הקיים.',
+    'מנגד, גם כשהעילה דומה, יש מקום לתובענה נפרדת כשהיא נשענת על תשתית עובדתית אחרת: מוצר או שירות שונה, מנגנון חיוב אחר, ציבור לקוחות שלא נכלל בקבוצה המקורית, או תקופה מאוחרת לסיום ההליך הקודם. במקרים כאלה כדאי לפרט כבר בבקשה לאישור את ההבדלים בין המקרים, לצרף את הנתונים התומכים בהם, ולהסביר מדוע ההליך הקיים אינו נותן מענה הולם לחברי הקבוצה החדשה. בדיקה של כתבי הטענות וההחלטות בתיקים שבחרתם תסייע לזהות את נקודות החפיפה והשוני ולנסח את הגדרת הקבוצה בהתאם.'
+  ];
+  function analysis() { return '<h3>ניתוח</h3>' + ANALYSIS.map(function (t) { return '<p>' + t + '</p>'; }).join(''); }
+
   function answer(q, cs) {
     var X = citer(), named = cs.filter(function (c) { return q.indexOf(c.num) > -1; });
     if (named.length) cs = named;
@@ -254,6 +303,7 @@
       : /תקציר|סכם|סיכום|על מה|ספר לי/.test(q) ? aSummary(cs, X)
       : /טוענ|טענות|הגנה|תשובת|תשובה/.test(q) ? aDefense(cs, X)
       : aOverlap(cs, X);
+    r.body += analysis();
     r.sources = X.list;
     return r;
   }
@@ -262,8 +312,7 @@
     var who = { lawyer: 'עו"ד ישראל כהן', id: 'ישראל כהן', org: 'ישראל כהן, חברת אלפא בע"מ' }[window.NH ? NH.user() : 'lawyer'];
     var d = document.createElement('div');
     d.className = 'pc-ublock';
-    d.innerHTML = '<div class="pc-who"><span class="pc-av pc-av-user" aria-hidden="true">' + (who ? 'יכ' : 'א') + '</span>' + (who || 'אני') + '</div>' +
-      '<div class="pc-qtag">על ' + (cs.length === 1 ? 'התיק' : cs.length + ' התיקים') + ': ' + cs.map(function (c) { return '<span class="pc-num">' + c.num + '</span>'; }).join('') + '</div><div class="pc-q"></div>';
+    d.innerHTML = '<div class="pc-who"><span class="pc-av pc-av-user" aria-hidden="true">' + (who ? 'יכ' : 'א') + '</span>' + (who || 'אני') + '</div><div class="pc-q"></div>';
     d.querySelector('.pc-q').textContent = q;
     return d;
   }
@@ -274,9 +323,7 @@
     var n = res.sources.length;
     a.innerHTML = '<div class="pc-ahead"><div class="pc-who"><span class="pc-av pc-av-bot" aria-hidden="true">' + svg.scale + '</span>פנקס התובענות' +
         (n ? '<small>· מבוסס על ' + (n === 1 ? 'מקור אחד' : n + ' מקורות') + '</small>' : '') + '</div>' +
-      '<div class="pc-acts"><button type="button" class="cvs-iconbtn" data-copy title="העתקת התשובה" aria-label="העתקת התשובה">' + svg.copy + '</button>' +
-      '<button type="button" class="cvs-iconbtn" data-rate aria-pressed="false" title="תשובה מועילה" aria-label="תשובה מועילה">' + svg.up + '</button>' +
-      '<button type="button" class="cvs-iconbtn" data-rate aria-pressed="false" title="תשובה לא מועילה" aria-label="תשובה לא מועילה">' + svg.down + '</button></div></div>' +
+      '<div class="pc-acts"><button type="button" class="cvs-iconbtn" data-copy title="העתקת התשובה" aria-label="העתקת התשובה">' + svg.copy + '</button></div></div>' +
       '<div class="pc-body">' + res.body + '</div>';
     return a;
   }
@@ -376,23 +423,50 @@
     t.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); p[2](t.value); } });
     f.addEventListener('submit', function (e) { e.preventDefault(); p[2](t.value); });
   });
-  $('pcSuggest').innerHTML = SUGGEST.map(function (s) { return '<button type="button" class="pc-sugg">' + svg.msg + '<span>' + esc(s) + '</span></button>'; }).join('');
-  $('pcSuggest').addEventListener('click', function (e) { var b = e.target.closest('.pc-sugg'); if (b) runSearch(b.textContent); });
 
   /* ── results interactions ── */
   var branches = [], courts = [];
   CASES.forEach(function (c) { if (branches.indexOf(c.branch) < 0) branches.push(c.branch); if (courts.indexOf(shortCourt(c)) < 0) courts.push(shortCourt(c)); });
   $('pcFBranch').innerHTML = '<option value="">כל הענפים</option>' + branches.map(function (b) { return '<option>' + esc(b) + '</option>'; }).join('');
   $('pcFCourt').innerHTML = '<option value="">כל בתי המשפט</option>' + courts.map(function (b) { return '<option>' + esc(b) + '</option>'; }).join('');
-  [['pcFBranch', 'branch'], ['pcFCourt', 'court'], ['pcFStatus', 'status'], ['pcFSort', 'sort']].forEach(function (p) {
-    $(p[0]).addEventListener('change', function () { S.filter[p[1]] = this.value; renderResults(); });
+  $('pcFSort').innerHTML = '<option value="">רלוונטיות</option>' + ORDER.map(function (k) {
+    return '<option value="' + k + ':asc">' + COLS[k].label + ', בסדר עולה</option><option value="' + k + ':desc">' + COLS[k].label + ', בסדר יורד</option>';
+  }).join('');
+  [['pcFBranch', 'branch'], ['pcFCourt', 'court'], ['pcFStatus', 'status']].forEach(function (p) {
+    $(p[0]).addEventListener('change', function () { S.filter[p[1]] = this.value; S.page = 1; renderResults(); });
+  });
+  $('pcFSort').addEventListener('change', function () { var v = this.value.split(':'); S.sort = { key: v[0] || '', dir: v[1] || 'asc' }; renderResults(); });
+  $('pcResetView').addEventListener('click', function () {
+    S.filter = { branch: '', court: '', status: '' }; S.sort = { key: '', dir: 'asc' }; S.cols = ORDER.slice(); S.page = 1;
+    ['pcFBranch', 'pcFCourt', 'pcFStatus'].forEach(function (id) { $(id).value = ''; });
+    renderResults();
+    $('pcFilterBtn').focus();
+  });
+  $('pcFilterClear').addEventListener('click', function () {
+    S.filter = { branch: '', court: '', status: '' }; S.sort = { key: '', dir: 'asc' }; S.page = 1;
+    ['pcFBranch', 'pcFCourt', 'pcFStatus'].forEach(function (id) { $(id).value = ''; });
+    renderResults();
+  });
+  /* the filters fold under one icon, as in איתור החלטות, and open as a drawer below it */
+  function filterPanel(open) {
+    $('pcFilterPanel').hidden = !open;
+    $('pcFilterBtn').setAttribute('aria-expanded', String(open));
+    $('pcFilterBtn').classList.toggle('cvs-toggle-on', open || !!filterCount());
+    if (open) $('pcFBranch').focus();
+  }
+  $('pcFilterBtn').addEventListener('click', function () { filterPanel($('pcFilterPanel').hidden); });
+  document.addEventListener('click', function (e) {
+    if (!$('pcFilterPanel').hidden && !e.target.closest('#pcFilterPanel, #pcFilterBtn')) filterPanel(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !$('pcFilterPanel').hidden) { filterPanel(false); $('pcFilterBtn').focus(); }
   });
   document.querySelectorAll('[data-layout]').forEach(function (b) {
     b.addEventListener('click', function () { S.layout = b.dataset.layout; renderResults(); });
   });
   $('pcResBody').addEventListener('change', function (e) {
     var cb = e.target;
-    if (cb.id === 'pcPickAll') { shown().forEach(function (c) { setPick(c.id, cb.checked); }); renderResults(); return; }
+    if (cb.id === 'pcPickAll') { document.querySelectorAll('#pcResBody [data-pick]').forEach(function (x) { setPick(x.dataset.pick, cb.checked); }); renderResults(); return; }
     if (cb.dataset.pick) { setPick(cb.dataset.pick, cb.checked); syncPickbar(); }
   });
   $('pcResBody').addEventListener('click', function (e) {
@@ -400,13 +474,61 @@
     if (t.closest('.pc-pick')) return;
     var od = t.closest('[data-open-doc]');
     if (od) { var p = od.dataset.openDoc.split(':'); openDoc(p[0], +p[1], [], -1, od); return; }
-    if (t.closest('[data-sort-date]')) { S.filter.sort = S.filter.sort === 'new' ? 'old' : 'new'; $('pcFSort').value = S.filter.sort; renderResults(); return; }
+    var sb = t.closest('[data-sort]');
+    if (sb) {
+      var k = sb.dataset.sort;
+      /* each click moves on: ascending, descending, back to relevance */
+      S.sort = S.sort.key !== k ? { key: k, dir: 'asc' } : S.sort.dir === 'asc' ? { key: k, dir: 'desc' } : { key: '', dir: 'asc' };
+      renderResults();
+      var again = document.querySelector('[data-sort="' + k + '"]'); if (again) again.focus();
+      return;
+    }
+    var pg = t.closest('[data-page]');
+    if (pg) { S.page = +pg.dataset.page; renderResults(); $('pcResH').scrollIntoView({ block: 'start', behavior: reduce() ? 'auto' : 'smooth' }); return; }
     var ex = t.closest('[data-expand]');
     if (ex) { var open = ex.getAttribute('aria-expanded') !== 'true'; ex.setAttribute('aria-expanded', open); $(ex.getAttribute('aria-controls')).hidden = !open; ex.closest('tr').classList.toggle('is-open', open); return; }
     var more = t.closest('[data-more]');
     if (more) { var o = more.getAttribute('aria-expanded') !== 'true'; more.setAttribute('aria-expanded', o); more.querySelector('span').textContent = o ? 'הצג פחות' : 'הצג עוד'; $(more.getAttribute('aria-controls')).hidden = !o; return; }
     var sd = t.closest('[data-showdocs]');
     if (sd) { var s = sd.getAttribute('aria-expanded') !== 'true'; sd.setAttribute('aria-expanded', s); $(sd.getAttribute('aria-controls')).hidden = !s; return; }
+  });
+  /* columns: drag a header to a new place, or Alt+arrow on its sort button */
+  function moveCol(k, to) {
+    var from = S.cols.indexOf(k);
+    if (from < 0 || to < 0 || to >= S.cols.length || to === from) return;
+    S.cols.splice(from, 1); S.cols.splice(to, 0, k);
+    renderResults();
+    var again = document.querySelector('[data-sort="' + k + '"]'); if (again) again.focus();
+  }
+  var dragCol = null;
+  $('pcResBody').addEventListener('dragstart', function (e) {
+    var th = e.target.closest && e.target.closest('th[data-col]'); if (!th) return;
+    dragCol = th.dataset.col; th.classList.add('is-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', dragCol); } catch (err) {}
+  });
+  $('pcResBody').addEventListener('dragover', function (e) {
+    var th = e.target.closest('th[data-col]'); if (!th || !dragCol) return;
+    e.preventDefault();
+    document.querySelectorAll('th.is-drop').forEach(function (x) { if (x !== th) x.classList.remove('is-drop'); });
+    th.classList.add('is-drop');
+  });
+  $('pcResBody').addEventListener('drop', function (e) {
+    var th = e.target.closest('th[data-col]'); if (!th || !dragCol) return;
+    e.preventDefault();
+    var k = dragCol; dragCol = null;
+    moveCol(k, S.cols.indexOf(th.dataset.col));
+  });
+  $('pcResBody').addEventListener('dragend', function () {
+    dragCol = null;
+    document.querySelectorAll('th.is-drop, th.is-dragging').forEach(function (x) { x.classList.remove('is-drop', 'is-dragging'); });
+  });
+  $('pcResBody').addEventListener('keydown', function (e) {
+    var sb = e.target.closest && e.target.closest('[data-sort]');
+    if (!sb || !e.altKey || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+    e.preventDefault();
+    /* right-to-left: the right arrow moves a column toward the start */
+    moveCol(sb.dataset.sort, S.cols.indexOf(sb.dataset.sort) + (e.key === 'ArrowLeft' ? 1 : -1));
   });
   $('pcPickClear').addEventListener('click', function () { S.sel = []; renderResults(); });
   $('pcStartChat').addEventListener('click', startChat);
@@ -435,12 +557,6 @@
       var done = function () { copy.setAttribute('aria-pressed', 'true'); copy.title = 'הועתק'; setTimeout(function () { copy.setAttribute('aria-pressed', 'false'); copy.title = 'העתקת התשובה'; }, 1600); };
       try { navigator.clipboard.writeText(text).then(done, done); } catch (err) { done(); }
       return;
-    }
-    var rate = t.closest('[data-rate]');
-    if (rate) {
-      var on = rate.getAttribute('aria-pressed') !== 'true';
-      rate.parentNode.querySelectorAll('[data-rate]').forEach(function (r) { r.setAttribute('aria-pressed', 'false'); });
-      rate.setAttribute('aria-pressed', on);
     }
   });
   $('pcViewClose').addEventListener('click', closeDoc);

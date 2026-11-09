@@ -163,7 +163,7 @@
   .pd-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 12px; font: 400 13px 'Rubik'; color: var(--fg-2); }
   .pd-legend span { display: inline-flex; align-items: center; gap: 6px; }
   .pd-legend i { width: 11px; height: 11px; border-radius: 3px; }
-  .pd-s0 { background: #2a78d6; } .pd-s1 { background: #eb6834; } .pd-s2 { background: #1baf7a; } .pd-s3 { background: #eda100; }
+  .pd-st0 { background: #2a78d6; } .pd-st1 { background: #b9c2d0; }
   .pd-stack { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: center; gap: 8px; min-height: 30px; font: 400 14px 'Rubik'; color: var(--pc-ink); }
   .pd-stacktrack { display: flex; gap: 2px; height: 14px; }
   .pd-stacktrack i { min-width: 2px; }
@@ -189,7 +189,7 @@
   .pd-tablewrap .pd-table { margin-top: 8px; }
   .pd-empty { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 70px 16px; text-align: center; font: 400 14px 'Rubik'; color: var(--fg-3); }
   .pd-empty b { font: 500 16px 'Rubik'; color: var(--fg-2); }
-  .pd-note { margin-top: 14px; }
+  .pd-note { margin-top: 14px; text-align: center; }
   .pd-tip { position: fixed; z-index: 60; max-width: 260px; padding: 6px 10px; border-radius: 6px; background: #14233c; color: #fff; font: 400 13px/1.4 'Rubik'; pointer-events: none; box-shadow: var(--box-shadow-medium); }
   @media (max-width: 1180px) {
     .pd-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -225,11 +225,6 @@
   .pc-welcome h2 { margin: 0; font: 600 24px/32px 'Rubik'; color: var(--pc-title); letter-spacing: -.2px; text-wrap: balance; }
   .pc-welcome > p { margin: 0 0 14px; max-width: 60ch; font: 400 15px/1.6 'Rubik'; color: var(--fg-2); }
   .pc-welcome .pc-composer { width: 100%; max-width: 760px; }
-  .pc-suggest { width: 100%; max-width: 760px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 18px; text-align: start; }
-  .pc-suggest-lbl { width: 100%; max-width: 760px; text-align: start; font: 500 13px 'Rubik'; color: var(--fg-2); margin-top: 18px; margin-bottom: -8px; }
-  .pc-sugg { display: flex; align-items: flex-start; gap: 10px; padding: 13px 14px; border: 1.5px solid var(--brand-tint-strong); border-radius: 10px; background: #fff; font: 400 14.5px/1.45 'Rubik'; color: var(--pc-ink); cursor: pointer; text-align: start; }
-  .pc-sugg:hover { background: var(--cvs-hover); border-color: var(--cvs-hover); }
-  .pc-sugg svg { width: 17px; height: 17px; flex: none; margin-top: 2px; color: var(--brand-navy); }
   .pc-disclaim { margin-top: 18px; font: 400 12.5px 'Rubik'; color: var(--fg-3); }
 
   /* ── composer ── */
@@ -244,7 +239,7 @@
   .pc-send svg { width: 18px; height: 18px; }
   .pc-dock { position: sticky; bottom: 0; padding: 14px 0 18px; background: linear-gradient(to top, var(--pc-page) 70%, rgba(244,248,252,0)); margin-top: 8px; z-index: 5; }
   .pc-dock .pc-composer textarea { min-height: 26px; }
-  .pc-dockhint { margin: 6px 4px 0; font: 400 12.5px 'Rubik'; color: var(--fg-3); }
+  .pc-dockhint { margin: 6px 4px 0; font: 400 12.5px 'Rubik'; color: var(--fg-3); text-align: center; }
 
   /* ── demo note, status, small parts ── */
   .pc-demo { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; padding: 8px 12px; border-radius: 8px; background: #fdf3dc; color: #6b4a05; font: 400 13.5px/1.5 'Rubik'; }
@@ -283,7 +278,14 @@
   #pcResCount b { color: var(--pc-ink); }
   #pcResCount q { color: var(--pc-ink); }
   .pc-restools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-  .pc-restools .pd-selwrap select { min-width: 128px; }
+  .pc-filterwrap { position: relative; }
+  .pc-resetview { font-size: 13.5px; white-space: nowrap; }
+  .pc-filterbtn { position: relative; width: 38px; height: 38px; }
+  .pc-filterbtn svg { width: 17px; height: 17px; }
+  .pc-filterbadge { position: absolute; top: -6px; left: -6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--brand-navy); color: #fff; font: 600 11px/18px 'Rubik'; text-align: center; }
+  .pc-filterpanel { position: absolute; top: calc(100% + 8px); left: 0; z-index: 20; width: 300px; display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 12px; background: #fff; box-shadow: var(--box-shadow-medium); }
+  .pc-filterpanel .pd-selwrap select { width: 100%; max-width: none; }
+  .pc-filterpanel .pc-linkbtn { align-self: flex-start; }
   .pc-seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 8px; background: #e6ecf5; }
   .pc-seg button { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 0; border-radius: 6px; background: none; color: var(--fg-2); font: 500 13.5px 'Rubik'; cursor: pointer; }
   .pc-seg button svg { width: 15px; height: 15px; }
@@ -302,8 +304,26 @@
   .pc-rrow.is-open td { border-bottom: 0; }
   .pc-numtxt { font-weight: 600; color: var(--brand-navy); white-space: nowrap; }
   .pc-tname { font-weight: 500; min-width: 200px; }
-  .pc-tcause { color: var(--fg-1); min-width: 220px; }
-  .pc-sorth { border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+  .pc-tcause { color: var(--fg-1); min-width: 260px; max-width: 360px; font-size: 14px; }
+  .pc-tcause b { font-weight: 500; color: var(--pc-ink); }
+  .pc-th { display: flex; align-items: center; gap: 2px; }
+  .pc-grip { display: grid; place-items: center; width: 14px; color: var(--fg-3); opacity: 0; cursor: grab; transition: opacity .12s; }
+  .pc-grip svg { width: 14px; height: 14px; }
+  .pc-rtable th[data-col]:hover .pc-grip, .pc-rtable th[data-col]:focus-within .pc-grip { opacity: 1; }
+  .pc-rtable th[data-col] { cursor: grab; }
+  .pc-rtable th.is-dragging { opacity: .45; }
+  .pc-rtable th.is-drop { box-shadow: inset -3px 0 0 var(--brand-navy); }
+  .pc-sortbtn { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px; border: 0; border-radius: 4px; background: none; font: inherit; color: inherit; white-space: nowrap; cursor: pointer; }
+  .pc-sortbtn svg { width: 14px; height: 14px; opacity: .45; }
+  .pc-sortbtn:hover { color: var(--brand-navy); background: var(--cvs-hover); }
+  .pc-sortbtn:hover svg, .pc-sortbtn.is-on svg { opacity: 1; }
+  .pc-sortbtn.is-on { color: var(--brand-navy); }
+  .pc-sortbtn:focus-visible { outline: none; box-shadow: var(--box-shadow-focus); }
+  .pc-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .pc-pager { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 18px; }
+  .pc-pg { min-width: 36px; height: 36px; padding: 0 12px; border: 1px solid var(--border-1); border-radius: 6px; background: #fff; color: var(--brand-navy); font: 500 14px 'Rubik'; cursor: pointer; }
+  .pc-pg:hover { background: var(--brand-tint); border-color: var(--brand-tint); }
+  .pc-pg.is-on { background: var(--brand-navy); border-color: var(--brand-navy); color: #fff; }
   .pc-rdetail td { border-top: 0; padding-top: 0; }
   .pc-rdetail.is-picked, .pc-rrow.is-picked + .pc-rdetail { background: var(--brand-tint); }
   .pc-detail { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; padding: 6px 0 14px; }
@@ -330,10 +350,16 @@
   .pc-cardmore p { margin: 0; font: 400 14px/1.6 'Rubik'; color: var(--fg-1); }
   .pc-cardmore .pc-btn { align-self: flex-start; }
 
-  .pc-pickbar { position: sticky; bottom: 16px; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 16px; padding: 12px 16px; border-radius: 12px; background: #fff; box-shadow: 0 6px 24px rgba(20,40,80,.16); }
-  .pc-pickcount { padding: 4px 12px; border-radius: 999px; background: var(--brand-tint); color: var(--brand-navy); font: 600 14px 'Rubik'; }
-  .pc-pickbar > span:nth-child(2) { font: 400 13.5px 'Rubik'; color: var(--fg-2); }
-  .pc-pickbar .pc-linkbtn { margin-inline-start: auto; }
+  /* the call to action after choosing cases: a filled navy bar that slides up on the first pick */
+  .pc-pickbar { position: sticky; bottom: 16px; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 16px; padding: 14px 18px; border-radius: 12px; background: var(--brand-navy); color: #fff; box-shadow: 0 10px 30px rgba(6,30,64,.35); animation: pcBarIn 260ms cubic-bezier(0,0,.35,1); }
+  @keyframes pcBarIn { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .pc-pickcount { padding: 4px 12px; border-radius: 999px; background: rgba(255,255,255,.16); color: #fff; font: 600 15px 'Rubik'; }
+  .pc-pickbar > span:nth-child(2) { font: 400 14px 'Rubik'; color: #dbe6f7; }
+  .pc-pickbar .pc-linkbtn { margin-inline-start: auto; color: #fff; }
+  .pc-pickbar .pc-linkbtn:hover { color: #dbe6f7; }
+  .pc-pickbar .pc-primary { background: #fff; color: var(--brand-navy); font-weight: 600; }
+  .pc-pickbar .pc-primary:hover { background: var(--brand-tint); }
+  .pc-pickbar .pc-primary:focus-visible, .pc-pickbar .pc-linkbtn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
   .pc-primary { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border: 0; border-radius: 6px; background: var(--brand-navy); color: #fff; font: 500 15px 'Rubik'; cursor: pointer; }
   .pc-primary:hover { background: var(--brand-navy-hover); }
   .pc-primary svg { width: 17px; height: 17px; }
@@ -382,8 +408,6 @@
   .pc-av-bot { background: var(--brand-navy); color: #fff; }
   .pc-av-bot svg { width: 17px; height: 17px; }
   .pc-q { background: #fff; border: 1px solid var(--border-2); border-radius: 12px; padding: 14px 18px; font: 400 16px/1.6 'Rubik'; color: var(--pc-ink); white-space: pre-wrap; }
-  .pc-qtag { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; font: 400 13px 'Rubik'; color: var(--fg-2); }
-  .pc-qtag span { padding: 2px 8px; border-radius: 999px; background: var(--brand-tint); color: var(--brand-navy); font-weight: 500; }
 
   .pc-a { padding: 4px 0 10px; animation: pcIn 250ms cubic-bezier(0,0,.35,1); }
   @keyframes pcIn { from { transform: translateY(6px); } to { transform: none; } }
@@ -391,7 +415,9 @@
   .pc-ahead .pc-who { margin: 0; flex: 1; }
   .pc-acts { display: flex; gap: 2px; }
   .pc-acts .cvs-iconbtn[aria-pressed="true"] { background: #e8f0fb; color: var(--pc-ink); }
-  .pc-body { font: 400 16px/1.75 'Rubik'; color: var(--fg-1); max-width: 78ch; }
+  .pc-body { font: 400 16px/1.75 'Rubik'; color: var(--fg-1); text-align: justify; }
+  .pc-ublock, .pc-a { padding-inline-start: 46px; }
+  .pc-ublock > .pc-who, .pc-a .pc-ahead { margin-inline-start: -46px; }
   .pc-body p { margin: 0 0 14px; }
   .pc-body h3 { margin: 22px 0 8px; font: 600 18px/26px 'Rubik'; color: var(--pc-title); letter-spacing: -.2px; }
   .pc-body ul { margin: 0 0 14px; padding-inline-start: 20px; }
@@ -454,7 +480,6 @@
   @media (max-width: 1000px) { .pc-docp { width: min(640px, 100vw); } }
   @media (max-width: 860px) {
     .pc-welcome { padding: 20px 0 24px; }
-    .pc-suggest { grid-template-columns: minmax(0, 1fr); }
     .pc-cards { grid-template-columns: minmax(0, 1fr); }
     .pc-detail { grid-template-columns: minmax(0, 1fr); gap: 14px; }
     .pc-cases, .pc-cases.has-doc { grid-template-columns: minmax(0, 1fr); }
@@ -466,8 +491,9 @@
     .pc-docscroll { padding: 12px; }
     .pc-ahead .pc-who small, .pc-dockhint { display: none; }
     .pc-restools { width: 100%; }
-    .pc-restools .pd-selwrap { flex: 1 1 calc(50% - 4px); }
-    .pc-restools .pd-selwrap select { width: 100%; min-width: 0; }
+    .pc-filterpanel { left: auto; right: 0; width: min(300px, calc(100vw - 48px)); }
+    .pc-ublock, .pc-a { padding-inline-start: 0; }
+    .pc-ublock > .pc-who, .pc-a .pc-ahead { margin-inline-start: 0; }
     .pc-pickbar > span:nth-child(2) { display: none; }
   }
   @media (pointer: coarse) {
@@ -475,7 +501,7 @@
     .pc-cite::after { content: ""; position: absolute; inset: -12px -6px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .pc-a, .pc-sk, .pc-spin { animation: none !important; }
+    .pc-a, .pc-sk, .pc-spin, .pc-pickbar { animation: none !important; }
     .pc-chev svg, .pc-more svg { transition: none !important; }
   }
 </style>
@@ -641,8 +667,6 @@
             <textarea id="pcAskHome" rows="2" placeholder="למשל: חברת סלקום מחייבת אותי כל חודש על שירות תוכן שלא הזמנתי"></textarea>
             <button type="submit" class="pc-send" aria-label="חיפוש" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg></button>
           </form>
-          <div class="pc-suggest-lbl">שאלות לדוגמה</div>
-          <div class="pc-suggest" id="pcSuggest"></div>
           <div class="pc-disclaim">התשובות מבוססות על התיקים הרשומים בפנקס ואינן ייעוץ משפטי. כדאי לאמת כל תשובה מול המקורות.</div>
         </section>
 
@@ -651,10 +675,20 @@
           <div class="pc-reshead">
             <div><h2 id="pcResH">תוצאות חיפוש</h2><span id="pcResCount" aria-live="polite"></span></div>
             <div class="pc-restools" role="group" aria-label="סינון ותצוגה">
-              <span class="pd-selwrap"><select id="pcFBranch" aria-label="סינון לפי ענף"></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
-              <span class="pd-selwrap"><select id="pcFCourt" aria-label="סינון לפי בית משפט"></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
-              <span class="pd-selwrap"><select id="pcFStatus" aria-label="סינון לפי סטטוס"><option value="">פתוחים וסגורים</option><option value="open">פתוחים</option><option value="closed">סגורים</option></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
-              <span class="pd-selwrap"><select id="pcFSort" aria-label="מיון"><option value="rel">מיון: רלוונטיות</option><option value="new">מיון: החדשים קודם</option><option value="old">מיון: הישנים קודם</option></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+              <button type="button" class="pc-linkbtn pc-resetview" id="pcResetView" hidden>איפוס תצוגה</button>
+              <div class="pc-filterwrap">
+                <button type="button" class="cvs-filtertoggle pc-filterbtn" id="pcFilterBtn" title="סינון ומיון" aria-label="סינון ומיון התוצאות" aria-expanded="false" aria-controls="pcFilterPanel">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
+                  <span class="pc-filterbadge" id="pcFilterBadge" hidden></span>
+                </button>
+                <div class="pc-filterpanel" id="pcFilterPanel" role="group" aria-label="סינון ומיון" hidden>
+                  <label class="pd-filter"><span>ענף</span><span class="pd-selwrap"><select id="pcFBranch"></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></label>
+                  <label class="pd-filter"><span>בית משפט</span><span class="pd-selwrap"><select id="pcFCourt"></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></label>
+                  <label class="pd-filter"><span>סטטוס</span><span class="pd-selwrap"><select id="pcFStatus"><option value="">פתוחים וסגורים</option><option value="open">פתוחים</option><option value="closed">סגורים</option></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></label>
+                  <label class="pd-filter"><span>מיון</span><span class="pd-selwrap"><select id="pcFSort"></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></label>
+                  <button type="button" class="pc-linkbtn" id="pcFilterClear">ניקוי סינון ומיון</button>
+                </div>
+              </div>
               <div class="pc-seg" role="group" aria-label="תצוגה">
                 <button type="button" data-layout="table" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18"/><path d="M3 12h18"/><path d="M3 19h18"/></svg>טבלה</button>
                 <button type="button" data-layout="cards" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>כרטיסיות</button>

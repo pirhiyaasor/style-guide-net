@@ -21,8 +21,8 @@
     { name: 'מחוזי מרכז', w: 30 }, { name: 'מחוזי תל אביב־יפו', w: 28 }, { name: 'מחוזי חיפה', w: 13 },
     { name: 'מחוזי ירושלים', w: 11 }, { name: 'מחוזי צפון', w: 6 }, { name: 'מחוזי באר שבע', w: 5 }, { name: 'בתי הדין לעבודה', w: 7 }
   ];
-  var STATUS = { pending: 'תלויה ועומדת', approved: 'אושרה כייצוגית', settled: 'הסתיימה בפשרה', rejected: 'הבקשה נדחתה', withdrawn: 'הסתלקות או מחיקה' };
-  var OUTCOMES = ['approved', 'settled', 'rejected', 'withdrawn'];
+  /* the registry knows two states only: open and closed */
+  var STATUS = { open: 'פתוח', closed: 'סגור' };
 
   /* ── נתוני דמה ── */
   function seeded(a) {
@@ -46,10 +46,8 @@
     return pick(w).y;
   }
   function statusOf(field, age) {
-    var open = Math.max(.04, 1 - age * .17);
-    if (R() < open) return 'pending';
-    var r = R(), good = field === 'ביטוח' || field === 'בנקאות' ? .1 : field === 'סביבה' ? -.1 : 0;
-    return r < .14 ? 'approved' : r < .44 + good ? 'settled' : r < .76 + good / 2 ? 'rejected' : 'withdrawn';
+    var open = Math.max(.04, 1 - age * .17) + (field === 'סביבה' ? .08 : field === 'ביטוח' ? -.05 : 0);
+    return R() < open ? 'open' : 'closed';
   }
   var DATA = [];
   for (var i = 0; i < 1284; i++) {
@@ -59,7 +57,7 @@
     DATA.push({
       year: year, field: f.name, court: court, status: st,
       df: f.df[Math.floor(Math.pow(R(), 1.6) * f.df.length)],
-      months: st === 'pending' ? null : Math.round(Math.min(age * 12 + 3, 6 + 60 * Math.pow(R(), 1.5))),
+      months: st === 'open' ? null : Math.round(Math.min(age * 12 + 3, 6 + 60 * Math.pow(R(), 1.5))),
       amount: Math.round(Math.exp(16.1 + (R() + R() + R() - 1.5) * 1.5) / 1e5) / 10
     });
   }
@@ -82,12 +80,7 @@
     var h = a.length >> 1;
     return a.length % 2 ? a[h] : (a[h - 1] + a[h]) / 2;
   }
-  var isLive = function (d) { return d.status === 'pending' || d.status === 'approved'; };
-  var isGood = function (d) { return d.status === 'approved' || d.status === 'settled'; };
-  function goodRate(list) {
-    var done = list.filter(function (d) { return d.status !== 'pending'; });
-    return { rate: pct(done.filter(isGood).length, done.length), done: done.length };
-  }
+  var isOpen = function (d) { return d.status === 'open'; };
   var months = function (list) { return median(list.filter(function (d) { return d.months != null; }).map(function (d) { return d.months; })); };
   var money = function (m) { return (m >= 10 ? Math.round(m) : m.toFixed(1)) + ' מיליון ₪'; };
 
@@ -107,7 +100,7 @@
     $('pcDash').innerHTML =
       '<div class="pd-filters" role="group" aria-label="סינון הנתונים">' +
         select('pdField', 'תחום', names(FIELDS)) + select('pdCourt', 'בית משפט', names(COURTS)) +
-        select('pdStatus', 'מצב התיק', [['', 'הכול']].concat(Object.keys(STATUS).map(function (k) { return [k, STATUS[k]]; }))) +
+        select('pdStatus', 'סטטוס', [['', 'הכול']].concat(Object.keys(STATUS).map(function (k) { return [k, STATUS[k]]; }))) +
         select('pdFrom', 'משנת', years) + select('pdTo', 'עד שנת', years) +
         '<div class="pd-filteracts"><button type="button" class="pc-linkbtn" id="pdClear">ניקוי</button><button type="button" class="pc-btn" id="pdCsv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>ייצוא CSV</button></div>' +
       '</div>' +
@@ -117,16 +110,16 @@
         '<section class="pd-insights" aria-labelledby="pdInsH"><h3 id="pdInsH">מה בולט בנתונים</h3><ul id="pdIns"></ul></section>' +
         '<div class="pd-grid">' +
           card('pdYears', 'הגשות לפי שנה', 'מספר התובענות שהוגשו בכל שנה. שנת ' + LAST + ' עדיין חלקית.', 'pd-c8') +
-          card('pdStat', 'מצב התיקים', 'כמה תיקים בכל מצב', 'pd-c4') +
+          card('pdStat', 'פתוחים וסגורים', 'כמה תיקים פתוחים וכמה סגורים', 'pd-c4') +
           card('pdFields', 'תחומים', 'לחיצה על תחום מסננת את כל הדשבורד', 'pd-c5') +
-          card('pdOut', 'איך הסתיימו התיקים, לפי תחום', 'חלוקה באחוזים, מתוך התיקים שכבר התקבלה בהם הכרעה', 'pd-c7') +
+          card('pdOut', 'פתוחים וסגורים לפי תחום', 'חלוקה באחוזים בכל תחום', 'pd-c7') +
           card('pdHeat', 'נושאים חמים: תחום מול שנה', 'כמה תובענות הוגשו בכל תחום בעשר השנים האחרונות', 'pd-c12') +
-          card('pdCourts', 'בתי משפט', 'כמה תיקים בכל ערכאה, ומשך הזמן החציוני עד הכרעה', 'pd-c5') +
-          card('pdDfs', 'המשיבות שנתבעו הכי הרבה', 'עוזר לבדוק אם נגד משיבה מסוימת כבר תלויים תיקים', 'pd-c7') +
+          card('pdCourts', 'בתי משפט', 'כמה תיקים בכל ערכאה, ומשך הזמן החציוני עד סגירת התיק', 'pd-c5') +
+          card('pdDfs', 'המשיבות שנתבעו הכי הרבה', 'עוזר לבדוק אם נגד משיבה מסוימת כבר יש תיקים פתוחים', 'pd-c7') +
         '</div>' +
       '</div>' +
       '<div class="pd-empty" id="pdEmpty" hidden><b>אין תיקים שמתאימים לסינון</b><span>אפשר להרחיב את טווח השנים או לנקות את הסינון.</span></div>' +
-      '<p class="pc-disclaim pd-note">כל הנתונים בעמוד בדויים ומוצגים להדגמה בלבד.</p>' +
+      '<p class="pc-disclaim pd-note">כל הנתונים בעמוד בדויים ומוצגים להדגמה בלבד. הנתונים מתעדכנים אחת לשבוע.</p>' +
       '<div class="pd-tip" id="pdTip" role="tooltip" hidden></div>';
 
     $('pdTo').value = String(LAST);
@@ -164,7 +157,7 @@
     draw();
   }
   function csv() {
-    var head = ['שנת הגשה', 'תחום', 'בית משפט', 'משיבה', 'מצב', 'חודשים עד הכרעה', 'סכום התביעה (מיליון ₪)'];
+    var head = ['שנת הגשה', 'תחום', 'בית משפט', 'משיבה', 'סטטוס', 'חודשים עד סגירה', 'סכום התביעה (מיליון ₪)'];
     var q = function (s) { return '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"'; };
     var text = [head].concat(rows().map(function (d) { return [d.year, d.field, d.court, d.df, STATUS[d.status], d.months, d.amount]; }))
       .map(function (r) { return r.map(q).join(','); }).join('\r\n');
@@ -182,12 +175,12 @@
       body.map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div></details>';
   }
   function drawKpis(list) {
-    var live = list.filter(isLive).length, g = goodRate(list), m = months(list);
+    var open = list.filter(isOpen).length, closed = list.length - open, m = months(list);
     var tiles = [
       ['תובענות בפנקס', fmt(list.length), list.length === DATA.length ? 'כל השנים והתחומים' : 'מתוך ' + fmt(DATA.length)],
-      ['תיקים פעילים', fmt(live), pct(live, list.length) + '% מהתיקים'],
-      ['אישור או פשרה', g.done ? g.rate + '%' : '–', 'מתוך ' + fmt(g.done) + ' תיקים שהוכרעו'],
-      ['משך עד הכרעה', m ? Math.round(m) + ' חודשים' : '–', 'חציון'],
+      ['תיקים פתוחים', fmt(open), pct(open, list.length) + '% מהתיקים'],
+      ['תיקים סגורים', fmt(closed), pct(closed, list.length) + '% מהתיקים'],
+      ['משך עד סגירה', m ? Math.round(m) + ' חודשים' : '–', 'חציון, בתיקים הסגורים'],
       ['סכום תביעה', money(median(list.map(function (d) { return d.amount; }))), 'חציון']
     ];
     $('pdKpis').innerHTML = tiles.map(function (t) { return '<div class="pd-kpi"><span>' + t[0] + '</span><b>' + t[1] + '</b><small>' + t[2] + '</small></div>'; }).join('');
@@ -201,11 +194,11 @@
       var d = Math.round((a - b) / b * 100);
       out.push('ב־' + (LAST - 1) + ' הוגשו <b>' + fmt(a) + '</b> תובענות, ' + (d === 0 ? 'בדיוק כמו' : (d > 0 ? 'עלייה של ' : 'ירידה של ') + Math.abs(d) + '% לעומת') + ' ' + (LAST - 2) + '.');
     }
-    var best = FIELDS.map(function (f) { var g = goodRate(list.filter(function (x) { return x.field === f.name; })); return { n: f.name, r: g.rate, d: g.done }; })
+    var most = FIELDS.map(function (f) { var l = list.filter(function (x) { return x.field === f.name; }); return { n: f.name, r: pct(l.filter(isOpen).length, l.length), d: l.length }; })
       .filter(function (x) { return x.d >= 15; }).sort(function (p, q) { return q.r - p.r; })[0];
-    if (!F.field && best) out.push('שיעור האישור או הפשרה הגבוה ביותר הוא בתחום <b>' + esc(best.n) + '</b>: ' + best.r + '% מהתיקים שהוכרעו.');
-    var lv = count(list.filter(isLive), 'df'), who = Object.keys(lv).sort(function (p, q) { return lv[q] - lv[p]; })[0];
-    if (who) out.push('הכי הרבה תיקים פעילים הם נגד <b>' + esc(who) + '</b>: ' + fmt(lv[who]) + ' תיקים.');
+    if (!F.field && !F.status && most) out.push('השיעור הגבוה ביותר של תיקים פתוחים הוא בתחום <b>' + esc(most.n) + '</b>: ' + most.r + '% מהתיקים בו.');
+    var lv = count(list.filter(isOpen), 'df'), who = Object.keys(lv).sort(function (p, q) { return lv[q] - lv[p]; })[0];
+    if (who) out.push('הכי הרבה תיקים פתוחים הם נגד <b>' + esc(who) + '</b>: ' + fmt(lv[who]) + ' תיקים.');
     $('pdIns').innerHTML = out.map(function (t) { return '<li>' + t + '</li>'; }).join('');
   }
   function niceMax(m) {
@@ -252,20 +245,19 @@
     $('pdFields').innerHTML = bars(fieldOrder(base), { click: true, of: function (n) { return pct(n, base.length); } });
   }
   function drawOutcomes(list) {
+    var keys = Object.keys(STATUS);
     var fs = fieldOrder(list).filter(function (x) { return x.n; }).map(function (x) {
-      var done = list.filter(function (d) { return d.field === x.name && d.status !== 'pending'; }), c = count(done, 'status');
-      return { name: x.name, done: done.length, c: c };
-    }).filter(function (x) { return x.done; });
-    if (!fs.length) { $('pdOut').innerHTML = '<p class="pd-none">עדיין אין תיקים שהוכרעו בסינון הזה.</p>'; return; }
-    var legend = '<div class="pd-legend">' + OUTCOMES.map(function (k, i) { return '<span><i class="pd-s' + i + '"></i>' + STATUS[k] + '</span>'; }).join('') + '</div>';
+      return { name: x.name, all: x.n, c: count(list.filter(function (d) { return d.field === x.name; }), 'status') };
+    });
+    var legend = '<div class="pd-legend">' + keys.map(function (k, i) { return '<span><i class="pd-st' + i + '"></i>' + STATUS[k] + '</span>'; }).join('') + '</div>';
     var body = fs.map(function (f) {
-      return '<div class="pd-stack"><span class="pd-blabel">' + esc(f.name) + '</span><span class="pd-stacktrack">' + OUTCOMES.map(function (k, i) {
+      return '<div class="pd-stack"><span class="pd-blabel">' + esc(f.name) + '</span><span class="pd-stacktrack">' + keys.map(function (k, i) {
         var n = f.c[k] || 0;
-        return n ? '<i class="pd-s' + i + '" tabindex="0" style="flex:' + n + ' 0 0" data-tip="' + esc(f.name) + ', ' + STATUS[k] + ': ' + pct(n, f.done) + '% (' + fmt(n) + ' מתוך ' + fmt(f.done) + ')"></i>' : '';
+        return n ? '<i class="pd-st' + i + '" tabindex="0" style="flex:' + n + ' 0 0" data-tip="' + esc(f.name) + ', ' + STATUS[k] + ': ' + pct(n, f.all) + '% (' + fmt(n) + ' מתוך ' + fmt(f.all) + ')"></i>' : '';
       }).join('') + '</span></div>';
     }).join('');
-    $('pdOut').innerHTML = legend + body + dataTable('תוצאות לפי תחום, באחוזים', ['תחום'].concat(OUTCOMES.map(function (k) { return STATUS[k]; })).concat('הוכרעו'),
-      fs.map(function (f) { return [esc(f.name)].concat(OUTCOMES.map(function (k) { return pct(f.c[k] || 0, f.done) + '%'; })).concat(fmt(f.done)); }));
+    $('pdOut').innerHTML = legend + body + dataTable('פתוחים וסגורים לפי תחום', ['תחום', 'פתוחים', 'סגורים', 'סך הכול'],
+      fs.map(function (f) { return [esc(f.name), pct(f.c.open || 0, f.all) + '% (' + fmt(f.c.open || 0) + ')', pct(f.c.closed || 0, f.all) + '% (' + fmt(f.c.closed || 0) + ')', fmt(f.all)]; }));
   }
   function drawHeat(list) {
     var ys = [];
@@ -290,7 +282,7 @@
     var c = count(list, 'court');
     var items = COURTS.map(function (x) { return { name: x.name, n: c[x.name] || 0 }; }).filter(function (x) { return x.n; }).sort(function (a, b) { return b.n - a.n; });
     var mx = items.length ? items[0].n : 1;
-    $('pdCourts').innerHTML = '<div class="pd-scroll"><table class="pd-table"><thead><tr><th scope="col">ערכאה</th><th scope="col">תיקים</th><th scope="col">עד הכרעה</th></tr></thead><tbody>' + items.map(function (x) {
+    $('pdCourts').innerHTML = '<div class="pd-scroll"><table class="pd-table"><thead><tr><th scope="col">ערכאה</th><th scope="col">תיקים</th><th scope="col">עד סגירה</th></tr></thead><tbody>' + items.map(function (x) {
       var m = months(list.filter(function (d) { return d.court === x.name; }));
       return '<tr><td>' + esc(x.name) + '</td><td class="pd-cellbar"><span class="pd-track"><i style="width:' + (x.n / mx * 100) + '%"></i></span><span class="pc-num">' + fmt(x.n) + '</span></td><td>' + (m ? '<span class="pc-num">' + Math.round(m) + '</span> חודשים' : '–') + '</td></tr>';
     }).join('') + '</tbody></table></div>';
@@ -299,9 +291,9 @@
     var by = {};
     list.forEach(function (d) { (by[d.df] = by[d.df] || []).push(d); });
     var top = Object.keys(by).sort(function (a, b) { return by[b].length - by[a].length; }).slice(0, 7);
-    $('pdDfs').innerHTML = '<div class="pd-scroll"><table class="pd-table"><thead><tr><th scope="col">משיבה</th><th scope="col">תחום</th><th scope="col">תיקים</th><th scope="col">פעילים</th><th scope="col">אישור או פשרה</th></tr></thead><tbody>' + top.map(function (n) {
-      var l = by[n], g = goodRate(l);
-      return '<tr><td>' + esc(n) + '</td><td>' + esc(l[0].field) + '</td><td class="pc-num">' + fmt(l.length) + '</td><td class="pc-num">' + fmt(l.filter(isLive).length) + '</td><td class="pc-num">' + (g.done ? g.rate + '%' : '–') + '</td></tr>';
+    $('pdDfs').innerHTML = '<div class="pd-scroll"><table class="pd-table"><thead><tr><th scope="col">משיבה</th><th scope="col">תחום</th><th scope="col">תיקים</th><th scope="col">פתוחים</th><th scope="col">סגורים</th></tr></thead><tbody>' + top.map(function (n) {
+      var l = by[n], o = l.filter(isOpen).length;
+      return '<tr><td>' + esc(n) + '</td><td>' + esc(l[0].field) + '</td><td class="pc-num">' + fmt(l.length) + '</td><td class="pc-num">' + fmt(o) + '</td><td class="pc-num">' + fmt(l.length - o) + '</td></tr>';
     }).join('') + '</tbody></table></div>';
   }
   function draw() {
