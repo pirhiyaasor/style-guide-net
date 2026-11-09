@@ -8,21 +8,6 @@
 <script src="site.js"></script>
 <script src="pinkas-dash.js"></script>
 <style>
-  /* ── פוטר במסכים צרים — כמו בשאר המסכים ── */
-  @media (max-width: 1180px) {
-    #siteFooter > div { padding: 56px 40px !important; gap: 40px !important; }
-    #siteFooter > div > div { flex-wrap: wrap !important; gap: 40px !important; }
-    #siteFooter > div > div > div { flex: 1 1 300px !important; }
-  }
-  @media (max-width: 860px) {
-    #siteFooter > div { padding: 44px 20px !important; }
-    #siteFooter > div > div > div { flex: 1 1 100% !important; }
-    /* phone / WhatsApp / chat stack instead of three side by side */
-    #siteFooter [style*="gap:24px;width:100%"] { flex-direction: column !important; gap: 18px !important; }
-    #siteFooter [style*="align-self:stretch"] { display: none !important; }
-  }
-</style>
-<style>
   .cvs-headerclear {
     height: 36px; padding: 0 4px; flex-shrink: 0;
     background: none; border: 0; color: var(--brand-navy);
@@ -643,117 +628,7 @@
 </aside>
 <div class="pc-docbg" id="pcDocBg" hidden></div>
 
-<div id="siteFooter" style="flex-shrink:0;background:#001e40">
-  <div style="max-width:1840px;margin:0 auto;padding:70px 96px;display:flex;flex-direction:column;gap:60px;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
-    <div style="display:flex;justify-content:space-between;gap:40px">
-
-      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
-        <div style="position:relative;width:40px;height:40px">
-          <div style="position:absolute;top:17.5%;right:6.18%;bottom:15.23%;left:7.5%">
-            <img src="assets/footer-frame.svg" style="position:absolute;inset:0;width:100%;height:100%">
-          </div>
-        </div>
-        <div style="font:600 20px 'Rubik';color:#f4f8fe">מידע שימושי</div>
-        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#f4f8fe;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הגשת תביעה קטנה</a>
-        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הגשת תביעה בדיון מהיר בבית הדין לעבודה</a>
-        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> בקשה לשינוי מועד דיון</a>
-        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> בקשה לפטור מאגרה בשל חוסר יכולת כלכלית</a>
-      </div>
-
-      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
-        <div style="position:relative;width:40px;height:40px">
-          <div style="position:absolute;top:15%;right:7.43%;bottom:15.17%;left:7.5%;overflow:hidden">
-            <div style="position:absolute;top:19.3%;right:60.24%;bottom:16.11%;left:0">
-              <div style="position:absolute;top:-2.77%;right:0;bottom:0;left:0">
-                <img src="assets/footer-group.svg" style="display:block;width:100%;height:100%">
-              </div>
-            </div>
-            <div style="position:absolute;top:6.48%;right:0;bottom:28.93%;left:60.27%">
-              <div style="position:absolute;top:-2.77%;right:0;bottom:0;left:0">
-                <img src="assets/footer-group1.svg" style="display:block;width:100%;height:100%">
-              </div>
-            </div>
-            <div style="position:absolute;top:6.48%;right:19.89%;bottom:80.7%;left:19.86%">
-              <div style="position:absolute;top:-13.97%;right:-2.44%;bottom:-13.97%;left:-2.44%">
-                <img src="assets/footer-vector.svg" style="display:block;width:100%;height:100%">
-              </div>
-            </div>
-            <div style="position:absolute;top:13.57%;right:50.01%;bottom:10.06%;left:49.99%">
-              <div style="position:absolute;top:-2.34%;right:-0.5px;bottom:-2.34%;left:-0.5px">
-                <img src="assets/footer-vector1.svg" style="display:block;width:100%;height:100%">
-              </div>
-            </div>
-            <div style="position:absolute;top:91.01%;right:39.79%;bottom:8.99%;left:39.76%">
-              <div style="position:absolute;top:-0.5px;right:-7.18%;bottom:-0.5px;left:-7.18%">
-                <img src="assets/footer-vector2.svg" style="display:block;width:100%;height:100%">
-              </div>
-            </div>
-            <div style="position:absolute;top:98.21%;right:34.09%;bottom:1.79%;left:34.09%">
-              <div style="position:absolute;top:-0.5px;right:-4.62%;bottom:-0.5px;left:-4.62%">
-                <img src="assets/footer-vector3.svg" style="display:block;width:100%;height:100%">
-              </div>
-            </div>
-            <div style="position:absolute;top:0;right:47.11%;bottom:92.91%;left:47.07%">
-              <img src="assets/footer-vector4.svg" style="position:absolute;inset:0;width:100%;height:100%">
-            </div>
-          </div>
-        </div>
-        <div style="font:600 20px 'Rubik';color:#f4f8fe">אודות</div>
-        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#f4f8fe;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> משוב</a>
-        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> תנאי שימוש</a>
-        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> שימוש בקבצי cookies</a>
-        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הצהרת נגישות</a>
-      </div>
-
-      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
-        <div style="position:relative;width:40px;height:40px">
-          <div style="position:absolute;top:12.5%;right:12.13%;bottom:12.13%;left:12.5%;overflow:hidden">
-            <div style="position:absolute;top:2.72%;right:2.75%;bottom:2.75%;left:2.72%">
-              <div style="position:absolute;top:-1.75%;right:-1.75%;bottom:-1.75%;left:-1.75%">
-                <img src="assets/footer-group2.svg" style="display:block;width:100%;height:100%">
-              </div>
-            </div>
-            <div style="position:absolute;top:0;right:41.26%;bottom:0;left:41.23%">
-              <img src="assets/footer-group3.svg" style="position:absolute;inset:0;width:100%;height:100%">
-            </div>
-            <div style="position:absolute;top:41.23%;right:0;bottom:41.26%;left:0">
-              <img src="assets/footer-group4.svg" style="position:absolute;inset:0;width:100%;height:100%">
-            </div>
-          </div>
-        </div>
-        <div style="font:600 20px 'Rubik';color:#f4f8fe">מוקד מידע ושירות ארצי</div>
-        <div style="font:400 16px 'Rubik';color:#fff;width:100%">
-          <div>שעות מענה אנושי:</div>
-          <div style="margin-top:4px">ימים א-ה: 8:00 עד 17:00</div>
-          <div>ימי ו, ערבי חג וחול המועד: 8:00 עד 12:30</div>
-        </div>
-        <div style="display:flex;gap:24px;width:100%">
-          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
-            <div style="font:400 18px 'Rubik';color:#fff">בטלפון</div>
-            <div style="display:flex;align-items:center;gap:16px">
-              <span dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">077-2703333</span>
-              <span style="width:2px;height:18px;background:rgba(255,255,255,.2)"></span>
-              <span dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">*3852</span>
-            </div>
-            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> ניתן לזמן תור לשיחה</a>
-          </div>
-          <div style="width:2px;background:rgba(255,255,255,.2);align-self:stretch"></div>
-          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
-            <div style="font:400 18px 'Rubik';color:#fff">בווטסאפ</div>
-            <div dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">050-6255727</div>
-            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> להתחיל שיחה</a>
-          </div>
-          <div style="width:2px;background:rgba(255,255,255,.2);align-self:stretch"></div>
-          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
-            <div style="font:400 18px 'Rubik';color:#fff">בצ'אט</div>
-            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> להתחיל שיחה</a>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</div>
+<!-- no footer in this version -->
 
 <script>
   /* the account menu closes on any click outside it */
