@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>פנקס התובענות הייצוגיות | נט המשפט</title>
+<link rel="stylesheet" href="styles.css">
+<script src="site.js"></script>
+<script src="pinkas-dash.js"></script>
+<style>
+  /* ── פוטר במסכים צרים — כמו בשאר המסכים ── */
+  @media (max-width: 1180px) {
+    #siteFooter > div { padding: 56px 40px !important; gap: 40px !important; }
+    #siteFooter > div > div { flex-wrap: wrap !important; gap: 40px !important; }
+    #siteFooter > div > div > div { flex: 1 1 300px !important; }
+  }
+  @media (max-width: 860px) {
+    #siteFooter > div { padding: 44px 20px !important; }
+    #siteFooter > div > div > div { flex: 1 1 100% !important; }
+    /* phone / WhatsApp / chat stack instead of three side by side */
+    #siteFooter [style*="gap:24px;width:100%"] { flex-direction: column !important; gap: 18px !important; }
+    #siteFooter [style*="align-self:stretch"] { display: none !important; }
+  }
+</style>
+<style>
+  .cvs-headerclear {
+    height: 36px; padding: 0 4px; flex-shrink: 0;
+    background: none; border: 0; color: var(--brand-navy);
+    font: 400 14px 'Rubik'; cursor: pointer; white-space: nowrap;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .cvs-headerclear:hover { color: var(--brand-navy-hover); }
+
+  /* ── mobile: the rail becomes a drawer (design.md §6) ── */
+  .hp-burger { display: none; }
+  .md-backdrop { display: none; }
+  @media (max-width: 860px) {
+    body { padding-right: 0 !important; }
+    /* the drawer waits off-screen to the right; without this it counts as page
+       width and the whole page scrolls sideways */
+    html { overflow-x: hidden; }
+    .hp-burger {
+      display: flex; align-items: center; justify-content: center;
+      width: 40px; height: 40px; border: 0; border-radius: 8px; background: none;
+      color: var(--brand-navy); cursor: pointer; flex-shrink: 0; margin-inline-end: 4px;
+    }
+    .hp-burger:hover { background: var(--cvs-hover); }
+    .hp-burger svg { width: 22px; height: 22px; }
+    .cvs-thinscroll {
+      width: 284px !important; max-width: 86vw; transform: translateX(100%);
+      transition: transform .22s ease, visibility 0s .22s; box-shadow: -8px 0 24px rgba(20,40,80,.14); overflow-y: auto !important;
+      visibility: hidden;   /* closed: out of the tab order too */
+    }
+    body.md-drawer-open { overflow: hidden; }
+    body.md-drawer-open .cvs-thinscroll { transform: none; visibility: visible; transition: transform .22s ease; }
+    body.md-drawer-open .md-backdrop { display: block; position: fixed; inset: 0; z-index: 35; background: rgba(6,30,64,.32); }
+    .cvs-railInner { align-items: stretch !important; padding: 0 12px 12px !important; }
+    .md-drawerhead { display: flex !important; }
+    .cvs-thinscroll .cvs-raildash, .cvs-thinscroll .cvs-railnav > summary, .cvs-thinscroll .cvs-railInner > a {
+      flex-direction: row !important; justify-content: flex-start !important; gap: 12px !important;
+      padding: 12px !important; height: auto !important; margin: 0 !important;
+    }
+    .cvs-thinscroll .cvs-railInner span { font-size: 16px !important; text-align: start !important; }
+    .cvs-thinscroll .cvs-railInner span br { display: none; }
+    .cvs-thinscroll .cvs-railnav > div {
+      position: static !important; width: auto !important; box-shadow: none !important;
+      padding: 0 31px 4px 0 !important;
+    }
+    #cvsTopHeader > div { flex-wrap: wrap; height: auto !important; padding: 10px 16px !important; row-gap: 10px; }
+    #cvsTopHeader .md-logocol { width: auto !important; flex: 1 1 auto !important; }
+    #cvsTopHeader .md-findcol { order: 3; flex: 1 1 100% !important; padding-right: 0 !important; flex-wrap: wrap; }
+    #cvsTopHeader .md-findcol select.cvs-select { width: 140px !important; }
+    .md-content { padding: 0 16px 64px !important; }
+  }
+  .md-drawerhead {
+    display: none; align-items: center; justify-content: space-between;
+    height: 56px; margin: 0 -12px 8px; padding: 0 16px; border-bottom: 1px solid #e1e6ef;
+    font: 600 17px 'Rubik'; color: var(--fg-1);
+  }
+  .md-drawerhead button {
+    width: 40px; height: 40px; border: 0; background: none; border-radius: 8px; cursor: pointer;
+    color: var(--fg-2); display: flex; align-items: center; justify-content: center;
+  }
+  .md-drawerhead button:hover { background: var(--cvs-hover); }
+  .cvs-railInner > .md-drawerhead:hover { background: none; }
+</style>
+<style>
+  /* Standalone version for נט המשפט: no rail, no case search, the נט המשפט logo. */
+  /* ═══ פנקס התובענות הייצוגיות. Shares styles.css (tokens, rail, header, footer)
+         with the other screens. A question opens 20 search results (table or cards);
+         the chosen cases go into a conversation whose answers cite paragraphs in
+         the cases' documents, shown beside it as in the case screen. ═══ */
+
+  [hidden] { display: none !important; }
+
+  /* design.md §2.2 / §7.2: contrast fixes that styles.css does not carry yet */
+  :root {
+    --tertiary-text-color: #6c6e81;
+    --fg-disabled: #9699a6;
+    --border-field: #878ca0;
+    --pc-page: #f4f8fc;
+    --pc-ink: #001E40;
+    --pc-title: #1a1a1a;
+  }
+  body { background: var(--pc-page); }
+  #cvsTopHeader input, #cvsTopHeader select { border-color: var(--border-field) !important; }
+  #cvsTopHeader input::placeholder { color: var(--fg-3); }
+
+  .pc-wrap { padding-top: 14px; }
+  .pc-headacts { margin-inline-start: auto; align-self: center; display: flex; flex-wrap: wrap; gap: 8px; }
+  .pc-newbtn { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 6px; border: 1px solid var(--border-1); background: #fff; color: var(--brand-navy); font: 500 14px 'Rubik'; cursor: pointer; }
+  .pc-newbtn:hover { background: var(--brand-tint); border-color: var(--brand-tint); }
+  .pc-newbtn svg { width: 16px; height: 16px; }
+  .pc-main.is-dash { max-width: 1240px; }
+  #pcTitle:focus { outline: none; }
+
+  /* ── data dashboard (pinkas-dash.js) ── */
+  .pd-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(20,40,80,.07); padding: 16px 18px; }
+  .pd-filter { display: flex; flex-direction: column; gap: 5px; font: 500 13px 'Rubik'; color: var(--fg-2); }
+  .pd-selwrap { position: relative; display: block; }
+  .pd-selwrap select { appearance: none; -webkit-appearance: none; height: 38px; min-width: 112px; max-width: 190px; padding: 0 10px 0 28px; border: 1px solid var(--border-field); border-radius: 6px; background: #fff; font: 400 14px 'Rubik'; color: var(--fg-1); cursor: pointer; }
+  .pd-selwrap select:focus-visible { outline: none; box-shadow: var(--box-shadow-focus); }
+  .pd-selwrap svg { position: absolute; left: 8px; top: 50%; width: 14px; height: 14px; transform: translateY(-50%); color: var(--fg-2); pointer-events: none; }
+  .pd-filteracts { margin-inline-start: auto; display: flex; align-items: center; gap: 14px; height: 38px; }
+  .pd-filteracts .pc-btn svg { width: 15px; height: 15px; }
+  .pd-count { margin: 12px 2px 14px; font: 400 14px 'Rubik'; color: var(--fg-2); }
+  .pd-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+  .pd-kpi { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(20,40,80,.07); padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .pd-kpi span { font: 400 14px 'Rubik'; color: var(--fg-2); }
+  .pd-kpi b { font: 600 25px/1.25 'Rubik'; color: var(--pc-title); font-variant-numeric: tabular-nums; }
+  .pd-kpi small { font: 400 12.5px 'Rubik'; color: var(--fg-3); }
+  .pd-insights { margin: 14px 0; padding: 14px 18px; border-radius: 12px; background: var(--brand-tint); color: var(--pc-ink); }
+  .pd-insights h3 { margin: 0 0 6px; font: 600 15px 'Rubik'; color: var(--pc-ink); }
+  .pd-insights ul { margin: 0; padding: 0 18px 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 32px; font: 400 14.5px/1.55 'Rubik'; }
+  .pd-insights b { font-weight: 600; }
+  .pd-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px; }
+  .pd-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(20,40,80,.07); padding: 18px 20px; min-width: 0; }
+  .pd-c4 { grid-column: span 4; } .pd-c5 { grid-column: span 5; } .pd-c7 { grid-column: span 7; } .pd-c8 { grid-column: span 8; } .pd-c12 { grid-column: span 12; }
+  .pd-card h3 { margin: 0; font: 600 17px/1.35 'Rubik'; color: var(--pc-title); }
+  .pd-sub { margin: 2px 0 16px; font: 400 13.5px/1.45 'Rubik'; color: var(--fg-2); }
+  .pd-none { margin: 0; font: 400 14px 'Rubik'; color: var(--fg-2); }
+  .pd-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .pd-plot { position: relative; height: 190px; margin: 14px 0 0; padding-right: 38px; }
+  .pd-gl { position: absolute; right: 0; left: 0; border-top: 1px solid #e6eaf1; }
+  .pd-gl span { position: absolute; right: 0; top: -9px; padding-left: 6px; background: #fff; font: 400 12px 'Rubik'; color: var(--fg-3); }
+  .pd-cols { position: relative; height: 100%; display: flex; align-items: flex-end; gap: 2px; }
+  .pd-col { flex: 1 1 0; height: 100%; display: flex; align-items: flex-end; justify-content: center; min-width: 0; cursor: default; border-radius: 4px; }
+  .pd-col:hover, .pd-col:focus-visible { background: rgba(42,120,214,.07); outline: none; }
+  .pd-colbar { position: relative; width: 100%; max-width: 24px; min-height: 0; background: #2a78d6; border-radius: 4px 4px 0 0; }
+  .pd-col.is-partial .pd-colbar { background: #a9c9ee; }
+  .pd-colbar em { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); padding-bottom: 3px; font: 500 12.5px 'Rubik'; color: var(--pc-ink); white-space: nowrap; }
+  .pd-xlabels { display: flex; gap: 2px; margin-top: 6px; padding-right: 38px; }
+  .pd-xlabels span { flex: 1 1 0; min-width: 0; text-align: center; font: 400 12px 'Rubik'; color: var(--fg-2); }
+  .pd-bars { display: flex; flex-direction: column; gap: 2px; }
+  .pd-bar { display: grid; grid-template-columns: 132px minmax(0, 1fr) 42px; align-items: center; gap: 8px; width: 100%; min-height: 34px; padding: 0 6px; border: 0; border-radius: 6px; background: none; font: 400 14px 'Rubik'; color: var(--pc-ink); text-align: start; }
+  .pd-barbtn { cursor: pointer; }
+  .pd-barbtn:hover { background: var(--cvs-hover); }
+  .pd-barbtn:focus-visible { outline: none; box-shadow: var(--box-shadow-focus); }
+  .pd-barbtn[aria-pressed="true"] { background: var(--brand-tint); font-weight: 500; }
+  .pd-blabel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pd-track { display: block; height: 10px; }
+  .pd-track i { display: block; height: 100%; background: #2a78d6; border-radius: 4px 0 0 4px; }
+  .pd-bval { font-size: 13.5px; color: var(--fg-2); text-align: end; }
+  .pd-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 12px; font: 400 13px 'Rubik'; color: var(--fg-2); }
+  .pd-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .pd-legend i { width: 11px; height: 11px; border-radius: 3px; }
+  .pd-st0 { background: #2a78d6; } .pd-st1 { background: #b9c2d0; }
+  .pd-stack { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: center; gap: 8px; min-height: 30px; font: 400 14px 'Rubik'; color: var(--pc-ink); }
+  .pd-stacktrack { display: flex; gap: 2px; height: 14px; }
+  .pd-stacktrack i { min-width: 2px; }
+  .pd-stacktrack i:first-child { border-radius: 0 4px 4px 0; }
+  .pd-stacktrack i:last-child { border-radius: 4px 0 0 4px; }
+  .pd-stacktrack i:focus-visible { outline: 2px solid var(--pc-ink); outline-offset: 1px; }
+  .pd-scroll { overflow-x: auto; }
+  .pd-heat { width: 100%; min-width: 620px; border-collapse: separate; border-spacing: 2px; font: 400 13.5px 'Rubik'; }
+  .pd-heat th { font: 400 13px 'Rubik'; color: var(--fg-2); padding: 3px 6px; }
+  .pd-heat tbody th { text-align: start; color: var(--pc-ink); font-size: 14px; white-space: nowrap; }
+  .pd-heat td { height: 32px; text-align: center; border-radius: 4px; cursor: default; }
+  .pd-heat td:focus-visible { outline: 2px solid var(--pc-ink); outline-offset: 1px; }
+  .pd-scale { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 8px; font: 400 12px 'Rubik'; color: var(--fg-2); }
+  .pd-scale i { width: 110px; height: 8px; border-radius: 4px; background: linear-gradient(to left, #e8eff9, #0a3b8f); }
+  .pd-table { width: 100%; border-collapse: collapse; font: 400 14px 'Rubik'; color: var(--pc-ink); }
+  .pd-table th { text-align: start; padding: 7px 8px; font: 500 13px 'Rubik'; color: var(--fg-2); background: #eff5fd; white-space: nowrap; }
+  .pd-table td { padding: 8px; border-top: 1px solid #eef1f6; }
+  .pd-table td:first-child { min-width: 130px; }
+  .pd-cellbar { display: flex; align-items: center; gap: 8px; min-width: 110px; }
+  .pd-cellbar .pd-track { flex: 1; }
+  .pd-tablewrap { margin-top: 12px; }
+  .pd-tablewrap summary { display: inline-block; cursor: pointer; font: 400 13.5px 'Rubik'; color: var(--brand-navy); text-decoration: underline; text-underline-offset: 3px; }
+  .pd-tablewrap .pd-table { margin-top: 8px; }
+  .pd-empty { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 70px 16px; text-align: center; font: 400 14px 'Rubik'; color: var(--fg-3); }
+  .pd-empty b { font: 500 16px 'Rubik'; color: var(--fg-2); }
+  .pd-note { margin-top: 14px; text-align: center; }
+  .pd-tip { position: fixed; z-index: 60; max-width: 260px; padding: 6px 10px; border-radius: 6px; background: #14233c; color: #fff; font: 400 13px/1.4 'Rubik'; pointer-events: none; box-shadow: var(--box-shadow-medium); }
+  @media (max-width: 1180px) {
+    .pd-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .pd-c4, .pd-c5, .pd-c7, .pd-c8 { grid-column: span 12; }
+  }
+  @media (max-width: 700px) {
+    .pd-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .pd-kpi { padding: 12px 14px; }
+    .pd-kpi b { font-size: 20px; }
+    .pd-insights ul { grid-template-columns: minmax(0, 1fr); }
+    .pd-card { padding: 16px 14px; }
+    .pd-filter { flex: 1 1 calc(50% - 6px); min-width: 0; }
+    .pd-selwrap select { width: 100%; max-width: none; min-width: 0; }
+    .pd-filteracts { flex: 1 1 100%; margin: 0; justify-content: space-between; }
+    .pd-xlabels .pd-thin { visibility: hidden; }
+    .pd-bar { grid-template-columns: 124px minmax(0, 1fr) 38px; }
+  }
+
+  /* ── page frame ── */
+  .pc-main { min-width: 0; max-width: 980px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; }
+  .pc-main.is-wide { max-width: none; }
+  .pc-pagehead { display: flex; align-items: flex-start; gap: 12px 24px; flex-wrap: wrap; margin-bottom: 18px; }
+  .pc-headtext { flex: 1 1 520px; min-width: 0; }
+  .pc-pagehead .dc-title { margin: 0; font: 700 26px/1.25 'Rubik'; color: var(--pc-title); letter-spacing: -.2px; }
+  .pc-pagehead p { margin: 6px 0 0; max-width: 92ch; font: 400 15px/1.55 'Rubik'; color: var(--fg-2); }
+  .pc-headacts { margin-inline-start: auto; align-self: flex-start; }
+  .pd-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+  /* ── welcome (screen 1) ── */
+  .pc-welcome { padding: 34px 0 34px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+  .pc-mark { width: 56px; height: 56px; border-radius: 14px; background: var(--brand-tint); color: var(--brand-navy); display: grid; place-items: center; margin-bottom: 6px; }
+  .pc-mark svg { width: 28px; height: 28px; }
+  .pc-welcome h2 { margin: 0; font: 600 24px/32px 'Rubik'; color: var(--pc-title); letter-spacing: -.2px; text-wrap: balance; }
+  .pc-welcome > p { margin: 0 0 14px; max-width: 60ch; font: 400 15px/1.6 'Rubik'; color: var(--fg-2); }
+  .pc-welcome .pc-composer { width: 100%; max-width: 760px; }
+  .pc-disclaim { margin-top: 18px; font: 400 12.5px 'Rubik'; color: var(--fg-3); }
+
+  /* ── composer ── */
+  .pc-composer { display: flex; align-items: flex-end; gap: 10px; background: #fff; border: 1px solid var(--border-field); border-radius: 11px; padding: 12px 14px 10px; box-shadow: 0 2px 10px rgba(20,40,80,.07); transition: border-color 100ms var(--motion-timing-transition, ease), box-shadow 100ms; }
+  .pc-composer:hover { border-color: var(--fg-2); }
+  .pc-composer:focus-within { border-color: var(--brand-navy); box-shadow: 0 0 0 4px rgba(42,111,219,.1), 0 2px 10px rgba(20,40,80,.07); }
+  .pc-composer textarea { flex: 1; border: 0; outline: none; resize: none; background: none; min-width: 0; min-height: 52px; max-height: 180px; font: 400 16px/1.55 'Rubik'; color: var(--fg-1); padding: 0; }
+  .pc-composer textarea::placeholder { color: var(--fg-3); }
+  .pc-send { width: 38px; height: 38px; border-radius: 6px; border: 0; background: var(--brand-navy); color: #fff; display: grid; place-items: center; cursor: pointer; flex: none; }
+  .pc-send:hover { background: var(--brand-navy-hover); }
+  .pc-send:disabled { background: var(--brand-tint-strong); color: var(--brand-navy); cursor: not-allowed; }
+  .pc-send svg { width: 18px; height: 18px; }
+  .pc-dock { position: sticky; bottom: 0; padding: 14px 0 18px; background: linear-gradient(to top, var(--pc-page) 70%, rgba(244,248,252,0)); margin-top: 8px; z-index: 5; }
+  .pc-dock .pc-composer textarea { min-height: 26px; }
+  .pc-dockhint { margin: 6px 4px 0; font: 400 12.5px 'Rubik'; color: var(--fg-3); text-align: center; }
+
+  /* ── demo note, status, small parts ── */
+  .pc-demo { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; padding: 8px 12px; border-radius: 8px; background: #fdf3dc; color: #6b4a05; font: 400 13.5px/1.5 'Rubik'; }
+  .pc-demo svg { width: 16px; height: 16px; flex: none; }
+  .pc-num { direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; }
+  .pc-st { display: inline-block; font: 500 12.5px 'Rubik'; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
+  .pc-st-open { background: #e3f4ea; color: #00734a; }
+  .pc-st-closed { background: #eef0f4; color: #4a4f60; }
+  .pc-pick { display: grid; place-items: center; width: 34px; height: 34px; margin: -7px; border-radius: 6px; cursor: pointer; }
+  .pc-pick:hover { background: var(--brand-tint); }
+  .pc-pick input { width: 18px; height: 18px; margin: 0; accent-color: var(--brand-navy); cursor: pointer; }
+  .pc-chev { width: 34px; height: 34px; border-radius: 6px; border: 0; background: none; color: var(--fg-2); display: grid; place-items: center; cursor: pointer; flex: none; }
+  .pc-chev:hover { background: var(--brand-tint); color: var(--brand-navy); }
+  .pc-chev svg { width: 18px; height: 18px; transition: transform .15s; }
+  .pc-chev[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .pc-btn { height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border-1); background: #fff; color: var(--brand-navy); font: 500 13.5px 'Rubik'; display: inline-flex; align-items: center; gap: 7px; cursor: pointer; }
+  .pc-btn:hover { background: var(--brand-tint); border-color: var(--brand-tint); }
+  .pc-btn:disabled { color: var(--fg-disabled); background: #f7f9fc; border-color: #e1e6ef; cursor: not-allowed; }
+  .pc-btn svg { width: 15px; height: 15px; }
+  .pc-linkbtn { border: 0; background: none; padding: 0; color: var(--brand-navy); font: 400 14px 'Rubik'; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .pc-linkbtn:hover { color: var(--brand-navy-hover); }
+  .pc-nodocs { margin: 0; font: 400 14px 'Rubik'; color: var(--fg-3); }
+  .pc-doclist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .pc-docrow { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 10px; border: 0; border-radius: 6px; background: none; color: var(--brand-navy); font: 400 14.5px 'Rubik'; text-align: start; cursor: pointer; }
+  .pc-docrow:hover { background: var(--cvs-hover); }
+  .pc-docrow svg { width: 16px; height: 16px; flex: none; }
+  .pc-docrow span { text-decoration: underline; text-underline-offset: 3px; }
+  .pc-docrow small { margin-inline-start: 6px; }
+  .pc-docrow small { font: 400 13px 'Rubik'; color: var(--fg-2); }
+
+  /* ── results (screen 2) ── */
+  .pc-reshead { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-bottom: 14px; }
+  .pc-reshead h2 { margin: 0; font: 600 20px 'Rubik'; color: var(--pc-title); }
+  .pc-reshead > div:first-child { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; min-width: 0; flex: 1 1 360px; }
+  #pcResCount { font: 400 14.5px/1.5 'Rubik'; color: var(--fg-2); }
+  #pcResCount b { color: var(--pc-ink); }
+  #pcResCount q { color: var(--pc-ink); }
+  .pc-restools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .pc-filterwrap { position: relative; }
+  .pc-resetview { font-size: 13.5px; white-space: nowrap; }
+  .pc-filterbtn { position: relative; width: 38px; height: 38px; }
+  .pc-filterbtn svg { width: 17px; height: 17px; }
+  .pc-filterbadge { position: absolute; top: -6px; left: -6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--brand-navy); color: #fff; font: 600 11px/18px 'Rubik'; text-align: center; }
+  .pc-filterpanel { position: absolute; top: calc(100% + 8px); left: 0; z-index: 20; width: 300px; display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 12px; background: #fff; box-shadow: var(--box-shadow-medium); }
+  .pc-filterpanel .pd-selwrap select { width: 100%; max-width: none; }
+  .pc-filterpanel .pc-linkbtn { align-self: flex-start; }
+  .pc-seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 8px; background: #e6ecf5; }
+  .pc-seg button { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 0; border-radius: 6px; background: none; color: var(--fg-2); font: 500 13.5px 'Rubik'; cursor: pointer; }
+  .pc-seg button svg { width: 15px; height: 15px; }
+  .pc-seg button[aria-pressed="true"] { background: #fff; color: var(--brand-navy); box-shadow: 0 1px 3px rgba(20,40,80,.12); }
+  .pc-seg button:focus-visible { outline: none; box-shadow: var(--box-shadow-focus); }
+  .pc-resload { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font: 400 14px 'Rubik'; color: var(--fg-2); }
+  .pc-skrow { height: 48px; border-radius: 8px; margin-bottom: 8px; }
+
+  .pc-tablewrap { overflow-x: auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(20,40,80,.07); }
+  .pc-rtable { width: 100%; min-width: 1060px; border-collapse: collapse; font: 400 14.5px/1.45 'Rubik'; color: var(--pc-ink); }
+  .pc-rtable th { position: sticky; top: 0; text-align: start; padding: 10px 10px; background: #eff5fd; font: 500 13.5px 'Rubik'; color: var(--fg-2); white-space: nowrap; }
+  .pc-rtable td { padding: 10px; border-top: 1px solid #eef1f6; vertical-align: middle; }
+  .pc-rtable .pc-ckcol { width: 44px; padding-inline-start: 18px; }
+  .pc-rrow:hover { background: #f8fafd; }
+  .pc-rrow.is-picked { background: var(--brand-tint); }
+  .pc-rrow.is-open td { border-bottom: 0; }
+  .pc-numtxt { font-weight: 600; color: var(--brand-navy); white-space: nowrap; }
+  .pc-tname { font-weight: 500; min-width: 200px; }
+  .pc-tcause { color: var(--fg-1); min-width: 260px; max-width: 360px; font-size: 14px; }
+  .pc-tcause b { font-weight: 500; color: var(--pc-ink); }
+  .pc-th { display: flex; align-items: center; gap: 2px; }
+  .pc-grip { display: grid; place-items: center; width: 14px; color: var(--fg-3); opacity: 0; cursor: grab; transition: opacity .12s; }
+  .pc-grip svg { width: 14px; height: 14px; }
+  .pc-rtable th[data-col]:hover .pc-grip, .pc-rtable th[data-col]:focus-within .pc-grip { opacity: 1; }
+  .pc-rtable th[data-col] { cursor: grab; }
+  .pc-rtable th.is-dragging { opacity: .45; }
+  .pc-rtable th.is-drop { box-shadow: inset -3px 0 0 var(--brand-navy); }
+  .pc-sortbtn { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px; border: 0; border-radius: 4px; background: none; font: inherit; color: inherit; white-space: nowrap; cursor: pointer; }
+  .pc-sortbtn svg { width: 14px; height: 14px; opacity: .45; }
+  .pc-sortbtn:hover { color: var(--brand-navy); background: var(--cvs-hover); }
+  .pc-sortbtn:hover svg, .pc-sortbtn.is-on svg { opacity: 1; }
+  .pc-sortbtn.is-on { color: var(--brand-navy); }
+  .pc-sortbtn:focus-visible { outline: none; box-shadow: var(--box-shadow-focus); }
+  .pc-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .pc-pager { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 18px; }
+  .pc-pg { min-width: 36px; height: 36px; padding: 0 12px; border: 1px solid var(--border-1); border-radius: 6px; background: #fff; color: var(--brand-navy); font: 500 14px 'Rubik'; cursor: pointer; }
+  .pc-pg:hover { background: var(--brand-tint); border-color: var(--brand-tint); }
+  .pc-pg.is-on { background: var(--brand-navy); border-color: var(--brand-navy); color: #fff; }
+  .pc-rdetail td { border-top: 0; padding-top: 0; }
+  .pc-rdetail.is-picked, .pc-rrow.is-picked + .pc-rdetail { background: var(--brand-tint); }
+  .pc-detail { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; padding: 6px 0 14px; }
+  .pc-detail h4, .pc-cardmore h4 { margin: 0 0 6px; font: 600 14px 'Rubik'; color: var(--pc-title); }
+  .pc-detail p { margin: 0; font: 400 14.5px/1.65 'Rubik'; color: var(--fg-1); }
+
+  .pc-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-items: start; }
+  .pc-card { background: #fff; border: 1.5px solid transparent; border-radius: 12px; box-shadow: 0 2px 10px rgba(20,40,80,.07); padding: 14px 16px 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .pc-card:hover { box-shadow: 0 6px 18px rgba(20,40,80,.1); }
+  .pc-card.is-picked { border-color: var(--brand-navy); background: var(--brand-tint); }
+  .pc-cardtop { display: flex; align-items: center; gap: 10px; }
+  .pc-cardtop .pc-st { margin-inline-start: auto; }
+  .pc-numpill { padding: 2px 10px; border-radius: 999px; background: var(--brand-tint); color: var(--brand-navy); font: 600 14px 'Rubik'; white-space: nowrap; }
+  .pc-card.is-picked .pc-numpill { background: #fff; }
+  .pc-card h3 { margin: 4px 0 0; font: 600 16px/1.4 'Rubik'; color: var(--pc-title); }
+  .pc-cardmeta { display: flex; flex-wrap: wrap; gap: 2px 0; font: 400 13px 'Rubik'; color: var(--fg-2); }
+  .pc-cardmeta > span + span::before { content: ""; display: inline-block; width: 1px; height: 12px; margin: 0 8px; background: var(--border-1); vertical-align: -1px; }
+  .pc-cardcause { margin: 2px 0 0; font: 400 14px/1.5 'Rubik'; color: var(--fg-1); }
+  .pc-cardcause b { font-weight: 600; color: var(--brand-navy); }
+  .pc-more { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; padding: 4px 0; border: 0; background: none; color: var(--brand-navy); font: 500 13.5px 'Rubik'; cursor: pointer; }
+  .pc-more svg { width: 15px; height: 15px; transition: transform .15s; }
+  .pc-more[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .pc-cardmore { display: flex; flex-direction: column; gap: 10px; padding: 10px 0 6px; border-top: 1px solid #eef1f6; }
+  .pc-cardmore p { margin: 0; font: 400 14px/1.6 'Rubik'; color: var(--fg-1); }
+  .pc-cardmore .pc-btn { align-self: flex-start; }
+
+  /* the call to action after choosing cases: a filled navy bar that slides up on the first pick */
+  .pc-pickbar { position: sticky; bottom: 16px; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 16px; padding: 14px 18px; border-radius: 12px; background: var(--brand-navy); color: #fff; box-shadow: 0 10px 30px rgba(6,30,64,.35); animation: pcBarIn 260ms cubic-bezier(0,0,.35,1); }
+  @keyframes pcBarIn { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .pc-pickcount { padding: 4px 12px; border-radius: 999px; background: rgba(255,255,255,.16); color: #fff; font: 600 15px 'Rubik'; }
+  .pc-pickbar > span:nth-child(2) { font: 400 14px 'Rubik'; color: #dbe6f7; }
+  .pc-pickbar .pc-linkbtn { margin-inline-start: auto; color: #fff; }
+  .pc-pickbar .pc-linkbtn:hover { color: #dbe6f7; }
+  .pc-pickbar .pc-primary { background: #fff; color: var(--brand-navy); font-weight: 600; }
+  .pc-pickbar .pc-primary:hover { background: var(--brand-tint); }
+  .pc-pickbar .pc-primary:focus-visible, .pc-pickbar .pc-linkbtn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .pc-primary { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border: 0; border-radius: 6px; background: var(--brand-navy); color: #fff; font: 500 15px 'Rubik'; cursor: pointer; }
+  .pc-primary:hover { background: var(--brand-navy-hover); }
+  .pc-primary svg { width: 17px; height: 17px; }
+
+  /* ── conversation with the chosen cases (screen 3) ── */
+  .pc-cases { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; align-items: start; }
+  .pc-cases.has-doc { grid-template-columns: 300px minmax(0, 1fr) minmax(420px, 44%); }
+  .pc-side { position: sticky; top: 84px; background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(20,40,80,.07); padding: 14px 10px; max-height: calc(100vh - 104px); overflow: auto; }
+  .pc-sidehead { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 8px; }
+  .pc-sidenote { margin: 4px 8px 10px; font: 400 13px/1.45 'Rubik'; color: var(--fg-3); }
+  .pc-sidehead h2 { margin: 0; font: 600 17px 'Rubik'; color: var(--brand-navy); }
+  .pc-badge { padding: 2px 9px; border-radius: 999px; background: var(--brand-tint); color: var(--brand-navy); font: 600 12.5px 'Rubik'; white-space: nowrap; }
+  #pcSideList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .pc-sc { border: 1px solid var(--border-2); border-radius: 10px; }
+  .pc-sc.is-on { border-color: var(--brand-tint-strong); }
+  .pc-scrow { display: flex; align-items: flex-start; gap: 10px; padding: 12px 10px 10px 6px; }
+  .pc-scrow .pc-pick { margin-top: -6px; }
+  .pc-scid { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .pc-scid b { font: 500 14.5px/1.4 'Rubik'; color: var(--pc-ink); }
+  .pc-scid > span { font: 400 13px 'Rubik'; color: var(--fg-2); }
+  .pc-scid .pc-num { font-weight: 600; color: var(--brand-navy); }
+  .pc-sc:not(.is-on) .pc-scid { opacity: .6; }
+  .pc-scrow .pc-chev { margin: -6px 0 0; }
+  .pc-scdocs { padding: 0 8px 8px; }
+  .pc-scdocs ul { list-style: none; margin: 0; padding: 6px 0 0; border-top: 1px solid #eef1f6; display: flex; flex-direction: column; gap: 2px; }
+  .pc-scdoc { display: flex; align-items: flex-start; gap: 8px; width: 100%; padding: 7px 8px; border: 0; border-right: 3px solid transparent; border-radius: 4px; background: none; color: var(--fg-1); font: 400 14px/1.4 'Rubik'; text-align: start; cursor: pointer; }
+  .pc-scdoc:hover { background: var(--cvs-hover); }
+  .pc-scdoc[aria-current="true"] { background: var(--brand-tint); border-right-color: var(--brand-navy); border-radius: 4px 0 0 4px; color: var(--brand-navy); font-weight: 500; }
+  .pc-scdoc svg { width: 16px; height: 16px; flex: none; margin-top: 1px; color: var(--brand-navy); }
+  .pc-scdoc span { display: flex; flex-direction: column; }
+  .pc-scdoc small { font: 400 12.5px 'Rubik'; color: var(--fg-3); }
+  .pc-scdocs .pc-nodocs { padding: 8px 8px 2px; border-top: 1px solid #eef1f6; font-size: 13.5px; }
+  .pc-back { width: 100%; justify-content: center; margin-top: 12px; height: 38px; }
+  .pc-chatcol { min-width: 0; }
+  .pc-pill { align-self: center; max-width: 100%; padding: 9px 18px; border-radius: 999px; background: #e6eef9; color: var(--pc-ink); font: 400 14.5px/1.5 'Rubik'; text-align: center; }
+  .pc-nonote { margin: 0 0 8px; }
+
+  .pc-viewer { position: sticky; top: 84px; height: calc(100vh - 104px); display: flex; flex-direction: column; background: #eef1f6; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(20,40,80,.07); }
+
+  /* ── conversation ── */
+  .pc-thread { display: flex; flex-direction: column; gap: 22px; padding-top: 4px; }
+  .pc-who { display: flex; align-items: center; gap: 10px; font: 600 15px 'Rubik'; color: var(--pc-ink); margin-bottom: 8px; }
+  .pc-who small { font: 400 13px 'Rubik'; color: var(--fg-3); }
+  .pc-av { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; flex: none; font: 600 13px 'Rubik'; }
+  .pc-av-user { background: var(--brand-tint); color: var(--brand-navy); }
+  .pc-av-bot { background: var(--brand-navy); color: #fff; }
+  .pc-av-bot svg { width: 17px; height: 17px; }
+  .pc-q { background: #fff; border: 1px solid var(--border-2); border-radius: 12px; padding: 14px 18px; font: 400 16px/1.6 'Rubik'; color: var(--pc-ink); white-space: pre-wrap; }
+
+  .pc-a { padding: 4px 0 10px; animation: pcIn 250ms cubic-bezier(0,0,.35,1); }
+  @keyframes pcIn { from { transform: translateY(6px); } to { transform: none; } }
+  .pc-ahead { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .pc-ahead .pc-who { margin: 0; flex: 1; }
+  .pc-acts { display: flex; gap: 2px; }
+  .pc-acts .cvs-iconbtn[aria-pressed="true"] { background: #e8f0fb; color: var(--pc-ink); }
+  .pc-body { font: 400 16px/1.75 'Rubik'; color: var(--fg-1); text-align: justify; }
+  .pc-ublock, .pc-a { padding-inline-start: 46px; }
+  .pc-ublock > .pc-who, .pc-a .pc-ahead { margin-inline-start: -46px; }
+  .pc-body p { margin: 0 0 14px; }
+  .pc-body h3 { margin: 22px 0 8px; font: 600 18px/26px 'Rubik'; color: var(--pc-title); letter-spacing: -.2px; }
+  .pc-body ul { margin: 0 0 14px; padding-inline-start: 20px; }
+  .pc-body li { margin-bottom: 8px; }
+  .pc-body b { font-weight: 600; color: var(--pc-ink); }
+  .pc-body blockquote { margin: 0 0 12px; padding: 4px 16px 4px 0; border-right: 3px solid var(--brand-tint-strong); color: var(--fg-1); }
+  .pc-body blockquote footer { all: unset; display: block; font: 400 13.5px 'Rubik'; color: var(--fg-2); margin-top: 4px; }
+  .pc-nocite { font-size: 13.5px; color: var(--fg-3); }
+  .pc-cite { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px; margin: 0 2px; vertical-align: 2px; border: 0; border-radius: 4px; background: var(--brand-tint); color: var(--brand-navy); font: 600 12px 'Rubik'; cursor: pointer; }
+  .pc-cite:hover { background: var(--brand-tint-strong); }
+  .pc-cite.is-current { background: var(--brand-navy); color: #fff; }
+  .pc-cite:focus-visible { outline: 2px solid var(--brand-azure); outline-offset: 2px; }
+  .pc-cmpwrap { overflow-x: auto; margin: 4px 0 14px; border: 1px solid var(--border-1); border-radius: 8px; background: #fff; }
+  .pc-cmp { width: 100%; min-width: 640px; border-collapse: collapse; font: 400 14px/1.45 'Rubik'; }
+  .pc-cmp th { background: #eff5fd; color: var(--fg-2); font-weight: 500; text-align: start; padding: 8px 10px; }
+  .pc-cmp td { padding: 9px 10px; border-top: 1px solid #eef1f6; color: var(--pc-ink); vertical-align: top; }
+  .pc-cmp td.pc-num { white-space: nowrap; }
+
+  /* ── loading (design.md §8.2) and error (§8.3) ── */
+  .pc-loading .pc-step { display: flex; align-items: center; gap: 8px; font: 400 14px 'Rubik'; color: var(--fg-2); margin-bottom: 14px; }
+  .pc-spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--brand-tint-strong); border-top-color: var(--brand-navy); animation: pcSpin .8s linear infinite; flex: none; }
+  @keyframes pcSpin { to { transform: rotate(360deg); } }
+  .pc-sk { height: 12px; border-radius: 4px; background: linear-gradient(90deg, #e7e9ef 0%, #f1f3f7 50%, #e7e9ef 100%); background-size: 200% 100%; animation: pcShim 1.2s ease-in-out infinite; margin-bottom: 10px; }
+  @keyframes pcShim { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+  .pc-notice { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 8px; background: #f7ded6; color: #9e2b12; font: 400 14.5px/1.5 'Rubik'; }
+  .pc-notice svg { width: 18px; height: 18px; flex: none; }
+  .pc-notice span { flex: 1; }
+  .pc-notice .pc-linkbtn { color: #9e2b12; font-weight: 500; }
+
+  /* ── the document: inline viewer (.pc-viewer) or overlay (.pc-docp) ── */
+  .pc-docp { position: fixed; top: 0; bottom: 0; left: 0; z-index: 45; width: min(46vw, 720px); background: #eef1f6; box-shadow: 0 15px 50px rgba(0,0,0,.22); display: flex; flex-direction: column; }
+  .pc-dochead { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #fff; border-bottom: 1px solid var(--border-2); }
+  .pc-dochead b { flex: 1; min-width: 0; font: 500 15.5px 'Rubik'; color: var(--pc-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pc-docx { width: 28px; height: 28px; border-radius: 6px; border: 0; background: var(--brand-tint); color: var(--brand-navy); display: grid; place-items: center; cursor: pointer; flex: none; }
+  .pc-docx:hover { background: var(--brand-tint-strong); }
+  .pc-docx svg { width: 15px; height: 15px; }
+  .pc-docscroll { flex: 1; overflow: auto; padding: 22px; }
+  .pc-paper { background: #fff; max-width: 620px; margin: 0 auto; padding: 46px 56px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,.12); font: 400 14.5px/1.85 'Rubik'; color: #1d2330; }
+  .pc-paper .c { text-align: center; font-weight: 600; }
+  .pc-paper .n { text-align: center; color: #555c6b; margin-bottom: 20px; }
+  .pc-paper h4 { text-align: center; font: 600 16px 'Rubik'; margin: 18px 0 12px; text-decoration: underline; text-underline-offset: 4px; }
+  .pc-paper p { margin: 0 0 12px; }
+  .pc-paper .pp { position: relative; margin: 0 0 12px; scroll-margin: 60px; }
+  .pc-paper mark { background: #fdf0c4; color: inherit; padding: 1px 2px; border-radius: 2px; }
+  .pc-paper .pp.is-active mark { background: #fbe08a; box-shadow: 0 0 0 2px #fbe08a; }
+  .pc-pins { position: absolute; top: 2px; right: -38px; display: flex; flex-direction: column; gap: 3px; }
+  .pc-pin { display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 4px; background: var(--brand-tint); color: var(--brand-navy); font: 600 12px/1 'Rubik'; }
+  .pc-paper .pp.is-active .pc-pin { background: var(--brand-navy); color: #fff; }
+  .pc-paper .pp-n { color: #555c6b; }
+  .pc-paper .pp-date { margin-top: 20px; color: #555c6b; }
+  .pc-paper .pp-demo { color: #555c6b; font-size: 12.5px; margin-top: 18px; }
+  .pc-docbg { position: fixed; inset: 0; z-index: 44; background: rgba(6,30,64,.32); }
+
+  @media (max-width: 1440px) { .pc-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 1180px) {
+    .pc-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pc-cases, .pc-cases.has-doc { grid-template-columns: 260px minmax(0, 1fr); }
+    .pc-viewer { display: none !important; }
+  }
+  @media (max-width: 1000px) { .pc-docp { width: min(640px, 100vw); } }
+  @media (max-width: 860px) {
+    .pc-welcome { padding: 20px 0 24px; }
+    .pc-cards { grid-template-columns: minmax(0, 1fr); }
+    .pc-detail { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .pc-cases, .pc-cases.has-doc { grid-template-columns: minmax(0, 1fr); }
+    .pc-side { position: static; max-height: none; }
+    .pc-a { padding: 2px 0 8px; }
+    .pc-body { font-size: 15.5px; }
+    .pc-paper { padding: 28px 22px 28px 22px; padding-right: 44px; }
+    .pc-pins { right: -32px; }
+    .pc-docscroll { padding: 12px; }
+    .pc-ahead .pc-who small, .pc-dockhint { display: none; }
+    .pc-restools { width: 100%; }
+    .pc-filterpanel { left: auto; right: 0; width: min(300px, calc(100vw - 48px)); }
+    .pc-ublock, .pc-a { padding-inline-start: 0; }
+    .pc-ublock > .pc-who, .pc-a .pc-ahead { margin-inline-start: 0; }
+    .pc-pickbar > span:nth-child(2) { display: none; }
+  }
+  @media (pointer: coarse) {
+    .pc-cite { position: relative; }
+    .pc-cite::after { content: ""; position: absolute; inset: -12px -6px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pc-a, .pc-sk, .pc-spin, .pc-pickbar { animation: none !important; }
+    .pc-chev svg, .pc-more svg { transition: none !important; }
+  }
+</style>
+</head>
+<body style="display:flex;flex-direction:column;min-height:100vh">
+<div id="cvsTopHeader" style="background:#fff;position:sticky;top:0;z-index:30">
+  <div style="max-width:1840px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;gap:0;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
+
+    <!-- logo column: same width as the accordion sidebar below, so their right edges align -->
+    <div class="md-logocol" style="width:260px;flex-shrink:0;display:flex;justify-content:flex-start">
+      <a href="https://www.court.gov.il/ngcs.web.site/homepage.aspx" title="לאתר נט המשפט" style="display:flex">
+        <img id="cvsLogo" src="assets/net-hamishpat-logo.png" alt="נט המשפט, קשר ממוחשב ומאובטח לבתי המשפט — לאתר נט המשפט" style="height:44px;width:auto">
+      </a>
+    </div>
+
+    <div style="flex:1"></div>
+
+    <!-- guest: login button; signed in: bell and account menu (site.js) -->
+    <div class="nh-user" id="nhUser"></div>
+    <script>NH.renderUser(document.getElementById('nhUser'));</script>
+
+  </div>
+</div>
+
+<div style="flex:1 0 auto;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
+  <main class="md-content" style="max-width:1840px;margin:0 auto;padding:0 32px 40px">
+    <nav class="dc-crumbs" aria-label="פירורי לחם">
+      <ol>
+        <li><a href="https://www.court.gov.il/ngcs.web.site/homepage.aspx">נט המשפט</a></li>
+        <li id="pcCrumbPinkas" hidden><a href="pinkas-net.html">פנקס התובענות הייצוגיות</a></li>
+        <li><span aria-current="page" id="pcCrumbNow">פנקס התובענות הייצוגיות</span></li>
+      </ol>
+    </nav>
+    <div class="pc-wrap">
+
+      <div class="pc-main" id="pcMain">
+        <div class="pc-pagehead">
+          <div class="pc-headtext">
+            <h1 class="dc-title" id="pcTitle" tabindex="-1">פנקס התובענות הייצוגיות</h1>
+            <p id="pcSubtitle">בדיקה אם כבר הוגשה תובענה ייצוגית בנושא</p>
+          </div>
+          <div class="pc-headacts">
+            <button type="button" class="pc-newbtn" id="pcDashBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><span id="pcDashLbl">דשבורד נתונים</span></button>
+            <button type="button" class="pc-newbtn" id="pcNew" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86z"/></svg>שיחה חדשה</button>
+          </div>
+        </div>
+
+        <!-- the data dashboard, inside the registry (pinkas-dash.js) -->
+        <div id="pcDash" hidden></div>
+
+        <!-- screen 1: the question -->
+        <section class="pc-welcome" id="pcWelcome" aria-labelledby="pcWelcomeH">
+          <div class="pc-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg></div>
+          <h2 id="pcWelcomeH">על איזה נושא תרצו להגיש תובענה?</h2>
+          <p>מתארים את המקרה במילים שלכם. התשובה מפרטת אילו תובענות ייצוגיות כבר הוגשו בנושא, מה מצבן, ומפנה לכל תיק בפנקס.</p>
+          <form class="pc-composer" id="pcFormHome">
+            <label for="pcAskHome" class="pd-sr">השאלה שלכם</label>
+            <textarea id="pcAskHome" rows="2" placeholder="למשל: חברת סלקום מחייבת אותי כל חודש על שירות תוכן שלא הזמנתי"></textarea>
+            <button type="submit" class="pc-send" aria-label="חיפוש" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg></button>
+          </form>
+          <div class="pc-disclaim">התשובות מבוססות על התיקים הרשומים בפנקס ואינן ייעוץ משפטי. כדאי לאמת כל תשובה מול המקורות.</div>
+        </section>
+
+        <!-- screen 2: the search results, as a table or as cards -->
+        <section class="pc-results" id="pcResults" aria-labelledby="pcResH" hidden>
+          <div class="pc-reshead">
+            <div><h2 id="pcResH">תוצאות חיפוש</h2><span id="pcResCount" aria-live="polite"></span></div>
+            <div class="pc-restools" role="group" aria-label="סינון ותצוגה">
+              <button type="button" class="pc-linkbtn pc-resetview" id="pcResetView" hidden>איפוס תצוגה</button>
+              <div class="pc-filterwrap">
+                <button type="button" class="cvs-filtertoggle pc-filterbtn" id="pcFilterBtn" title="סינון ומיון" aria-label="סינון ומיון התוצאות" aria-expanded="false" aria-controls="pcFilterPanel">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
+                  <span class="pc-filterbadge" id="pcFilterBadge" hidden></span>
+                </button>
+                <div class="pc-filterpanel" id="pcFilterPanel" role="group" aria-label="סינון ומיון" hidden>
+                  <label class="pd-filter"><span>ענף</span><span class="pd-selwrap"><select id="pcFBranch"></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></label>
+                  <label class="pd-filter"><span>בית משפט</span><span class="pd-selwrap"><select id="pcFCourt"></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></label>
+                  <label class="pd-filter"><span>סטטוס</span><span class="pd-selwrap"><select id="pcFStatus"><option value="">פתוחים וסגורים</option><option value="open">פתוחים</option><option value="closed">סגורים</option></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></label>
+                  <label class="pd-filter"><span>מיון</span><span class="pd-selwrap"><select id="pcFSort"></select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></label>
+                  <button type="button" class="pc-linkbtn" id="pcFilterClear">ניקוי סינון ומיון</button>
+                </div>
+              </div>
+              <div class="pc-seg" role="group" aria-label="תצוגה">
+                <button type="button" data-layout="table" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18"/><path d="M3 12h18"/><path d="M3 19h18"/></svg>טבלה</button>
+                <button type="button" data-layout="cards" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>כרטיסיות</button>
+              </div>
+            </div>
+          </div>
+          <div id="pcResBody"></div>
+          <div class="pc-pickbar" id="pcPickbar" role="region" aria-label="התיקים שנבחרו" hidden>
+            <span class="pc-pickcount" id="pcPickCount"></span>
+            <span>אפשר לבחור כמה תיקים ולהשוות ביניהם בשיחה</span>
+            <button type="button" class="pc-linkbtn" id="pcPickClear">ניקוי בחירה</button>
+            <button type="button" class="pc-primary" id="pcStartChat"></button>
+          </div>
+        </section>
+
+        <!-- screen 3: the conversation with the chosen cases -->
+        <section class="pc-cases" id="pcCases" aria-label="שיחה עם התיקים" hidden>
+          <aside class="pc-side" aria-labelledby="pcSideH">
+            <div class="pc-sidehead"><h2 id="pcSideH">תיקים בשיחה</h2><span class="pc-badge" id="pcSideCount"></span></div>
+            <p class="pc-sidenote">השאלות מתייחסות לתיקים המסומנים, בלחיצה על החץ ניתן לראות את מסמכי התיק</p>
+            <ul id="pcSideList"></ul>
+            <button type="button" class="pc-btn pc-back" id="pcBackRes">חזרה לתוצאות</button>
+          </aside>
+          <div class="pc-chatcol">
+            <div class="pc-thread" id="pcThread" aria-live="polite"></div>
+            <div class="pc-dock">
+              <div class="pc-notice pc-nonote" id="pcNoneOn" role="status" hidden><span>לא מסומן אף תיק. סמנו לפחות תיק אחד בצד כדי לשאול.</span></div>
+              <form class="pc-composer" id="pcFormDock">
+                <label for="pcAskDock" class="pd-sr">שאלה על התיקים</label>
+                <textarea id="pcAskDock" rows="1" placeholder="שאלו על התיקים שנבחרו, למשל: האם כבר הוגשה תובענה על אותה עילה?"></textarea>
+                <button type="submit" class="pc-send" aria-label="שליחה" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg></button>
+              </form>
+              <p class="pc-dockhint">התשובות מבוססות על מסמכי התיקים בפנקס ואינן ייעוץ משפטי.</p>
+            </div>
+          </div>
+          <section class="pc-viewer" id="pcViewer" aria-labelledby="pcViewTitle" hidden>
+            <div class="pc-dochead"><b id="pcViewTitle"></b><button type="button" class="pc-docx" id="pcViewClose" aria-label="סגירת המסמך"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+            <div class="pc-docscroll" id="pcViewScroll"><div class="pc-paper" id="pcViewPaper"></div></div>
+          </section>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<aside class="pc-docp" id="pcDoc" role="dialog" aria-modal="true" aria-labelledby="pcDocTitle" hidden>
+  <div class="pc-dochead">
+    <b id="pcDocTitle"></b>
+    <button type="button" class="pc-docx" id="pcDocClose" aria-label="סגירת המסמך"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+  </div>
+  <div class="pc-docscroll"><div class="pc-paper" id="pcPaper"></div></div>
+</aside>
+<div class="pc-docbg" id="pcDocBg" hidden></div>
+
+<div id="siteFooter" style="flex-shrink:0;background:#001e40">
+  <div style="max-width:1840px;margin:0 auto;padding:70px 96px;display:flex;flex-direction:column;gap:60px;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
+    <div style="display:flex;justify-content:space-between;gap:40px">
+
+      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
+        <div style="position:relative;width:40px;height:40px">
+          <div style="position:absolute;top:17.5%;right:6.18%;bottom:15.23%;left:7.5%">
+            <img src="assets/footer-frame.svg" style="position:absolute;inset:0;width:100%;height:100%">
+          </div>
+        </div>
+        <div style="font:600 20px 'Rubik';color:#f4f8fe">מידע שימושי</div>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#f4f8fe;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הגשת תביעה קטנה</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הגשת תביעה בדיון מהיר בבית הדין לעבודה</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> בקשה לשינוי מועד דיון</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> בקשה לפטור מאגרה בשל חוסר יכולת כלכלית</a>
+      </div>
+
+      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
+        <div style="position:relative;width:40px;height:40px">
+          <div style="position:absolute;top:15%;right:7.43%;bottom:15.17%;left:7.5%;overflow:hidden">
+            <div style="position:absolute;top:19.3%;right:60.24%;bottom:16.11%;left:0">
+              <div style="position:absolute;top:-2.77%;right:0;bottom:0;left:0">
+                <img src="assets/footer-group.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:6.48%;right:0;bottom:28.93%;left:60.27%">
+              <div style="position:absolute;top:-2.77%;right:0;bottom:0;left:0">
+                <img src="assets/footer-group1.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:6.48%;right:19.89%;bottom:80.7%;left:19.86%">
+              <div style="position:absolute;top:-13.97%;right:-2.44%;bottom:-13.97%;left:-2.44%">
+                <img src="assets/footer-vector.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:13.57%;right:50.01%;bottom:10.06%;left:49.99%">
+              <div style="position:absolute;top:-2.34%;right:-0.5px;bottom:-2.34%;left:-0.5px">
+                <img src="assets/footer-vector1.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:91.01%;right:39.79%;bottom:8.99%;left:39.76%">
+              <div style="position:absolute;top:-0.5px;right:-7.18%;bottom:-0.5px;left:-7.18%">
+                <img src="assets/footer-vector2.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:98.21%;right:34.09%;bottom:1.79%;left:34.09%">
+              <div style="position:absolute;top:-0.5px;right:-4.62%;bottom:-0.5px;left:-4.62%">
+                <img src="assets/footer-vector3.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:0;right:47.11%;bottom:92.91%;left:47.07%">
+              <img src="assets/footer-vector4.svg" style="position:absolute;inset:0;width:100%;height:100%">
+            </div>
+          </div>
+        </div>
+        <div style="font:600 20px 'Rubik';color:#f4f8fe">אודות</div>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#f4f8fe;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> משוב</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> תנאי שימוש</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> שימוש בקבצי cookies</a>
+        <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> הצהרת נגישות</a>
+      </div>
+
+      <div style="flex:0 1 auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;min-width:0">
+        <div style="position:relative;width:40px;height:40px">
+          <div style="position:absolute;top:12.5%;right:12.13%;bottom:12.13%;left:12.5%;overflow:hidden">
+            <div style="position:absolute;top:2.72%;right:2.75%;bottom:2.75%;left:2.72%">
+              <div style="position:absolute;top:-1.75%;right:-1.75%;bottom:-1.75%;left:-1.75%">
+                <img src="assets/footer-group2.svg" style="display:block;width:100%;height:100%">
+              </div>
+            </div>
+            <div style="position:absolute;top:0;right:41.26%;bottom:0;left:41.23%">
+              <img src="assets/footer-group3.svg" style="position:absolute;inset:0;width:100%;height:100%">
+            </div>
+            <div style="position:absolute;top:41.23%;right:0;bottom:41.26%;left:0">
+              <img src="assets/footer-group4.svg" style="position:absolute;inset:0;width:100%;height:100%">
+            </div>
+          </div>
+        </div>
+        <div style="font:600 20px 'Rubik';color:#f4f8fe">מוקד מידע ושירות ארצי</div>
+        <div style="font:400 16px 'Rubik';color:#fff;width:100%">
+          <div>שעות מענה אנושי:</div>
+          <div style="margin-top:4px">ימים א-ה: 8:00 עד 17:00</div>
+          <div>ימי ו, ערבי חג וחול המועד: 8:00 עד 12:30</div>
+        </div>
+        <div style="display:flex;gap:24px;width:100%">
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <div style="font:400 18px 'Rubik';color:#fff">בטלפון</div>
+            <div style="display:flex;align-items:center;gap:16px">
+              <span dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">077-2703333</span>
+              <span style="width:2px;height:18px;background:rgba(255,255,255,.2)"></span>
+              <span dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">*3852</span>
+            </div>
+            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> ניתן לזמן תור לשיחה</a>
+          </div>
+          <div style="width:2px;background:rgba(255,255,255,.2);align-self:stretch"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <div style="font:400 18px 'Rubik';color:#fff">בווטסאפ</div>
+            <div dir="ltr" style="font:600 18px 'Rubik';color:#fff;white-space:nowrap">050-6255727</div>
+            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> להתחיל שיחה</a>
+          </div>
+          <div style="width:2px;background:rgba(255,255,255,.2);align-self:stretch"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+            <div style="font:400 18px 'Rubik';color:#fff">בצ'אט</div>
+            <a href="#" style="display:flex;align-items:center;gap:10px;font:400 18px 'Rubik';color:#fff;text-decoration:none"><img src="assets/footer-chevron.svg" style="width:9px;height:12px;transform:rotate(180deg)"> להתחיל שיחה</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  /* the account menu closes on any click outside it */
+  document.addEventListener('click', function (e) {
+    document.querySelectorAll('.cvs-avatarmenu[open]').forEach(function (d) { if (!d.contains(e.target)) d.open = false; });
+  });
+</script>
+<script src="pinkas-data.js"></script>
+<script src="pinkas-app.js"></script>
+
+</body>
+</html>
