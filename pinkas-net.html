@@ -106,7 +106,7 @@
   #cvsTopHeader input, #cvsTopHeader select { border-color: var(--border-field) !important; }
   #cvsTopHeader input::placeholder { color: var(--fg-3); }
 
-  .pc-wrap { padding-top: 14px; }
+  .pc-wrap { padding-top: 28px; }
   .pc-headacts { margin-inline-start: auto; align-self: center; display: flex; flex-wrap: wrap; gap: 8px; }
   .pc-newbtn { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 6px; border: 1px solid var(--border-1); background: #fff; color: var(--brand-navy); font: 500 14px 'Rubik'; cursor: pointer; }
   .pc-newbtn:hover { background: var(--brand-tint); border-color: var(--brand-tint); }
@@ -529,7 +529,8 @@
 
 <div style="flex:1 0 auto;font-family:'Rubik',sans-serif" dir="rtl" lang="he">
   <main class="md-content" style="max-width:1840px;margin:0 auto;padding:0 32px 40px">
-    <nav class="dc-crumbs" aria-label="פירורי לחם">
+    <!-- no breadcrumbs in this version (pinkas-app.js still writes to them, so they stay hidden) -->
+    <nav class="dc-crumbs" aria-label="פירורי לחם" hidden>
       <ol>
         <li><a href="https://www.court.gov.il/ngcs.web.site/homepage.aspx">נט המשפט</a></li>
         <li id="pcCrumbPinkas" hidden><a href="pinkas-net.html">פנקס התובענות הייצוגיות</a></li>
