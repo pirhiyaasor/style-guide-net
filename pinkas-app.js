@@ -40,9 +40,10 @@
     branch: { label: 'ענף', sort: function (c) { return c.branch; }, cell: function (c) { return esc(c.branch); } },
     filed: { label: 'הוגשה', sort: function (c) { return dateKey(c.filed); }, cell: function (c) { return '<span class="pc-num">' + c.filed + '</span>'; } },
     status: { label: 'סטטוס', sort: function (c) { return c.open ? 0 : 1; }, cell: status },
-    cause: { label: 'עילה', sort: function (c) { return c.cause; }, cell: function (c) { var t = c.cause + '. ' + c.sum; return '<span class="pc-clamp" title="' + esc(t) + '"><b>' + esc(c.cause) + '.</b> ' + esc(c.sum) + '</span>'; }, cls: 'pc-tcause' }
+    amount: { label: 'סכום התביעה', sort: function (c) { return +c.amount.replace(/[^0-9]/g, ''); }, cell: function (c) { return '<span class="pc-num pc-amount">' + c.amount + '</span>'; } },
+    cause: { label: 'שאלה משפטית', sort: function (c) { return c.cause; }, cell: function (c) { var t = c.cause + '. ' + c.sum; return '<span class="pc-clamp" title="' + esc(t) + '"><b>' + esc(c.cause) + '.</b> ' + esc(c.sum) + '</span>'; }, cls: 'pc-tcause' }
   };
-  var ORDER = ['num', 'name', 'court', 'branch', 'filed', 'status', 'cause'];
+  var ORDER = ['num', 'name', 'court', 'branch', 'filed', 'status', 'amount', 'cause'];
   S.cols = ORDER.slice();
 
   /* ── search: always the 20 cases of the registry, most relevant first ── */
@@ -128,9 +129,8 @@
         return '<tr class="pc-rrow' + (picked(c) ? ' is-picked' : '') + '" data-case="' + c.id + '">' +
           '<td class="pc-ckcol">' + pick(c) + '</td>' +
           S.cols.map(function (k) { return '<td' + (COLS[k].cls ? ' class="' + COLS[k].cls + '"' : '') + '>' + COLS[k].cell(c) + '</td>'; }).join('') +
-          '<td><button type="button" class="pc-chev" data-expand aria-expanded="false" aria-controls="' + did + '" aria-label="פרטים ומסמכים, ת&quot;צ ' + c.num + '">' + svg.chev + '</button></td></tr>' +
+          '<td><button type="button" class="pc-chev" data-expand aria-expanded="false" aria-controls="' + did + '" aria-label="מסמכי התיק, ת&quot;צ ' + c.num + '">' + svg.chev + '</button></td></tr>' +
           '<tr class="pc-rdetail" id="' + did + '" hidden><td></td><td colspan="' + (S.cols.length + 1) + '"><div class="pc-detail">' +
-            '<div><h4>תקציר</h4><p>' + esc(c.sum) + '</p></div>' +
             '<div><h4>מסמכים מצורפים</h4>' + docList(c) + '</div></div></td></tr>';
       }).join('') + '</tbody></table></div>';
   }
@@ -141,7 +141,8 @@
         '<div class="pc-cardtop">' + pick(c) + '<span class="pc-numpill pc-num">' + c.num + '</span>' + status(c) + '</div>' +
         '<h3>' + esc(title(c)) + '</h3>' +
         '<div class="pc-cardmeta"><span>' + esc(shortCourt(c)) + '</span><span>' + esc(c.branch) + '</span><span>הוגשה ב־<span class="pc-num">' + c.filed + '</span></span></div>' +
-        '<p class="pc-cardcause"><b>עילה:</b> ' + esc(c.cause) + '</p>' +
+        '<p class="pc-cardcause"><b>שאלה משפטית:</b> ' + esc(c.cause) + '</p>' +
+        '<p class="pc-cardcause"><b>סכום התביעה:</b> <span class="pc-num">' + c.amount + '</span></p>' +
         '<button type="button" class="pc-more" data-more aria-expanded="false" aria-controls="' + mid + '"><span>הצג עוד</span>' + svg.chev + '</button>' +
         '<div class="pc-cardmore" id="' + mid + '" hidden><p>' + esc(c.sum) + '</p>' +
           (c.docs.length
@@ -366,11 +367,58 @@
       '<p class="pp-date">' + (di === 0 || di === 1 ? 'הוגש ביום ' : 'ניתנה היום, ') + '<span class="pc-num">' + d.date + '</span></p>' +
       '<p class="pp-demo">מסמך לדוגמה באב־טיפוס. התוכן בדוי.</p>';
   }
+  var ICON = function (d, n) { return '<svg width="' + (n || 17) + '" height="' + (n || 17) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
+  var TOOL = '<div class="cvs-pdftool pc-pdftool" role="toolbar" aria-label="פעולות על המסמך">' +
+    '<div class="cvs-pdftool-group">' +
+      '<button type="button" data-pdf="rotate" title="סיבוב" aria-label="סיבוב המסמך">' + ICON('<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>') + '</button>' +
+      '<button type="button" data-pdf="first" title="תחילת המסמך" aria-label="מעבר לתחילת המסמך">' + ICON('<path d="m17 11-5-5-5 5"/><path d="m17 18-5-5-5 5"/>') + '</button>' +
+      '<button type="button" data-pdf="prev" title="עמוד קודם" aria-label="עמוד קודם">' + ICON('<path d="m18 15-6-6-6 6"/>') + '</button>' +
+      '<span class="cvs-pdftool-pagenum" title="עמוד נוכחי">1</span><span class="cvs-pdftool-pagetotal" title="סך העמודים">1</span>' +
+      '<button type="button" data-pdf="next" title="עמוד הבא" aria-label="עמוד הבא">' + ICON('<path d="m6 9 6 6 6-6"/>') + '</button>' +
+      '<button type="button" data-pdf="last" title="סוף המסמך" aria-label="מעבר לסוף המסמך">' + ICON('<path d="m7 6 5 5 5-5"/><path d="m7 13 5 5 5-5"/>') + '</button>' +
+    '</div><div class="cvs-pdftool-div"></div>' +
+    '<button type="button" data-pdf="in" title="הגדלה" aria-label="הגדלה">' + ICON('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>', 18) + '</button>' +
+    '<span class="cvs-pdftool-zoom" aria-live="polite">100%</span>' +
+    '<button type="button" data-pdf="out" title="הקטנה" aria-label="הקטנה">' + ICON('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/>', 18) + '</button>' +
+    '<div class="cvs-pdftool-grip" aria-hidden="true">' + ICON('<circle cx="12" cy="9" r="1"/><circle cx="19" cy="9" r="1"/><circle cx="5" cy="9" r="1"/><circle cx="12" cy="15" r="1"/><circle cx="19" cy="15" r="1"/><circle cx="5" cy="15" r="1"/>', 14) + '</div></div>';
+  var WIDE = '<button type="button" class="pc-docx pc-docwide" data-pdf="wide" title="הגדלת המסמך" aria-label="הגדלת המסמך" aria-pressed="false">' + ICON('<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>', 15) + '</button>';
+  ['pcViewer', 'pcDoc'].forEach(function (id) {
+    var box = $(id);
+    box.querySelector('.pc-docx').insertAdjacentHTML('beforebegin', WIDE);
+    box.querySelector('.pc-docscroll').insertAdjacentHTML('beforebegin', TOOL);
+  });
+  var PDF = { zoom: 100, turn: 0 };
+  function pdfApply() {
+    document.querySelectorAll('.pc-viewer .pc-paper, .pc-docp .pc-paper').forEach(function (p) {
+      p.style.zoom = PDF.zoom / 100;
+      p.style.transform = PDF.turn ? 'rotate(' + PDF.turn + 'deg)' : '';
+    });
+    document.querySelectorAll('.pc-pdftool .cvs-pdftool-zoom').forEach(function (z) { z.textContent = PDF.zoom + '%'; });
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-pdf]'); if (!b) return;
+    var box = b.closest('.pc-viewer, .pc-docp'), scroll = box.querySelector('.pc-docscroll'), a = b.dataset.pdf;
+    if (a === 'in') PDF.zoom = Math.min(200, PDF.zoom + 10);
+    else if (a === 'out') PDF.zoom = Math.max(50, PDF.zoom - 10);
+    else if (a === 'rotate') PDF.turn = (PDF.turn + 90) % 360;
+    else if (a === 'first' || a === 'prev') scroll.scrollTo({ top: 0, behavior: reduce() ? 'auto' : 'smooth' });
+    else if (a === 'last' || a === 'next') scroll.scrollTo({ top: scroll.scrollHeight, behavior: reduce() ? 'auto' : 'smooth' });
+    else if (a === 'wide') {
+      var on = b.getAttribute('aria-pressed') !== 'true';
+      b.setAttribute('aria-pressed', String(on));
+      b.title = on ? 'הקטנת המסמך' : 'הגדלת המסמך';
+      $('pcCases').classList.toggle('doc-wide', on && box.id === 'pcViewer');
+      box.classList.toggle('is-wide', on);
+    }
+    pdfApply();
+  });
+
   var lastFocus = null;
   function openDoc(cid, di, pins, active, from) {
     var c = byId(cid);
     if (!c || !c.docs[di]) return;
     pins = pins || []; lastFocus = from || document.activeElement;
+    if (!S.doc || S.doc.c !== cid || S.doc.d !== di) PDF = { zoom: 100, turn: 0 };
     S.doc = { c: cid, d: di };
     var head = 'ת"צ <span class="pc-num">' + c.num + '</span> · ' + esc(c.docs[di].type);
     var inline = S.view === 'cases' && wide();
@@ -389,13 +437,16 @@
       $('pcDocClose').focus();
     }
     if (S.view === 'cases') renderSide();
+    pdfApply();
     var target = scroll.querySelector('.pp.is-active');
     if (target) target.scrollIntoView({ block: 'center', behavior: reduce() ? 'auto' : 'smooth' }); else scroll.scrollTop = 0;
   }
   function closeDoc() {
     var had = S.doc;
     S.doc = null;
-    $('pcViewer').hidden = true; $('pcCases').classList.remove('has-doc');
+    $('pcViewer').hidden = true; $('pcCases').classList.remove('has-doc', 'doc-wide');
+    document.querySelectorAll('.pc-viewer, .pc-docp').forEach(function (b) { b.classList.remove('is-wide'); });
+    document.querySelectorAll('[data-pdf="wide"]').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); b.title = 'הגדלת המסמך'; });
     $('pcDoc').hidden = true; $('pcDocBg').hidden = true;
     if (had && S.view === 'cases') renderSide();
     if (had && lastFocus && document.contains(lastFocus)) lastFocus.focus();

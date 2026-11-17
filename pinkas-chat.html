@@ -326,7 +326,8 @@
   .pc-pg.is-on { background: var(--brand-navy); border-color: var(--brand-navy); color: #fff; }
   .pc-rdetail td { border-top: 0; padding-top: 0; }
   .pc-rdetail.is-picked, .pc-rrow.is-picked + .pc-rdetail { background: var(--brand-tint); }
-  .pc-detail { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; padding: 6px 0 14px; }
+  .pc-detail { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; padding: 6px 0 14px; }
+  .pc-amount { white-space: nowrap; }
   .pc-detail h4, .pc-cardmore h4 { margin: 0 0 6px; font: 600 14px 'Rubik'; color: var(--pc-title); }
   .pc-detail p { margin: 0; font: 400 14.5px/1.65 'Rubik'; color: var(--fg-1); }
 
@@ -415,10 +416,16 @@
   .pc-ahead .pc-who { margin: 0; flex: 1; }
   .pc-acts { display: flex; gap: 2px; }
   .pc-acts .cvs-iconbtn[aria-pressed="true"] { background: #e8f0fb; color: var(--pc-ink); }
-  .pc-body { font: 400 16px/1.75 'Rubik'; color: var(--fg-1); text-align: justify; }
+  .pc-body { font: 400 16px/1.75 'Rubik'; color: var(--fg-1); text-align: start; }
+  .pc-ublock, .pc-a, .pc-chatcol .pc-dock { width: 100%; max-width: calc(800px + 46px); margin-inline: auto; box-sizing: border-box; }
+  .pc-chatcol .pc-pill { position: relative; inset-inline-start: 23px; max-width: 800px; }
   .pc-ublock, .pc-a { padding-inline-start: 46px; }
   .pc-ublock > .pc-who, .pc-a .pc-ahead { margin-inline-start: -46px; }
+  /* the question box lines up with the text of the answers, edge to edge */
+  .pc-chatcol .pc-dock { padding-inline-start: 46px; }
   .pc-body p { margin: 0 0 14px; }
+  /* one text size through the whole answer (16px); only the quotes' source lines stay smaller */
+  .pc-body p, .pc-body li, .pc-body td, .pc-body th, .pc-body .pc-num { font-size: 16px; }
   .pc-body h3 { margin: 22px 0 8px; font: 600 18px/26px 'Rubik'; color: var(--pc-title); letter-spacing: -.2px; }
   .pc-body ul { margin: 0 0 14px; padding-inline-start: 20px; }
   .pc-body li { margin-bottom: 8px; }
@@ -435,6 +442,7 @@
   .pc-cmp th { background: #eff5fd; color: var(--fg-2); font-weight: 500; text-align: start; padding: 8px 10px; }
   .pc-cmp td { padding: 9px 10px; border-top: 1px solid #eef1f6; color: var(--pc-ink); vertical-align: top; }
   .pc-cmp td.pc-num { white-space: nowrap; }
+  .pc-cmp th, .pc-cmp td { text-align: start; }
 
   /* ── loading (design.md §8.2) and error (§8.3) ── */
   .pc-loading .pc-step { display: flex; align-items: center; gap: 8px; font: 400 14px 'Rubik'; color: var(--fg-2); margin-bottom: 14px; }
@@ -454,7 +462,16 @@
   .pc-docx { width: 28px; height: 28px; border-radius: 6px; border: 0; background: var(--brand-tint); color: var(--brand-navy); display: grid; place-items: center; cursor: pointer; flex: none; }
   .pc-docx:hover { background: var(--brand-tint-strong); }
   .pc-docx svg { width: 15px; height: 15px; }
-  .pc-docscroll { flex: 1; overflow: auto; padding: 22px; }
+  .pc-docscroll { flex: 1; overflow: auto; padding: 22px 22px 22px 72px; }
+  .pc-pdftool { top: calc(50% + 26px); left: 14px; }
+  .pc-pdftool button:focus-visible { outline: none; box-shadow: var(--box-shadow-focus); }
+  .pc-paper { transform-origin: top center; transition: transform .2s ease; }
+  .pc-docwide { margin-inline-start: 0; }
+  .pc-docwide[aria-pressed="true"] { background: var(--brand-navy); color: #fff; }
+  /* the enlarged document takes the sidebar's room; the conversation keeps its column */
+  .pc-cases.has-doc.doc-wide { grid-template-columns: minmax(0, 1fr) minmax(560px, 60%); }
+  .pc-cases.has-doc.doc-wide .pc-side { display: none; }
+  .pc-docp.is-wide { width: min(86vw, 1100px); }
   .pc-paper { background: #fff; max-width: 620px; margin: 0 auto; padding: 46px 56px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,.12); font: 400 14.5px/1.85 'Rubik'; color: #1d2330; }
   .pc-paper .c { text-align: center; font-weight: 600; }
   .pc-paper .n { text-align: center; color: #555c6b; margin-bottom: 20px; }
@@ -488,12 +505,14 @@
     .pc-body { font-size: 15.5px; }
     .pc-paper { padding: 28px 22px 28px 22px; padding-right: 44px; }
     .pc-pins { right: -32px; }
-    .pc-docscroll { padding: 12px; }
+    .pc-docscroll { padding: 12px 12px 12px 62px; }
+    .pc-pdftool { left: 8px; }
     .pc-ahead .pc-who small, .pc-dockhint { display: none; }
     .pc-restools { width: 100%; }
     .pc-filterpanel { left: auto; right: 0; width: min(300px, calc(100vw - 48px)); }
-    .pc-ublock, .pc-a { padding-inline-start: 0; }
+    .pc-ublock, .pc-a, .pc-chatcol .pc-dock { padding-inline-start: 0; }
     .pc-ublock > .pc-who, .pc-a .pc-ahead { margin-inline-start: 0; }
+    .pc-chatcol .pc-pill { inset-inline-start: 0; }
     .pc-pickbar > span:nth-child(2) { display: none; }
   }
   @media (pointer: coarse) {
@@ -650,7 +669,7 @@
           </div>
           <div class="pc-headacts">
             <button type="button" class="pc-newbtn" id="pcDashBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><span id="pcDashLbl">דשבורד נתונים</span></button>
-            <button type="button" class="pc-newbtn" id="pcNew" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86z"/></svg>שיחה חדשה</button>
+            <button type="button" class="pc-newbtn" id="pcNew" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86z"/></svg>חיפוש חדש</button>
           </div>
         </div>
 
